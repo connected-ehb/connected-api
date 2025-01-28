@@ -27,7 +27,7 @@ public class User {
     private String firstName;
     private String lastName;
     private String fieldOfStudy;
-    private String profileImage;
+    private String profileImageUrl;
     private String linkedinUrl;
 
     @ManyToOne
