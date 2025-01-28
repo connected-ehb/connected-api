@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.sql.ast.tree.update.Assignment;
+import com.ehb.connected.domain.impl.assignments.entities.Assignment; // Correct import
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,11 +20,8 @@ import java.util.List;
 public class Course {
     @Id
     private Long Id;
-
     private String title;
-
     private int startYear;
-
     private int endYear;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
