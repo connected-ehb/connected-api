@@ -24,11 +24,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String first_Name;
-    private String last_Name;
-    private String field_Of_Study;
-    private String profile_Image;
-    private String linkedin_Url;
+    private String firstName;
+    private String lastName;
+    private String fieldOfStudy;
+    private String profileImage;
+    private String linkedinUrl;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = true)

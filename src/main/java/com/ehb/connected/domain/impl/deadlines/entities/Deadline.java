@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class Deadline {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
     private String title;
     private LocalDateTime dateTime;
@@ -26,7 +26,7 @@ public class Deadline {
     private String restriction;
 
     @ManyToOne
-    @JoinColumn(name = "id", nullable = false)
+    @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
 
 

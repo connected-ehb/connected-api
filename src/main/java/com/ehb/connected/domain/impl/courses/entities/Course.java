@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Course {
     @Id
-    private Long Id;
+    private Long id;
     private String title;
     private int startYear;
     private int endYear;

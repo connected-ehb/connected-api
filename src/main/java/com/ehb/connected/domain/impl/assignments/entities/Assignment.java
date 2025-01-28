@@ -22,12 +22,12 @@ import java.util.List;
 public class Assignment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
    private String title;
    private LocalDateTime date;
    private String description;
-   private int default_team_size;
+   private int defaultTeamSize;
 
    @ManyToOne
     @JoinColumn(name = "course_id", nullable = true)
