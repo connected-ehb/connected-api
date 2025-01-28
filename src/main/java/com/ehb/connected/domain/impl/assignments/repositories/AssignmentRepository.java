@@ -1,4 +1,4 @@
 package com.ehb.connected.domain.impl.assignments.repositories;
 
-public interface assignmentrepository {
+public interface AssignmentRepository {
 }

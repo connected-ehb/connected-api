@@ -1,4 +1,4 @@
 package com.ehb.connected.domain.impl.courses.repositories;
 
-public interface courserepository {
+public interface CourseRepository {
 }
