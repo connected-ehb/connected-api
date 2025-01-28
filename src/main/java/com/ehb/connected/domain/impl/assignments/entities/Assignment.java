@@ -4,6 +4,7 @@ package com.ehb.connected.domain.impl.assignments.entities;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
