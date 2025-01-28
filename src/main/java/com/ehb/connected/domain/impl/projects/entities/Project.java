@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @Getter
 @NoArgsConstructor
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,12 +28,10 @@ public class Project {
     private String backgroundImage;
 
     @ManyToOne
-    @Nullable
     @JoinColumn(name = "assignment_id", nullable = true)
     private Assignment assignment;
 
     @ManyToMany
-    @Nullable
     @JoinTable(
             name = "project_tag",
             joinColumns = @JoinColumn(name = "project_id"),
@@ -42,14 +40,11 @@ public class Project {
     private List<Tag> tags = new ArrayList<>();
 
     @ManyToOne
-    @Nullable
     @JoinColumn(name = "user_id", nullable = true)
     private User createdBy;
 
-    @Nullable
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Application> applications = new ArrayList<>();
-
-
 
 }

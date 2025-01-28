@@ -30,4 +30,21 @@ public class ProjectServiceImplTest {
         MockitoAnnotations.openMocks(this);
     }
 
+    @Test
+    public void testGetProjectById() {
+        Project project = new Project();
+        project.setId(1L);
+        project.setTitle("Project 1");
+        project.setDescription("Description 1");
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+
+        Project result = projectServiceImpl.getProjectById(1L);
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Project 1", result.getTitle());
+        assertEquals("Description 1", result.getDescription());
+        verify(projectRepository, times(1)).findById(1L);
+    }
+
 }
