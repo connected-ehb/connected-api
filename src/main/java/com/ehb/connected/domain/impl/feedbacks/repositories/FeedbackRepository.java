@@ -1,4 +1,7 @@
 package com.ehb.connected.domain.impl.feedbacks.repositories;
 
-public interface FeedbackRepository {
+import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 }

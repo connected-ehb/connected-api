@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.discussions.entities;
 
 
+import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -21,7 +22,7 @@ public class Discussion {
     private String comment;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
 }

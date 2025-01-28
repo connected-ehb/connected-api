@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.feedbacks.entities;
 
 
+import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,6 @@ public class Feedback {
     private String comment;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = true)
-    private User user;
+    @JoinColumn(name = "project_id", nullable = true)
+    private Project project;
 }
