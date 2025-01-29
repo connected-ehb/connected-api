@@ -11,4 +11,8 @@ public interface ProjectService {
     Project updateProject(Project project);
     void deleteProject(Long id);
 
+    void approveProject(Long id);
+
+    void rejectProject(Long id);
+
 }
