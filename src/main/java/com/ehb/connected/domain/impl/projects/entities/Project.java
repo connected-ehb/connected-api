@@ -34,7 +34,7 @@ public class Project {
 
     private String title;
     private String description;
-    private String status;
+    private ProjectStatusEnum status;
     private String githubUrl;
     private String backgroundImage;
 
