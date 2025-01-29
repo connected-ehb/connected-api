@@ -37,6 +37,8 @@ public class User {
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<Project> createdProjects = new ArrayList<>();
 
-
+    //MTM with users: multiple users can be in the same project
+    @ManyToMany(mappedBy = "approvedUsers")
+    private List<Project> approvedProjects = new ArrayList<>();
 
 }
