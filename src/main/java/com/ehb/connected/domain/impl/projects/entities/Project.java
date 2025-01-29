@@ -63,10 +63,10 @@ public class Project {
     //MTM with users: multiple users can be in the same project
     @ManyToMany
     @JoinTable(
-            name = "project_approved_users",
+            name = "members",
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
-    private List<User> approvedUsers = new ArrayList<>();
+    private List<User> members = new ArrayList<>();
 
 }

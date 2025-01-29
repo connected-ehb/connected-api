@@ -38,7 +38,7 @@ public class User {
     private List<Project> createdProjects = new ArrayList<>();
 
     //MTM with users: multiple users can be in the same project
-    @ManyToMany(mappedBy = "approvedUsers")
-    private List<Project> approvedProjects = new ArrayList<>();
+    @ManyToMany(mappedBy = "members")
+    private List<Project> projects = new ArrayList<>();
 
 }
