@@ -4,7 +4,16 @@ import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.users.entities.User;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,9 +54,8 @@ public class Project {
     @JoinColumn(name = "user_id", nullable = true)
     private User createdBy;
 
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Application> applications = new ArrayList<>();
-
-
 
 }
