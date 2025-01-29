@@ -1,8 +1,7 @@
-package com.ehb.connected.domain.impl.assignments;
+package com.ehb.connected.domain.impl.assignments.service;
 
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
-import com.ehb.connected.domain.impl.assignments.service.AssignmentServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
