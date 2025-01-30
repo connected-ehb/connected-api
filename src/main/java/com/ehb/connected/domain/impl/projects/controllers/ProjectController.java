@@ -39,4 +39,10 @@ public class ProjectController {
         projectService.deleteProject(id);
     }
 
+
+    @PatchMapping("/{id}/approve")
+    public void approveProject(@PathVariable Long id) { projectService.approveProject(id);}
+
+    @PatchMapping("/{id}/approve")
+    public void rejectProject(@PathVariable Long id) { projectService.rejectProject(id);}
 }

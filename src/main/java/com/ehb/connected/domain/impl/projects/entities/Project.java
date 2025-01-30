@@ -34,12 +34,12 @@ public class Project {
 
     private String title;
     private String description;
-    private String status;
+    private ProjectStatusEnum status;
     private String githubUrl;
     private String backgroundImage;
 
     @ManyToOne
-    @JoinColumn(name = "assignment_id", nullable = true)
+    @JoinColumn(name = "assignment_id")
     private Assignment assignment;
 
     @ManyToMany
@@ -51,7 +51,7 @@ public class Project {
     private List<Tag> tags = new ArrayList<>();
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = true)
+    @JoinColumn(name = "user_id")
     private User createdBy;
 
 
