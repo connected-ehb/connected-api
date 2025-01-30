@@ -31,7 +31,7 @@ public class ProjectController {
 
     @PutMapping("/update/{id}")
     public Project updateProject(@PathVariable Long id, @RequestBody Project project){
-        return projectService.updateProject(project);
+        return projectService.updateProject(id, project);
     }
 
     @DeleteMapping("/delete/{id}")
@@ -43,6 +43,6 @@ public class ProjectController {
     @PatchMapping("/{id}/approve")
     public void approveProject(@PathVariable Long id) { projectService.approveProject(id);}
 
-    @PatchMapping("/{id}/approve")
+    @PatchMapping("/{id}/reject")
     public void rejectProject(@PathVariable Long id) { projectService.rejectProject(id);}
 }

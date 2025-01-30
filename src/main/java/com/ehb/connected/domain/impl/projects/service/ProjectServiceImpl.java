@@ -30,9 +30,23 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Project updateProject(Project project) {
-        return projectRepository.save(project);
+    public Project updateProject(Long id, Project project) {
+        Project existingProject = projectRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+
+        // If the project is approved, return as it cannot be updated
+        if (existingProject.getStatus() == ProjectStatusEnum.APPROVED) {
+            return existingProject;
+        }
+
+        existingProject.setTitle(project.getTitle());
+        existingProject.setDescription(project.getDescription());
+        existingProject.setGithubUrl(project.getGithubUrl());
+        existingProject.setBackgroundImage(project.getBackgroundImage());
+
+        return projectRepository.save(existingProject);
     }
+
 
     @Override
     public void deleteProject(Long id) {

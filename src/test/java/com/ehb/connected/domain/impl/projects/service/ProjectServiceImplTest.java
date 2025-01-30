@@ -77,18 +77,32 @@ public class ProjectServiceImplTest {
     }
 
     @Test
-    public void testUpdateProject(){
-        Project project = new Project();
-        project.setId(1L);
-        project.setTitle("Project updated!");
+    public void testUpdateProject() {
+        // Create an existing project in the repository
+        Project existingProject = new Project();
+        existingProject.setId(1L);
+        existingProject.setTitle("Old Title");
 
-        when(projectRepository.save(project)).thenReturn(project);
+        // Create the new project data
+        Project updatedProject = new Project();
+        updatedProject.setTitle("Project updated!");
 
-        Project result = projectServiceImpl.updateProject(project);
+        // Mock repository behavior
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(existingProject));
+        when(projectRepository.save(any(Project.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Call the service method
+        Project result = projectServiceImpl.updateProject(1L, updatedProject);
+
+        // Assertions
         assertNotNull(result);
-        assertEquals("Project updated!",result.getTitle());
-        verify(projectRepository,times(1)).save(project);
+        assertEquals("Project updated!", result.getTitle());
+
+        // Verify repository interactions
+        verify(projectRepository, times(1)).findById(1L);
+        verify(projectRepository, times(1)).save(existingProject);
     }
+
 
     @Test
     public void testDeleteProject(){
