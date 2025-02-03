@@ -3,8 +3,6 @@ package com.ehb.connected.config;
 import com.ehb.connected.domain.impl.auth.helpers.OAuth2LoginSuccessHandler;
 import com.ehb.connected.domain.impl.auth.helpers.TokenRefreshFilter;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.filters.CorsFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -44,7 +42,7 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/auth/**")
                         )
                 )
-                .addFilterBefore(tokenRefreshFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);;
+                .addFilterBefore(tokenRefreshFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 }
