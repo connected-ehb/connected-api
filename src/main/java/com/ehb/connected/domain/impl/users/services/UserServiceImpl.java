@@ -3,15 +3,17 @@ package com.ehb.connected.domain.impl.users.services;
 
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -37,8 +39,10 @@ public class UserServiceImpl implements UserService{
         userRepository.deleteById(id);
     }
 
-
-
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
+    }
 
 
 }
