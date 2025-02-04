@@ -41,7 +41,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         existingProject.setTitle(project.getTitle());
         existingProject.setDescription(project.getDescription());
-        existingProject.setGithubUrl(project.getGithubUrl());
+        existingProject.setRepositoryUrl(project.getRepositoryUrl());
         existingProject.setBackgroundImage(project.getBackgroundImage());
 
         return projectRepository.save(existingProject);

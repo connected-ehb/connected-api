@@ -46,6 +46,7 @@ public class User implements UserDetails {
     @Transient // OAuth2 attributes are not stored in the database
     private Map<String, Object> attributes;
 
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
