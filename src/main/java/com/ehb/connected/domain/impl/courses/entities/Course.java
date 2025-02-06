@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment; // Correct import
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,9 +22,10 @@ import java.util.List;
 public class Course {
     @Id
     private Long id;
-    private String title;
-    private int startYear;
-    private int endYear;
+    private String uuid;
+    private String name;
+    private LocalDateTime start_at;
+    private LocalDateTime end_at;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<Assignment> assignments = new ArrayList<>();

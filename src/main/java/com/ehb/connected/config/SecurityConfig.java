@@ -5,12 +5,14 @@ import com.ehb.connected.domain.impl.auth.helpers.TokenRefreshFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -29,20 +31,20 @@ public class SecurityConfig {
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login/**", "/login/oauth2/authorization/canvas", "/api/logout", "/oauth2/authorization/canvas", "/error").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(successHandler)
                 )
                 .exceptionHandling(exception -> exception
-                        // For API endpoints, instead of redirecting, simply return 401.
+                        // Ensure API requests return 401 instead of redirecting
                         .defaultAuthenticationEntryPointFor(
                                 new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                // Match only your API endpoints, for example:
-                                new AntPathRequestMatcher("/auth/**")
+                                new AntPathRequestMatcher("/api/**", "/auth/**")
                         )
                 )
-                .addFilterBefore(tokenRefreshFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(tokenRefreshFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 }

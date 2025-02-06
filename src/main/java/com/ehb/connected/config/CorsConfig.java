@@ -14,9 +14,10 @@ public class CorsConfig {
     public CorsConfigurationSource corsFilter() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Exactly match the frontend origin
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://canvas.mertenshome.com"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         // Apply configuration for all endpoints
