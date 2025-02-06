@@ -22,6 +22,7 @@ import java.util.List;
 public class Course {
     @Id
     private Long id;
+    private String uuid;
     private String name;
     private LocalDateTime start_at;
     private LocalDateTime end_at;
