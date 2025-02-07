@@ -51,6 +51,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             User user = userRepository.findByEmail(email)
                     .orElse(new User());
             user.setFirstName(firstName);
+            user.setLastName((String) attributes.get("last_name"));
             user.setEmail(email);
             user.setRole(role);
             user.setAccessToken(accessToken);
