@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.users.entities;
 
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.tags.entities.Tag;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,6 +32,7 @@ public class User implements UserDetails {
     private String fieldOfStudy;
     private String profileImageUrl;
     private String linkedinUrl;
+    private String aboutMe;
 
     private String accessToken;
 
@@ -52,6 +54,13 @@ public class User implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_tags",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private List<Tag> tags = new ArrayList<>();
+
     @Override
     public String getPassword() {
         return null;
@@ -66,4 +75,6 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+
 }

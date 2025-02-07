@@ -47,7 +47,7 @@ public class DatabaseSeeder {
     private final DeadlineRepository deadlineRepository;
 
 
-    @EventListener
+   /* @EventListener
     public void seed(ContextRefreshedEvent event) {
         try{
             seedUsers();
@@ -62,30 +62,19 @@ public class DatabaseSeeder {
         } catch (Exception e) {
             logger.error("Error while seeding database: ", e);
         }
-    }
+    }*/
 
 
+    //TODO fix user seeding
     private void seedUsers() {
-        logger.info("starting the user seeding...");
-        if (userRepository.count() == 0) {
-            User user1 = new User(null, "John", "Doe", "john.doe@student.ehb.be", "Networking", "icons/john.svg", "https://linkedin.com/johndoe", null, Role.STUDENT, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
-            User user2 = new User(null, "Jane", "Doe", "jane.doe@ehb.be", "Software Engineering", "icons/jane.svg", "https://linkedin.com/janedoe", null, Role.TEACHER, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
-            User user3 = new User(null, "Thomas", "de Trein", "thomas.detrein@student.ehb.be", "AI", "icons/thomas.svg", "https://linkedin.com/thomas", null, Role.STUDENT, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
 
-            userRepository.saveAllAndFlush(List.of(user1, user2, user3));
-            logger.info("Users Seeded");
-
-            List<User> savedUsers = userRepository.findAll();
-            savedUsers.forEach(user ->
-                    logger.info("User {} stored in DB with ID: {}", user.getEmail(), user.getId()));
-        } else{
-            logger.info("Users already seeded");
-        }
     }
     private void seedCourses() {
         if (courseRepository.count() == 0) {
-            Course course1 = new Course(1L, "Final Work", 2023, 2025, null);
-            Course course2 = new Course(2L, "IT Project", 2022, 2024, null);
+            LocalDateTime startDate = LocalDateTime.of(2024, 9, 18, 0, 0);
+            LocalDateTime endDate = LocalDateTime.of(2025, 9, 1, 0, 0);
+            Course course1 = new Course(1L,null, "Final Work", startDate ,endDate , null);
+            Course course2 = new Course(2L,null, "IT Project", startDate , endDate , null);
 
             courseRepository.saveAllAndFlush(List.of(course1, course2));
             logger.info("Courses Seeded");
@@ -107,9 +96,9 @@ public class DatabaseSeeder {
 
     private void seedTags() {
         if (tagRepository.count() == 0) {
-            Tag tag1 = new Tag(null, "Java", new ArrayList<>());
-            Tag tag2 = new Tag(null, "Spring Boot", new ArrayList<>());
-            Tag tag3 = new Tag(null, "AI", new ArrayList<>());
+            Tag tag1 = new Tag(null, "Java", new ArrayList<>(), new ArrayList<>());
+            Tag tag2 = new Tag(null, "Spring Boot", new ArrayList<>(), new ArrayList<>());
+            Tag tag3 = new Tag(null, "AI", new ArrayList<>(), new ArrayList<>());
 
             tagRepository.saveAll(List.of(tag1, tag2, tag3));
             logger.info("Tags Seeded");

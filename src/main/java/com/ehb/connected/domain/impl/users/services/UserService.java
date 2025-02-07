@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.users.services;
 
 
+import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface UserService {
     User updateUser(User user);
     void deleteUser(Long id);
     User getUserByEmail(String email);
+
 }
