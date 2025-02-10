@@ -1,5 +1,6 @@
 package com.ehb.connected.config;
 
+import com.ehb.connected.domain.impl.auth.helpers.LoadOAuth2UserService;
 import com.ehb.connected.domain.impl.auth.helpers.OAuth2LoginSuccessHandler;
 import com.ehb.connected.domain.impl.auth.helpers.TokenRefreshFilter;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler successHandler;
     private final TokenRefreshFilter tokenRefreshFilter;
     private final CorsConfig corsConfig;
+    private final LoadOAuth2UserService loadOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -35,6 +37,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(loadOAuth2UserService)
+                        )
                         .successHandler(successHandler)
                 )
                 .exceptionHandling(exception -> exception
