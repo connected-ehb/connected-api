@@ -20,7 +20,9 @@ public class Application {
 
     private String motivationMd;
 
+    private ApplicationStatusEnum status;
+
     @ManyToOne
-    @JoinColumn(name = "project_id", nullable = true)
+    @JoinColumn(name = "project_id")
     private Project project;
 }
