@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.projects.controllers;
 
 
+import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,4 +46,12 @@ public class ProjectController {
 
     @PatchMapping("/{id}/reject")
     public void rejectProject(@PathVariable Long id) { projectService.rejectProject(id);}
+
+    @GetMapping("/{id}/applications")
+    public List<Application> getAllApplications(@PathVariable Long id) { return projectService.getAllApplications(id);}
+
+    @PostMapping("/{id}/applications/{applicationId}/accept")
+    public void approveApplication(@PathVariable Long id, @PathVariable Long applicationId) {
+        projectService.approveApplication(id, applicationId);
+    }
 }
