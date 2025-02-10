@@ -3,20 +3,24 @@ package com.ehb.connected.domain.impl.projects.service;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.services.UserService;
+import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
+
 @Service
+@RequiredArgsConstructor
 public class ProjectOwnerShipService {
+
     private final ProjectRepository projectRepository;
+    private final UserServiceImpl userService;
 
-    public ProjectOwnerShipService(ProjectRepository projectRepository) {
-        this.projectRepository = projectRepository;
-    }
+    public boolean isUserOwnerOfProject(Principal principal, Long projectId) {
 
-    public boolean isUserOwnerOfProject(Long projectId) {
-
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User currentUser = userService.getUserByEmail(principal.getName());
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));

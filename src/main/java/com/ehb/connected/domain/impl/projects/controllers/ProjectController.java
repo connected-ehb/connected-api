@@ -7,6 +7,7 @@ import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -48,10 +49,15 @@ public class ProjectController {
     public void rejectProject(@PathVariable Long id) { projectService.rejectProject(id);}
 
     @GetMapping("/{id}/applications")
-    public List<Application> getAllApplications(@PathVariable Long id) { return projectService.getAllApplications(id);}
+    public List<Application> getAllApplications(Principal principal, @PathVariable Long id) { return projectService.getAllApplications(principal, id);}
 
-    @PostMapping("/{id}/applications/{applicationId}/accept")
-    public void approveApplication(@PathVariable Long id, @PathVariable Long applicationId) {
-        projectService.approveApplication(id, applicationId);
+    @PostMapping("/{id}/applications/{applicationId}/approve")
+    public void approveApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
+        projectService.reviewApplication(principal, id, applicationId, "approve");
+    }
+
+    @PostMapping("/{id}/applications/{applicationId}/reject")
+    public void rejectApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
+        projectService.reviewApplication(principal, id, applicationId, "reject");
     }
 }

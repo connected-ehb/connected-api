@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -83,8 +84,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<Application> getAllApplications(Long projectId) {
-        if (!projectOwnerShipService.isUserOwnerOfProject(projectId)) {
+    public List<Application> getAllApplications(Principal principal, Long projectId) {
+        if (!projectOwnerShipService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
 
@@ -97,9 +98,9 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void approveApplication(Long projectId, Long applicationId) {
+    public void reviewApplication(Principal principal, Long projectId, Long applicationId, String status) {
         // Check if user owns project
-        if (!projectOwnerShipService.isUserOwnerOfProject(projectId)) {
+        if (!projectOwnerShipService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
 
@@ -111,7 +112,12 @@ public class ProjectServiceImpl implements ProjectService {
             throw new RuntimeException("Application does not belong to the project");
         }
 
-        application.setStatus(ApplicationStatusEnum.APPROVED);
+        if(Objects.equals(status, "approve")){
+            application.setStatus(ApplicationStatusEnum.APPROVED);
+        } else {
+            application.setStatus(ApplicationStatusEnum.REJECTED);
+        }
+
         applicationRepository.save(application);
     }
 
