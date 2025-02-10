@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +23,7 @@ public class CourseController {
     private final UserServiceImpl userService;
     private final WebClient webClient;
 
+    //TODO: is EnrollmentType necessary?
     @PostMapping("/canvas")
     public ResponseEntity<String> getCourses(Principal principal, @RequestParam String EnrollmentType) {
         User user = userService.getUserByEmail(principal.getName());
@@ -39,4 +41,10 @@ public class CourseController {
 
         return ResponseEntity.ok().body(jsonResponse);
     }
+
+//    //Create a course in the local database not in Canvas
+//    @PostMapping("/create")
+//    public ResponseEntity<String> createCourse(Principal principal, @RequestBody Course course) {
+//
+//    }
 }
