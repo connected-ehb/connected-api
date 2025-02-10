@@ -1,18 +1,31 @@
 package com.ehb.connected.domain.impl.projects.service;
 
+import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private ProjectOwnerShipService projectOwnerShipService;
 
     @Override
     public List<Project> getAllProjects() {
@@ -68,5 +81,39 @@ public class ProjectServiceImpl implements ProjectService {
         project.setStatus(ProjectStatusEnum.REJECTED);
         projectRepository.save(project);
     }
+
+    @Override
+    public List<Application> getAllApplications(Long projectId) {
+        if (!projectOwnerShipService.isUserOwnerOfProject(projectId)) {
+            throw new RuntimeException("User is not the owner of the project");
+        }
+
+        Optional<Project> project = projectRepository.findById(projectId);
+        if (project.isEmpty()) {
+            throw new RuntimeException("Project not found");
+        }
+
+        return project.get().getApplications();
+    }
+
+    @Override
+    public void approveApplication(Long projectId, Long applicationId) {
+        // Check if user owns project
+        if (!projectOwnerShipService.isUserOwnerOfProject(projectId)) {
+            throw new RuntimeException("User is not the owner of the project");
+        }
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new EntityNotFoundException("Application not found"));
+
+        // Ensure the application belongs to the project before updating it
+        if (!Objects.equals(application.getProject().getId(), projectId)) {
+            throw new RuntimeException("Application does not belong to the project");
+        }
+
+        application.setStatus(ApplicationStatusEnum.APPROVED);
+        applicationRepository.save(application);
+    }
+
 
 }
