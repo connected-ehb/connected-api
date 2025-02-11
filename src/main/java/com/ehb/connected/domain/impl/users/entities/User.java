@@ -35,7 +35,7 @@ public class User implements UserDetails {
     private String accessToken;
 
     @Enumerated(EnumType.STRING)
-    private Role role = Role.STUDENT;
+    private Role role;
 
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<Project> createdProjects = new ArrayList<>();
@@ -48,7 +48,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        return role.getAuthorities();
     }
 
     @Override
