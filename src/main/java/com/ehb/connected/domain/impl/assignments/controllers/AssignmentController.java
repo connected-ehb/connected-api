@@ -1,26 +1,73 @@
 package com.ehb.connected.domain.impl.assignments.controllers;
 
 
+import com.ehb.connected.domain.impl.assignments.dto.AssignmentCreateDto;
+import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
+import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.assignments.service.AssignmentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.ehb.connected.domain.impl.courses.entities.Course;
+import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
+import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.services.UserService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/assignments")
+@RequestMapping("/api/assignments")
+@RequiredArgsConstructor
 public class AssignmentController {
 
-    @Autowired
-    private AssignmentService assignmentService;
+    private final AssignmentService assignmentService;
+    private final AssignmentMapper assignmentMapper;
+    private final CourseRepository courseRepository;
+    private final UserService userService;
+    private final WebClient webClient;
+
+
+    // TODO move logic to service layer
+    @PostMapping("/canvas/{courseId}")
+    public ResponseEntity<String> getAssignmentsFromCanvas(@PathVariable Long courseId, Principal principal) {
+
+        User user = userService.getUserByEmail(principal.getName());
+        String token = user.getAccessToken();
+
+        String jsonResponse = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/v1/courses/{courseId}/assignments")
+                        .build(courseId))
+                .header("Authorization", "Bearer " + token)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        return ResponseEntity.ok().body(jsonResponse);
+    }
+
+    // TODO move logic to service layer
+    @PostMapping("/")
+    public ResponseEntity<Map<String, String>> createAssignment(@RequestBody AssignmentCreateDto assignment) {
+        Course course = courseRepository.findById(assignment.getCourseId())
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+
+        Assignment assignmentEntity = assignmentMapper.AssignmentCreateToEntity(assignment);
+        assignmentEntity.setCourse(course);
+        assignmentService.createAssignment(assignmentEntity);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Assignment created successfully");
+        return ResponseEntity.ok().body(response);
+    }
 
     @GetMapping("/{id}")
-    public Assignment getAssignmentById(@PathVariable Long id){
-        return assignmentService.getAssignmentById(id);
+    public AssignmentDetailsDto getAssignmentById(@PathVariable Long id){
+        return assignmentMapper.toAssignmentDetailsDto(assignmentService.getAssignmentById(id));
     }
 
     @PatchMapping("/{id}")
