@@ -73,7 +73,7 @@ public class CourseController {
     @GetMapping("/")
     public ResponseEntity<List<CourseDetailsDto>> getCourses(Principal principal) {
         List<Course> courses = courseService.getCourses(principal);
-        List<CourseDetailsDto> courseDetailsDtos = courseMapper.toCourseDetailsDtoList(courses, principal);
+        List<CourseDetailsDto> courseDetailsDtos = courseMapper.toCourseDetailsDtoList(courses);
         ResponseEntity<List<CourseDetailsDto>> response = ResponseEntity.ok().body(courseDetailsDtos);
         return response;
     }
