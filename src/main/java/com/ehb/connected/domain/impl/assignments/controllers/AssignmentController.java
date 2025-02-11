@@ -1,6 +1,9 @@
 package com.ehb.connected.domain.impl.assignments.controllers;
 
 
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
+import com.ehb.connected.domain.impl.applications.service.ApplicationServiceImpl;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentCreateDto;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
@@ -18,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.Principal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,6 +34,7 @@ public class AssignmentController {
     private final CourseRepository courseRepository;
     private final UserService userService;
     private final WebClient webClient;
+    private final ApplicationServiceImpl applicationService;
 
 
     // TODO move logic to service layer
@@ -80,6 +85,14 @@ public class AssignmentController {
         assignmentService.deleteAssignment(id);
     }
 
+    @GetMapping("/{id}/applications")
+    public ResponseEntity<List<ApplicationDto>> getAllApplications(@PathVariable Long id){
+        List<ApplicationDto> applications = applicationService.findAllApplications(id).stream()
+                .map(ApplicationMapper::applicationToDto)
+                .toList();
+
+        return ResponseEntity.ok(applications);
+    }
 
 
 }

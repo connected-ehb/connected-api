@@ -1,0 +1,17 @@
+package com.ehb.connected.domain.impl.applications.dto;
+
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.projects.entities.Project;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+public class ApplicationDto {
+    private Long id;
+    private String motivationMd;
+    private ApplicationStatusEnum status;
+    private Project project;
+}
