@@ -1,7 +1,6 @@
 package com.ehb.connected.domain.impl.courses.dto;
 
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
-import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import lombok.Getter;
 import lombok.Setter;
 

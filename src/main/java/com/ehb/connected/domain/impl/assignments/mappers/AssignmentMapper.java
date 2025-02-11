@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -41,13 +40,5 @@ public class AssignmentMapper {
             assignmentDtos.add(toAssignmentDetailsDto(assignment));
         }
         return assignmentDtos;
-    }
-
-    public AssignmentDetailsDto[] toAssignmentDetailsDtoList(List<Assignment> assignments) {
-        AssignmentDetailsDto[] assignmentDetailsDtos = new AssignmentDetailsDto[assignments.size()];
-        for (int i = 0; i < assignments.size(); i++) {
-            assignmentDetailsDtos[i] = toAssignmentDetailsDto(assignments.get(i));
-        }
-        return assignmentDetailsDtos;
     }
 }
