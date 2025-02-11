@@ -3,30 +3,30 @@ package com.ehb.connected.domain.impl.projects.service;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
+import com.ehb.connected.domain.impl.feedbacks.repositories.FeedbackRepository;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
-import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
     @Autowired
-    private ProjectRepository projectRepository;
+    private final ProjectRepository projectRepository;
 
     @Autowired
-    private ApplicationRepository applicationRepository;
+    private final ApplicationRepository applicationRepository;
 
     @Autowired
-    private ProjectOwnerShipService projectOwnerShipService;
+    private final ProjectUserService projectUserService;
 
     @Override
     public List<Project> getAllProjects() {
@@ -35,7 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project getProjectById(Long id) {
-        return projectRepository.findById(id).orElse(null);
+        return projectRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Project not found"));
     }
 
     @Override
@@ -85,22 +85,20 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Application> getAllApplications(Principal principal, Long projectId) {
-        if (!projectOwnerShipService.isUserOwnerOfProject(principal, projectId)) {
+        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
 
-        Optional<Project> project = projectRepository.findById(projectId);
-        if (project.isEmpty()) {
-            throw new RuntimeException("Project not found");
-        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
-        return project.get().getApplications();
+        return project.getApplications();
     }
 
     @Override
     public void reviewApplication(Principal principal, Long projectId, Long applicationId, String status) {
         // Check if user owns project
-        if (!projectOwnerShipService.isUserOwnerOfProject(principal, projectId)) {
+        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
 
@@ -120,6 +118,4 @@ public class ProjectServiceImpl implements ProjectService {
 
         applicationRepository.save(application);
     }
-
-
 }
