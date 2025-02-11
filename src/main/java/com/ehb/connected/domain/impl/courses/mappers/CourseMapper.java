@@ -1,5 +1,6 @@
 package com.ehb.connected.domain.impl.courses.mappers;
 
+import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CourseMapper {
     private final UserServiceImpl userService;
+    private final AssignmentMapper assignmentMapper;
 
     public Course CourseCreateToEntity(CourseCreateDto courseCreateDto, Principal principal) {
         Course course = new Course();
@@ -37,6 +39,9 @@ public class CourseMapper {
         courseDto.setEndAt(course.getEndAt());
         courseDto.setOwnerId(course.getOwner().getId());
         courseDto.setCanvasCourseId(course.getCanvasCourseId());
+        if (course.getAssignments() != null) {
+            courseDto.setAssignments(assignmentMapper.toAssignmentDetailsDtoList(course.getAssignments()));
+        }
         return courseDto;
     }
 
