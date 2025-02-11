@@ -32,11 +32,13 @@ public class Course {
 
     private String uuid;
 
+    private Long canvasCourseId;
+
     private String name;
 
-    private LocalDateTime start_at;
+    private LocalDateTime startAt;
 
-    private LocalDateTime end_at;
+    private LocalDateTime endAt;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<Assignment> assignments = new ArrayList<>();
