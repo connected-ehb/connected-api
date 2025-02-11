@@ -20,27 +20,30 @@ public class CourseMapper {
         Course course = new Course();
         course.setName(courseCreateDto.getName());
         course.setUuid(courseCreateDto.getUuid());
-        course.setStart_at(courseCreateDto.getStart_at());
-        course.setEnd_at(courseCreateDto.getEnd_at());
+        course.setStartAt(courseCreateDto.getStartAt());
+        course.setEndAt(courseCreateDto.getEndAt());
         course.setAssignments(new ArrayList<>());
         course.setOwner(userService.getUserByEmail(principal.getName()));
+        course.setCanvasCourseId(courseCreateDto.getCanvasCourseId());
         return course;
     }
 
-    public CourseDetailsDto toCourseDetailsDto(Course course, Principal principal) {
+    public CourseDetailsDto toCourseDetailsDto(Course course) {
         CourseDetailsDto courseDto = new CourseDetailsDto();
+        courseDto.setId(course.getId());
         courseDto.setName(course.getName());
         courseDto.setUuid(course.getUuid());
-        courseDto.setStart_at(course.getStart_at());
-        courseDto.setEnd_at(course.getEnd_at());
-        courseDto.setOwner_id(course.getOwner().getId());
+        courseDto.setStartAt(course.getStartAt());
+        courseDto.setEndAt(course.getEndAt());
+        courseDto.setOwnerId(course.getOwner().getId());
+        courseDto.setCanvasCourseId(course.getCanvasCourseId());
         return courseDto;
     }
 
-    public List<CourseDetailsDto> toCourseDetailsDtoList(List<Course> courses, Principal principal) {
+    public List<CourseDetailsDto> toCourseDetailsDtoList(List<Course> courses) {
         List<CourseDetailsDto> courseDtos = new ArrayList<>();
         for (Course course : courses) {
-            courseDtos.add(toCourseDetailsDto(course, principal));
+            courseDtos.add(toCourseDetailsDto(course));
         }
         return courseDtos;
     }
