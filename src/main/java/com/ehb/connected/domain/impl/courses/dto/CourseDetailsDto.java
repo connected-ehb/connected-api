@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -16,5 +17,5 @@ public class CourseDetailsDto {
     LocalDateTime endAt;
     Long ownerId;
     Long canvasCourseId;
-    AssignmentDetailsDto[] assignments;
+    List<AssignmentDetailsDto> assignments;
 }
