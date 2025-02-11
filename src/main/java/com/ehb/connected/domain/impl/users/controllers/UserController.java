@@ -1,6 +1,8 @@
 package com.ehb.connected.domain.impl.users.controllers;
 
 
+import com.ehb.connected.domain.impl.tags.entities.Tag;
+import com.ehb.connected.domain.impl.tags.services.TagServiceImpl;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
@@ -22,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final TagServiceImpl tagService;
     private final UserDetailsMapper userDetailsMapper;
 
     @GetMapping
@@ -57,5 +61,4 @@ public class UserController {
         return userDetailsMapper.toUserDetailsDto(updatedUser);
 
     }
-
 }

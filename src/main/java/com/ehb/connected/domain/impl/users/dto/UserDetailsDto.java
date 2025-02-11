@@ -19,7 +19,7 @@ public class UserDetailsDto {
     private String linkedinUrl;
     private String fieldOfStudy;
     private String aboutMe;
-    private List<Tag> Tags;
+    private List<Tag> tags;
 
 
     //TODO: add createdProjects/ projects list ?
