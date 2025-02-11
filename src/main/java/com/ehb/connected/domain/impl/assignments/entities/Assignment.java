@@ -32,18 +32,19 @@ public class Assignment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-   private String title;
-   private LocalDateTime date;
+    private Long canvasAssignmentId;
+
+   private String name;
    private String description;
    private int defaultTeamSize;
 
    @ManyToOne
-    @JoinColumn(name = "course_id", nullable = true)
+    @JoinColumn(name = "course_id")
     private Course course;
 
-    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL)
     private List<Project> projects = new ArrayList<>();
 
-    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL)
     private List<Deadline> deadlines = new ArrayList<>();
 }
