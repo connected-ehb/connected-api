@@ -2,6 +2,8 @@ package com.ehb.connected.domain.impl.tags.entities;
 
 
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.users.entities.User;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,4 +28,20 @@ public class Tag {
     @ManyToMany(mappedBy = "tags")
     private List<Project> projects = new ArrayList<>();
 
+
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_tags",
+            joinColumns = @JoinColumn(name = "tag_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> users = new ArrayList<>();
+
+
+
+    @Override
+    public String toString() {
+        return "Tag{id=" + id + ", name='" + name + "'}";
+    }
 }
