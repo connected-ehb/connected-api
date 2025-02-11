@@ -44,10 +44,7 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exception -> exception
                         // Ensure API requests return 401 instead of redirecting
-                        .defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                new AntPathRequestMatcher("/api/**", "/auth/**")
-                        )
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
                 .addFilterBefore(tokenRefreshFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();

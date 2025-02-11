@@ -1,19 +1,26 @@
 package com.ehb.connected.domain.impl.courses.controllers;
 
+import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
+import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
+import com.ehb.connected.domain.impl.courses.mappers.CourseMapper;
+import com.ehb.connected.domain.impl.courses.services.CourseServiceImpl;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -21,7 +28,10 @@ import java.util.List;
 public class CourseController {
     private final UserServiceImpl userService;
     private final WebClient webClient;
+    private final CourseMapper courseMapper;
+    private final CourseServiceImpl courseService;
 
+    //TODO: is EnrollmentType necessary? && move logic to service
     @PostMapping("/canvas")
     public ResponseEntity<String> getCourses(Principal principal, @RequestParam String EnrollmentType) {
         User user = userService.getUserByEmail(principal.getName());
@@ -39,4 +49,33 @@ public class CourseController {
 
         return ResponseEntity.ok().body(jsonResponse);
     }
+
+    /**
+     * Create a course
+     * @param principal the security principal of the user creating the course
+     * @param course the courseCreateDto object containing the course information to be created
+     * @return a response entity with a message indicating the course was created
+     */
+    //TODO: use getAuthorities() to check if user has permission to create course
+    //@PreAuthorize("hasAuthority('course:create')")
+    @PostMapping("/")
+    public ResponseEntity<Map<String, String>> createCourse(Principal principal, @RequestBody CourseCreateDto course) {
+        User user = userService.getUserByEmail(principal.getName());
+
+        Course courseEntity = courseMapper.CourseCreateToEntity(course, principal);
+        courseService.createCourse(courseEntity);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Course created successfully");
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<List<CourseDetailsDto>> getCourses(Principal principal) {
+        List<Course> courses = courseService.getCourses(principal);
+        List<CourseDetailsDto> courseDetailsDtos = courseMapper.toCourseDetailsDtoList(courses, principal);
+        ResponseEntity<List<CourseDetailsDto>> response = ResponseEntity.ok().body(courseDetailsDtos);
+        return response;
+    }
+
 }
