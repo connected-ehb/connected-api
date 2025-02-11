@@ -7,11 +7,11 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class CourseCreateDto {
+public class CourseDetailsDto {
     String id;
     String uuid;
     String name;
     LocalDateTime start_at;
     LocalDateTime end_at;
-
+    Long owner_id;
 }
