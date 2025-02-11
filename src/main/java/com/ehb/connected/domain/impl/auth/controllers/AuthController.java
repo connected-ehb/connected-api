@@ -1,6 +1,6 @@
 package com.ehb.connected.domain.impl.auth.controllers;
 
-import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
+import com.ehb.connected.domain.impl.users.dto.authUserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.services.UserService;
@@ -20,9 +20,9 @@ public class AuthController {
     private final UserDetailsMapper userDetailsMapper;
 
     @GetMapping("/user")
-    public UserDetailsDto getCurrentUser(@AuthenticationPrincipal OAuth2User principal) {
+    public authUserDetailsDto getCurrentUser(@AuthenticationPrincipal OAuth2User principal) {
         User user = userService.getUserByEmail(principal.getAttribute("email"));
-        UserDetailsDto userDetailsDto = userDetailsMapper.toDtoWithPrincipal(user, principal);
-        return userDetailsDto;
+        authUserDetailsDto authUserDetailsDto = userDetailsMapper.toDtoWithPrincipal(user, principal);
+        return authUserDetailsDto;
     }
 }
