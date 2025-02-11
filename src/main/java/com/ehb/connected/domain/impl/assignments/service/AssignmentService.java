@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.assignments.service;
 
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
+
 import java.util.List;
 
 public interface AssignmentService {
@@ -10,4 +11,5 @@ public interface AssignmentService {
     Assignment updateAssignment(Assignment assignment);
     void deleteAssignment(Long id);
 
+    List<Assignment> getAllAssignmentsByCourse(Long courseId);
 }

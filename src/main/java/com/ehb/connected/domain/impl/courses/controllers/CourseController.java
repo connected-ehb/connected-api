@@ -1,5 +1,8 @@
 package com.ehb.connected.domain.impl.courses.controllers;
 
+import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
+import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
+import com.ehb.connected.domain.impl.assignments.service.AssignmentService;
 import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
@@ -9,12 +12,7 @@ import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.Principal;
@@ -30,6 +28,8 @@ public class CourseController {
     private final WebClient webClient;
     private final CourseMapper courseMapper;
     private final CourseServiceImpl courseService;
+    private final AssignmentService assignmentService;
+    private final AssignmentMapper assignmentMapper;
 
     //TODO: is EnrollmentType necessary? && move logic to service
     @PostMapping("/canvas")
@@ -76,6 +76,11 @@ public class CourseController {
         List<CourseDetailsDto> courseDetailsDtos = courseMapper.toCourseDetailsDtoList(courses);
         ResponseEntity<List<CourseDetailsDto>> response = ResponseEntity.ok().body(courseDetailsDtos);
         return response;
+    }
+
+    @GetMapping("/{courseId}/assignments")
+    public ResponseEntity<List<AssignmentDetailsDto>> getAllAssignmentsByCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(assignmentMapper.toAssignmentDetailsDtoList(assignmentService.getAllAssignmentsByCourse(courseId)));
     }
 
 }

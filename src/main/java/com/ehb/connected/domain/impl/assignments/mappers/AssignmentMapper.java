@@ -6,6 +6,9 @@ import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class AssignmentMapper {
@@ -28,5 +31,13 @@ public class AssignmentMapper {
         assignmentDetailsDto.setCanvasAssignmentId(assignment.getCanvasAssignmentId());
         assignmentDetailsDto.setCourseId(assignment.getCourse().getId());
         return assignmentDetailsDto;
+    }
+
+    public List<AssignmentDetailsDto> toAssignmentDetailsDtoList(List<Assignment> assignments) {
+        List<AssignmentDetailsDto> assignmentDtos = new ArrayList<>();
+        for (Assignment assignment : assignments) {
+            assignmentDtos.add(toAssignmentDetailsDto(assignment));
+        }
+        return assignmentDtos;
     }
 }

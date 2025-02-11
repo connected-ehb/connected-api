@@ -37,4 +37,9 @@ public class AssignmentServiceImpl implements AssignmentService {
     public void deleteAssignment(Long id) {
         assignmentRepository.deleteById(id);
     }
+
+    @Override
+    public List<Assignment> getAllAssignmentsByCourse(Long courseId) {
+        return assignmentRepository.findByCourseId(courseId);
+    }
 }
