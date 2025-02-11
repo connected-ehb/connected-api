@@ -16,11 +16,13 @@ import lombok.Setter;
 public class Application {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     private String motivationMd;
 
+    private ApplicationStatusEnum status;
+
     @ManyToOne
-    @JoinColumn(name = "project_id", nullable = true)
+    @JoinColumn(name = "project_id")
     private Project project;
 }

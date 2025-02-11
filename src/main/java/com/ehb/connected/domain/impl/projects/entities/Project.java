@@ -5,6 +5,7 @@ import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,7 +36,8 @@ public class Project {
     private String title;
     private String description;
     private ProjectStatusEnum status;
-    private String githubUrl;
+    private String repositoryUrl;
+    private String boardUrl;
     private String backgroundImage;
 
     @ManyToOne
@@ -50,8 +52,8 @@ public class Project {
     )
     private List<Tag> tags = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch= FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User createdBy;
 
 
