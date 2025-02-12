@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.deadlines.entities;
 
 
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
+import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,7 +29,7 @@ public class Deadline {
     private String title;
     private LocalDateTime dateTime;
     private String description;
-    private String restriction;
+    private DeadlineRestriction restriction;
 
     @ManyToOne
     @JoinColumn(name = "assignment_id", nullable = false)
