@@ -1,5 +1,6 @@
 package com.ehb.connected.domain.impl.users.entities;
 
+import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import jakarta.persistence.*;
@@ -38,6 +39,12 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(mappedBy = "applicant", cascade = CascadeType.ALL)
+    private List<Application> applications = new ArrayList<>();
+
+
+
 
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<Project> createdProjects = new ArrayList<>();
