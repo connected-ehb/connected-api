@@ -44,5 +44,10 @@ public class UserServiceImpl implements UserService{
         return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Override
+    public User getUserByCanvasUserId(Long canvasUserId) {
+        return userRepository.findByCanvasUserId(canvasUserId).orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
 
 }

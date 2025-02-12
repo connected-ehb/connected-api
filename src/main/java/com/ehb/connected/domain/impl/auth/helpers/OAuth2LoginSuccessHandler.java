@@ -44,14 +44,17 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             // Retrieve user attributes from the authentication principal
             var attributes = oauth2Token.getPrincipal().getAttributes();
             String firstName = (String) attributes.get("first_name");
+            String lastName = (String) attributes.get("last_name");
             String email = (String) attributes.get("email");
             Role role = email.endsWith("@ehb.be") ? Role.TEACHER : Role.STUDENT;
+            Long canvasUserId = ((Integer) attributes.get("id")).longValue();
 
             // Persist or update your user record in your own database.
             User user = userRepository.findByEmail(email)
                     .orElse(new User());
             user.setFirstName(firstName);
-            user.setLastName((String) attributes.get("last_name"));
+            user.setLastName(lastName);
+            user.setCanvasUserId(canvasUserId);
             user.setEmail(email);
             user.setRole(role);
             user.setAccessToken(accessToken);
@@ -59,7 +62,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             userRepository.save(user);
         }
 
-        // Redirect to your post-login page
         response.sendRedirect("http://localhost:4200");
     }
 }

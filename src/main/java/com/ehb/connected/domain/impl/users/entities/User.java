@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.users.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import jakarta.persistence.*;
@@ -23,6 +24,7 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long canvasUserId;
 
     private String firstName;
     private String lastName;

@@ -4,11 +4,15 @@ package com.ehb.connected.domain.impl.assignments.entities;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.annotation.Nullable;
+import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.JoinColumn;
@@ -34,11 +38,13 @@ public class Assignment {
 
     private Long canvasAssignmentId;
 
-   private String name;
-   private String description;
-   private int defaultTeamSize;
+    private String name;
 
-   @ManyToOne
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    private int defaultTeamSize;
+
+    @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
 

@@ -17,9 +17,16 @@ public class CourseServiceImpl implements CourseService {
     private final UserServiceImpl userService;
 
     @Override
-    public List<Course> getCourses(Principal principal) {
+    public List<Course> getCoursesByOwner(Principal principal) {
         return courseRepository.findByOwner(userService.getUserByEmail(principal.getName()));
     }
+
+    @Override
+    public List<Course> getCoursesByEnrollment(Principal principal) {
+        return courseRepository.findByEnrollmentsCanvasUserId(userService.getUserByEmail(principal.getName()).getCanvasUserId());
+    }
+
+
 
     @Override
     public void createCourse(Course course) {
