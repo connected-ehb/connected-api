@@ -8,7 +8,6 @@ import com.ehb.connected.domain.impl.feedbacks.service.FeedbackService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
-import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +35,7 @@ public class ProjectController {
     }
 
     @PostMapping("/create")
-    public ProjectDetailsDto createProject(@RequestBody ProjectCreateDto project){
+    public ProjectDetailsDto createProject(Principal principal, @RequestBody ProjectCreateDto project){
         return projectService.createProject(project);
     }
 
