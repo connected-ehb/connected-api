@@ -33,8 +33,8 @@ public class ProjectServiceImpl implements ProjectService {
     private final DeadlineService deadlineService;
 
     @Override
-    public List<ProjectDetailsDto> getAllProjects() {
-        return projectMapper.toDetailsDtoList(projectRepository.findAll());
+    public List<ProjectDetailsDto> getAllProjects(Long assignmentId) {
+        return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentId(assignmentId));
     }
 
     @Override
