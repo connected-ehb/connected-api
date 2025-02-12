@@ -5,10 +5,12 @@ import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.feedbacks.entities.FeedbackDto;
 import com.ehb.connected.domain.impl.feedbacks.service.FeedbackService;
-import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
+import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
+import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,30 +22,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProjectController {
 
-    @Autowired
     private final ProjectService projectService;
-
-    @Autowired
     private final FeedbackService feedbackService;
 
     @GetMapping
-    public List<Project> getAllProjects(){
+    public List<ProjectDetailsDto> getAllProjects(){
         return projectService.getAllProjects();
     }
 
     @GetMapping("/{id}")
-    public Project getProjectById(@PathVariable Long id){
+    public ProjectDetailsDto getProjectById(@PathVariable Long id){
         return projectService.getProjectById(id);
     }
 
     @PostMapping("/create")
-    public Project createProject(@RequestBody Project project){
+    public ProjectDetailsDto createProject(@RequestBody ProjectCreateDto project){
         return projectService.createProject(project);
     }
 
     @PutMapping("/update/{id}")
-    public Project updateProject(@PathVariable Long id, @RequestBody Project project){
-        return projectService.updateProject(id, project);
+    public ProjectDetailsDto updateProject(Principal principal, @PathVariable Long id, @RequestBody ProjectUpdateDto project){
+        return projectService.updateProject(principal, id, project);
     }
 
     @DeleteMapping("/delete/{id}")
