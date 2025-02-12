@@ -44,26 +44,18 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectDetailsDto createProject(ProjectCreateDto project) {
-        // Fetch all deadlines for the assignment with the restriction PROJECT_CREATION
-        List<Deadline> deadlines = deadlineService.getAllDeadlinesByAssignmentIdAndRestrictions(project.getAssignmentId(), DeadlineRestriction.PROJECT_CREATION);
+        // Fetch deadline for the assignment with the restriction PROJECT_CREATION
+        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignmentId(), DeadlineRestriction.PROJECT_CREATION);
 
-        // Delete expired deadlines
-        deadlines.stream()
-                .filter(deadline -> deadline.getDateTime().isBefore(LocalDateTime.now()))
-                .forEach(deadline -> deadlineService.deleteDeadline(deadline.getId()));
-
-        // Now check if any valid deadlines remain
-        if (deadlines.isEmpty()) {
-            throw new RuntimeException("No valid deadline available for project creation.");
+        // If a deadline exists and has passed, throw an error
+        if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Project creation is no longer allowed. The deadline has passed.");
         }
 
-        // Proceed with project creation since a valid deadline exists
+        // Proceed with project creation since there is no deadline or the deadline is valid
         Project newProject = projectMapper.toEntity(project);
         return projectMapper.toDetailsDto(projectRepository.save(newProject));
     }
-
-
-
 
     @Override
     public ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project) {
