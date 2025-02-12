@@ -43,4 +43,10 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new EntityNotFoundException("Course does not exist"));
     }
+
+    @Override
+    public Course getCourseByCanvasCourseId(Long canvasCourseId) {
+        return courseRepository.findByCanvasCourseId(canvasCourseId)
+                .orElseThrow(() -> new EntityNotFoundException("Course does not exist"));
+    }
 }
