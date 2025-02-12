@@ -24,26 +24,25 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final FeedbackService feedbackService;
-    private final ProjectMapper mapper;
 
     @GetMapping
     public List<ProjectDetailsDto> getAllProjects(){
-        return mapper.toDetailsDtoList(projectService.getAllProjects());
+        return projectService.getAllProjects();
     }
 
     @GetMapping("/{id}")
     public ProjectDetailsDto getProjectById(@PathVariable Long id){
-        return mapper.toDetailsDto(projectService.getProjectById(id));
+        return projectService.getProjectById(id);
     }
 
     @PostMapping("/create")
     public ProjectDetailsDto createProject(@RequestBody ProjectCreateDto project){
-        return mapper.toDetailsDto(projectService.createProject(project));
+        return projectService.createProject(project);
     }
 
     @PutMapping("/update/{id}")
     public ProjectDetailsDto updateProject(Principal principal, @PathVariable Long id, @RequestBody ProjectUpdateDto project){
-        return mapper.toDetailsDto(projectService.updateProject(principal, id, project));
+        return projectService.updateProject(principal, id, project);
     }
 
     @DeleteMapping("/delete/{id}")
