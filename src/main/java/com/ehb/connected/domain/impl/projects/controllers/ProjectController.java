@@ -29,8 +29,8 @@ public class ProjectController {
     private final ApplicationService applicationService;
 
     @GetMapping
-    public List<ProjectDetailsDto> getAllProjects(){
-        return projectService.getAllProjects();
+    public List<ProjectDetailsDto> getAllProjects(@RequestHeader Long assignmentId){
+        return projectService.getAllProjects(assignmentId);
     }
 
     @GetMapping("/{id}")
