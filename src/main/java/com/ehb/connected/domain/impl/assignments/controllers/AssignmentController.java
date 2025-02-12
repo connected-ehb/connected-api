@@ -37,6 +37,7 @@ public class AssignmentController {
     private final UserService userService;
     private final WebClient webClient;
     private final ApplicationServiceImpl applicationService;
+    private final ApplicationMapper applicationMapper;
 
 
     // TODO move logic to service layer
@@ -89,10 +90,12 @@ public class AssignmentController {
         assignmentService.deleteAssignment(id);
     }
 
+
+    //TODO mapping should be moved to service layer
     @GetMapping("/{id}/applications")
     public ResponseEntity<List<ApplicationDto>> getAllApplications(@PathVariable Long id){
         List<ApplicationDto> applications = applicationService.findAllApplications(id).stream()
-                .map(ApplicationMapper::applicationToDto)
+                .map(applicationMapper::toDto)
                 .toList();
 
         return ResponseEntity.ok(applications);
