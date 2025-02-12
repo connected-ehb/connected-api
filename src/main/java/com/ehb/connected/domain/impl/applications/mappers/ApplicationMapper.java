@@ -18,7 +18,8 @@ public class ApplicationMapper {
                 application.getId(),
                 application.getMotivationMd(),
                 application.getStatus(),
-                application.getProject()
+                application.getProject(),
+                application.getApplicant()
         );
     }
 }
