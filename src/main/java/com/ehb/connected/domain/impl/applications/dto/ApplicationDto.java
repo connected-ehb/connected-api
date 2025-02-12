@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.applications.dto;
 
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,5 +16,5 @@ public class ApplicationDto {
     private String motivationMd;
     private ApplicationStatusEnum status;
     private Project project;
-    private User applicant;
+    private UserDetailsDto applicant;
 }

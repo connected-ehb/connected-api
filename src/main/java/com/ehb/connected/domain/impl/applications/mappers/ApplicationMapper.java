@@ -2,12 +2,16 @@ package com.ehb.connected.domain.impl.applications.mappers;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ApplicationMapper {
+
+    private static UserDetailsMapper userMapper;
+
     private static final Logger logger = LoggerFactory.getLogger(ApplicationMapper.class);
     public static ApplicationDto applicationToDto(Application application){
         if (application == null){
@@ -19,7 +23,7 @@ public class ApplicationMapper {
                 application.getMotivationMd(),
                 application.getStatus(),
                 application.getProject(),
-                application.getApplicant()
+                userMapper.toUserDetailsDto(application.getApplicant())
         );
     }
 }
