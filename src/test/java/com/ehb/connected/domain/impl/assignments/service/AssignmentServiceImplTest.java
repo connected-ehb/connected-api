@@ -49,7 +49,7 @@ public class AssignmentServiceImplTest {
     public void testGetAssignmentById() {
         Assignment assignment = new Assignment();
         assignment.setId(1L);
-        assignment.setTitle("Assignment 1");
+        assignment.setName("Assignment 1");
         assignment.setDescription("Description 1");
 
         when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
@@ -57,7 +57,7 @@ public class AssignmentServiceImplTest {
         Assignment result = assignmentServiceImpl.getAssignmentById(1L);
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals("Assignment 1", result.getTitle());
+        assertEquals("Assignment 1", result.getName());
         assertEquals("Description 1", result.getDescription());
         verify(assignmentRepository, times(1)).findById(1L);
     }
@@ -65,13 +65,13 @@ public class AssignmentServiceImplTest {
     @Test
     public void testCreateAssignment() {
         Assignment assignment = new Assignment();
-        assignment.setTitle("New Assignment");
+        assignment.setName("New Assignment");
 
         when(assignmentRepository.save(assignment)).thenReturn(assignment);
 
         Assignment result = assignmentServiceImpl.createAssignment(assignment);
         assertNotNull(result);
-        assertEquals("New Assignment", result.getTitle());
+        assertEquals("New Assignment", result.getName());
         verify(assignmentRepository, times(1)).save(assignment);
     }
 
@@ -79,13 +79,13 @@ public class AssignmentServiceImplTest {
     public void testUpdateAssignment() {
         Assignment assignment = new Assignment();
         assignment.setId(1L);
-        assignment.setTitle("Updated Assignment");
+        assignment.setName("Updated Assignment");
 
         when(assignmentRepository.save(assignment)).thenReturn(assignment);
 
         Assignment result = assignmentServiceImpl.updateAssignment(assignment);
         assertNotNull(result);
-        assertEquals("Updated Assignment", result.getTitle());
+        assertEquals("Updated Assignment", result.getName());
         verify(assignmentRepository, times(1)).save(assignment);
     }
 
