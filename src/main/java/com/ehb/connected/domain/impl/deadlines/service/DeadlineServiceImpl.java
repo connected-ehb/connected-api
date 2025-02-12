@@ -19,8 +19,8 @@ public class DeadlineServiceImpl  implements DeadlineService {
     }
 
     @Override
-    public List<Deadline> getAllDeadlinesByAssignmentIdAndRestrictions(Long assignmentId, DeadlineRestriction restriction) {
-        return deadlineRepository.findAllByAssignmentIdAndRestriction(assignmentId, restriction);
+    public Deadline getDeadlineByAssignmentIdAndRestrictions(Long assignmentId, DeadlineRestriction restriction) {
+        return deadlineRepository.findTopByAssignmentIdAndRestrictionOrderByDateTimeDesc(assignmentId, restriction);
     }
 
     @Override
