@@ -1,5 +1,6 @@
 package com.ehb.connected.domain.impl.projects.dto;
 
+import com.ehb.connected.domain.impl.tags.entities.Tag;
 import lombok.Data;
 
 import java.util.List;
@@ -15,5 +16,5 @@ public class ProjectCreateDto {
     private String boardUrl;
     private String backgroundImage;
 
-    private List<Long> tagIds;
+    private List<Tag> tags;
 }
