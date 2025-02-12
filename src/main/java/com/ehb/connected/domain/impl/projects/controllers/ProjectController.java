@@ -1,7 +1,10 @@
 package com.ehb.connected.domain.impl.projects.controllers;
 
 
+import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.feedbacks.entities.FeedbackDto;
 import com.ehb.connected.domain.impl.feedbacks.service.FeedbackService;
@@ -23,6 +26,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final FeedbackService feedbackService;
+    private final ApplicationService applicationService;
 
     @GetMapping
     public List<ProjectDetailsDto> getAllProjects(){
@@ -96,5 +100,10 @@ public class ProjectController {
     @GetMapping("/{id}/feedback")
     public ResponseEntity<List<Feedback>> getFeedbacks(Principal principal, @PathVariable Long id) {
         return ResponseEntity.ok(feedbackService.getAllFeedbackForProject(principal, id));
+    }
+
+    @PostMapping("/{id}/apply")
+    public ResponseEntity<ApplicationDto> applyForProject(Principal principal, @PathVariable Long id, @RequestBody ApplicationCreateDto application) {
+        return ResponseEntity.ok(applicationService.createApplication(principal, id, application));
     }
 }

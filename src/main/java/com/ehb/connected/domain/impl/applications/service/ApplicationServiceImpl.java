@@ -1,19 +1,36 @@
 package com.ehb.connected.domain.impl.applications.service;
 
+import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
+import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
+import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
+import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ApplicationServiceImpl implements ApplicationService {
 
-    private final ApplicationRepository applicationRepository;
+    private final UserServiceImpl userService;
 
-    public ApplicationServiceImpl(ApplicationRepository applicationRepository) {
-        this.applicationRepository = applicationRepository;
-    }
+    private final ApplicationRepository applicationRepository;
+    private final ProjectRepository projectRepository;
+    private final DeadlineService deadlineService;
+    private final ApplicationMapper applicationMapper;
 
     @Override
     public Application getApplicationById(Long id) {
@@ -21,8 +38,23 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Application createApplication(Application application) {
-        return applicationRepository.save(application);
+    public ApplicationDto createApplication(Principal principal, Long projectId, ApplicationCreateDto application) {
+        Project project = projectRepository.findById(projectId).orElseThrow(() -> new EntityNotFoundException("Project not found"));
+        User currentUser = userService.getUserByEmail(principal.getName());
+        if(project.getCreatedBy().equals(currentUser)) {
+            throw new RuntimeException("User cannot apply to own project");
+        }
+        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignment().getId(), DeadlineRestriction.APPLICATION_SUBMISSION);
+        if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Project creation is no longer allowed. The deadline has passed.");
+        }
+        Application newApplication = new Application();
+        newApplication.setStatus(ApplicationStatusEnum.PENDING);
+        newApplication.setMotivationMd(application.getMotivationMd());
+        newApplication.setApplicant(currentUser);
+        newApplication.setProject(project);
+        applicationRepository.save(newApplication);
+        return applicationMapper.toDto(newApplication);
     }
 
     @Override

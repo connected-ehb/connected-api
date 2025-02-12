@@ -3,6 +3,9 @@ package com.ehb.connected.domain.impl.projects.service;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
+import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
+import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,6 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ApplicationRepository applicationRepository;
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
+    private final DeadlineService deadlineService;
 
     @Override
     public List<ProjectDetailsDto> getAllProjects() {
@@ -39,6 +44,15 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectDetailsDto createProject(ProjectCreateDto project) {
+        // Fetch deadline for the assignment with the restriction PROJECT_CREATION
+        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignmentId(), DeadlineRestriction.PROJECT_CREATION);
+
+        // If a deadline exists and has passed, throw an error
+        if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Project creation is no longer allowed. The deadline has passed.");
+        }
+
+        // Proceed with project creation since there is no deadline or the deadline is valid
         Project newProject = projectMapper.toEntity(project);
         return projectMapper.toDetailsDto(projectRepository.save(newProject));
     }

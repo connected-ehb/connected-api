@@ -7,7 +7,8 @@ import java.security.Principal;
 import java.util.List;
 
 public interface CourseService {
-    List<Course> getCourses(Principal principal);
+    List<Course> getCoursesByOwner(Principal principal);
+    List<Course> getCoursesByEnrollment(Principal principal);
     void createCourse(Course course);
 
     Course getCourseById(Long courseId);
