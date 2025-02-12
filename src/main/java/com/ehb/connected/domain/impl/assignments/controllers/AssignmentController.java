@@ -14,13 +14,17 @@ import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +47,6 @@ public class AssignmentController {
     // TODO move logic to service layer
     @PostMapping("/canvas/{courseId}")
     public ResponseEntity<String> getAssignmentsFromCanvas(@PathVariable Long courseId, Principal principal) {
-
         Course course = courseService.getCourseById(courseId);
         Long canvasCourseId = course.getCanvasCourseId();
         User user = userService.getUserByEmail(principal.getName());
@@ -58,7 +61,26 @@ public class AssignmentController {
                 .bodyToMono(String.class)
                 .block();
 
-        return ResponseEntity.ok().body(jsonResponse);
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> assignments = objectMapper.readValue(jsonResponse, new TypeReference<>() {});
+            List<Map<String, Object>> newAssignments = new ArrayList<>();
+
+            for (Map<String, Object> assignment : assignments) {
+                Long canvasAssignmentId = Long.parseLong(assignment.get("id").toString());
+                try {
+                    assignmentService.getAssignmentByCanvasAssignmentId(canvasAssignmentId);
+                } catch (EntityNotFoundException e) {
+                    newAssignments.add(assignment);
+                }
+            }
+
+            String filteredAssignmentsJson = objectMapper.writeValueAsString(newAssignments);
+            return ResponseEntity.ok().body(filteredAssignmentsJson);
+        } catch (Exception e) {
+            System.out.println("Error parsing assignments: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error parsing assignments");
+        }
     }
 
     // TODO move logic to service layer

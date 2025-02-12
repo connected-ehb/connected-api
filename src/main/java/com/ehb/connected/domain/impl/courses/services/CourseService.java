@@ -12,4 +12,6 @@ public interface CourseService {
     void createCourse(Course course);
 
     Course getCourseById(Long courseId);
+
+    Course getCourseByCanvasCourseId(Long canvasCourseId);
 }

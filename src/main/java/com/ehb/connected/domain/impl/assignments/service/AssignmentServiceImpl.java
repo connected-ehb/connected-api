@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.assignments.service;
 
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,5 +42,10 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Override
     public List<Assignment> getAllAssignmentsByCourse(Long courseId) {
         return assignmentRepository.findByCourseId(courseId);
+    }
+
+    @Override
+    public Assignment getAssignmentByCanvasAssignmentId(Long canvasAssignmentId) {
+        return assignmentRepository.findByCanvasAssignmentId(canvasAssignmentId).orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
     }
 }

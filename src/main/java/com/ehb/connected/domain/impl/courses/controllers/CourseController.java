@@ -7,19 +7,21 @@ import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.mappers.CourseMapper;
-import com.ehb.connected.domain.impl.courses.services.CourseServiceImpl;
+import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.domain.impl.enrollments.services.EnrollmentService;
 import com.ehb.connected.domain.impl.users.entities.User;
-import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
+import com.ehb.connected.domain.impl.users.services.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +30,10 @@ import java.util.Map;
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
 public class CourseController {
-    private final UserServiceImpl userService;
+    private final UserService userService;
     private final WebClient webClient;
     private final CourseMapper courseMapper;
-    private final CourseServiceImpl courseService;
+    private final CourseService courseService;
     private final AssignmentService assignmentService;
     private final AssignmentMapper assignmentMapper;
     private final EnrollmentService enrollmentService;
@@ -52,7 +54,27 @@ public class CourseController {
                 .bodyToMono(String.class)
                 .block();
 
-        return ResponseEntity.ok().body(jsonResponse);
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> courses = objectMapper.readValue(jsonResponse, new TypeReference<>() {
+            });
+            List<Map<String, Object>> newCourses = new ArrayList<>();
+
+            for (Map<String, Object> course : courses) {
+                Long canvasCourseId = Long.parseLong(course.get("id").toString());
+                try {
+                    courseService.getCourseByCanvasCourseId(canvasCourseId);
+                } catch (EntityNotFoundException e) {
+                    newCourses.add(course);
+                }
+            }
+
+            String filteredCoursesJson = objectMapper.writeValueAsString(newCourses);
+            return ResponseEntity.ok().body(filteredCoursesJson);
+        } catch (Exception e) {
+            System.out.println("Error parsing courses: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error parsing courses");
+        }
     }
 
     /**
