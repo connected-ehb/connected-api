@@ -12,4 +12,6 @@ public interface AssignmentService {
     void deleteAssignment(Long id);
 
     List<Assignment> getAllAssignmentsByCourse(Long courseId);
+
+    Assignment getAssignmentByCanvasAssignmentId(Long canvasAssignmentId);
 }
