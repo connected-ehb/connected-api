@@ -3,6 +3,9 @@ package com.ehb.connected.domain.impl.projects.service;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
+import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
+import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,6 +30,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ApplicationRepository applicationRepository;
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
+    private final DeadlineService deadlineService;
 
     @Override
     public List<ProjectDetailsDto> getAllProjects() {
@@ -39,9 +44,26 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectDetailsDto createProject(ProjectCreateDto project) {
+        // Fetch all deadlines for the assignment with the restriction PROJECT_CREATION
+        List<Deadline> deadlines = deadlineService.getAllDeadlinesByAssignmentIdAndRestrictions(project.getAssignmentId(), DeadlineRestriction.PROJECT_CREATION);
+
+        // Delete expired deadlines
+        deadlines.stream()
+                .filter(deadline -> deadline.getDateTime().isBefore(LocalDateTime.now()))
+                .forEach(deadline -> deadlineService.deleteDeadline(deadline.getId()));
+
+        // Now check if any valid deadlines remain
+        if (deadlines.isEmpty()) {
+            throw new RuntimeException("No valid deadline available for project creation.");
+        }
+
+        // Proceed with project creation since a valid deadline exists
         Project newProject = projectMapper.toEntity(project);
         return projectMapper.toDetailsDto(projectRepository.save(newProject));
     }
+
+
+
 
     @Override
     public ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project) {
