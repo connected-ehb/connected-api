@@ -9,4 +9,6 @@ import java.util.List;
 public interface CourseService {
     List<Course> getCourses(Principal principal);
     void createCourse(Course course);
+
+    Course getCourseById(Long courseId);
 }
