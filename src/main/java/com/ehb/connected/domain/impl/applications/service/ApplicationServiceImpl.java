@@ -11,6 +11,7 @@ import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public ApplicationDto createApplication(Principal principal, Long projectId, ApplicationCreateDto application) {
         Project project = projectRepository.findById(projectId).orElseThrow(() -> new EntityNotFoundException("Project not found"));
+        User currentUser = userService.getUserByEmail(principal.getName());
+        if(project.getCreatedBy().equals(currentUser)) {
+            throw new RuntimeException("User cannot apply to own project");
+        }
         Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignment().getId(), DeadlineRestriction.APPLICATION_SUBMISSION);
         if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Project creation is no longer allowed. The deadline has passed.");
@@ -46,7 +51,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application newApplication = new Application();
         newApplication.setStatus(ApplicationStatusEnum.PENDING);
         newApplication.setMotivationMd(application.getMotivationMd());
-        newApplication.setApplicant(userService.getUserByEmail(principal.getName()));
+        newApplication.setApplicant(currentUser);
         newApplication.setProject(project);
         applicationRepository.save(newApplication);
         return applicationMapper.toDto(newApplication);
