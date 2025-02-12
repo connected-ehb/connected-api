@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface DeadlineService {
     List<Deadline> getAllDeadlinesByAssignmentId(Long assignmentId);
-    List<Deadline> getAllDeadlinesByAssignmentIdAndRestrictions(Long assignmentId, DeadlineRestriction restriction);
+    Deadline getDeadlineByAssignmentIdAndRestrictions(Long assignmentId, DeadlineRestriction restriction);
     Deadline getDeadlineById(Long id);
     Deadline createDeadline(Deadline deadline);
     Deadline updateDeadline(Deadline deadline);
