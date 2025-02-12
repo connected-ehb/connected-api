@@ -1,18 +1,26 @@
 package com.ehb.connected.domain.impl.deadlines.service;
 
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.repositories.DeadlineRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 @Service
-public class DeadlineServiceImpl  implements DeadlineService{
-    @Autowired
-    private DeadlineRepository deadlineRepository;
+@RequiredArgsConstructor
+public class DeadlineServiceImpl  implements DeadlineService {
+
+    private final DeadlineRepository deadlineRepository;
+
     @Override
-    public List<Deadline> getAllDeadlines() {
-        return deadlineRepository.findAll();
+    public List<Deadline> getAllDeadlinesByAssignmentId(Long assignmentId) {
+        return deadlineRepository.findAllByAssignmentId(assignmentId);
+    }
+
+    @Override
+    public List<Deadline> getAllDeadlinesByAssignmentIdAndRestrictions(Long assignmentId, DeadlineRestriction restriction) {
+        return deadlineRepository.findAllByAssignmentIdAndRestriction(assignmentId, restriction);
     }
 
     @Override
