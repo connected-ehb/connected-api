@@ -3,13 +3,15 @@ package com.ehb.connected.domain.impl.projects.service;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
-import com.ehb.connected.domain.impl.feedbacks.repositories.FeedbackRepository;
+import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
+import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
+import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -19,38 +21,41 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
-    @Autowired
+
     private final ProjectRepository projectRepository;
-
-    @Autowired
     private final ApplicationRepository applicationRepository;
-
-    @Autowired
     private final ProjectUserService projectUserService;
+    private final ProjectMapper projectMapper;
 
     @Override
-    public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+    public List<ProjectDetailsDto> getAllProjects() {
+        return projectMapper.toDetailsDtoList(projectRepository.findAll());
     }
 
     @Override
-    public Project getProjectById(Long id) {
-        return projectRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Project not found"));
+    public ProjectDetailsDto getProjectById(Long id) {
+        return projectMapper.toDetailsDto(projectRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Project not found")));
     }
 
     @Override
-    public Project createProject(Project project) {
-        return projectRepository.save(project);
+    public ProjectDetailsDto createProject(ProjectCreateDto project) {
+        Project newProject = projectMapper.toEntity(project);
+        return projectMapper.toDetailsDto(projectRepository.save(newProject));
     }
 
     @Override
-    public Project updateProject(Long id, Project project) {
+    public ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project) {
         Project existingProject = projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
         // If the project is approved, return as it cannot be updated
         if (existingProject.getStatus() == ProjectStatusEnum.APPROVED) {
-            return existingProject;
+            return projectMapper.toDetailsDto(existingProject);
+        }
+
+        // Check if user is the owner of the project
+        if (!projectUserService.isUserOwnerOfProject(principal, id)) {
+            throw new RuntimeException("User is not the owner of the project");
         }
 
         existingProject.setTitle(project.getTitle());
@@ -58,7 +63,7 @@ public class ProjectServiceImpl implements ProjectService {
         existingProject.setRepositoryUrl(project.getRepositoryUrl());
         existingProject.setBackgroundImage(project.getBackgroundImage());
 
-        return projectRepository.save(existingProject);
+        return projectMapper.toDetailsDto(projectRepository.save(existingProject));
     }
 
 

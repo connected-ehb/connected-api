@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.applications.entities;
 
 
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,4 +26,10 @@ public class Application {
     @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User applicant;
+
+
 }
