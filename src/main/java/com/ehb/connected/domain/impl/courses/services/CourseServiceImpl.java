@@ -3,6 +3,7 @@ package com.ehb.connected.domain.impl.courses.services;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,5 +29,11 @@ public class CourseServiceImpl implements CourseService {
             System.out.println("Error while creating course: " + e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public Course getCourseById(Long courseId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("Course does not exist"));
     }
 }
