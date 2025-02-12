@@ -3,8 +3,7 @@ package com.ehb.connected.domain.impl.deadlines.controllers;
 
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
-import com.ehb.connected.domain.impl.projects.service.ProjectService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -18,13 +17,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/deadlines")
+@RequiredArgsConstructor
 public class DeadlineController {
-    @Autowired
-    private DeadlineService deadlineService;
 
-    @GetMapping()
-    public List<Deadline> getAllDeadlines(){
-        return deadlineService.getAllDeadlines();
+    private final DeadlineService deadlineService;
+
+    @GetMapping("/{assignmentId}")
+    public List<Deadline> getAllDeadlines(@PathVariable Long assignmentId){
+        return deadlineService.getAllDeadlinesByAssignmentId(assignmentId);
     }
 
     @GetMapping("/{id}")
