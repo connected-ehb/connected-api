@@ -11,6 +11,6 @@ import java.util.List;
 public interface DeadlineRepository extends JpaRepository<Deadline, Long> {
     List<Deadline> findAllByAssignmentId(Long assignmentId);
 
-    List<Deadline> findAllByAssignmentIdAndRestriction(Long assignmentId, DeadlineRestriction restriction);
+    Deadline findTopByAssignmentIdAndRestrictionOrderByDateTimeDesc(Long assignmentId, DeadlineRestriction restriction);
 
 }
