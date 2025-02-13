@@ -1,48 +1,31 @@
 package com.ehb.connected.domain.impl.tags.services;
 
-import com.ehb.connected.domain.impl.tags.entities.Tag;
+import com.ehb.connected.domain.impl.tags.dto.TagDto;
+import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.tags.repositories.TagRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TagServiceImpl implements TagService {
+
     private final TagRepository tagRepository;
+    private final TagMapper tagMapper;
 
-    public List<Tag> getAllTags() {
-        return null;
+    @Override
+    public List<TagDto> searchTagsByQuery(String query) {
+        return tagRepository.findByNameContainingIgnoreCase(query).stream().map(tagMapper::toDto).toList();
     }
 
     @Override
-    public List<Tag> searchTags(String query) {
-        log.warn("Searching for tags with query: {}", query);
-        log.warn("found tags: {}", tagRepository.findByNameContainingIgnoreCase(query));
-        return tagRepository.findByNameContainingIgnoreCase(query);
-
-    }
-
-    @Override
-    public Tag createTag(Tag tag) {
-        return null;
-    }
-
-    @Override
-    public Tag updateTag(Tag tag) {
-        return null;
-    }
-
-    @Override
-    public void deleteTag(Long id) {
-
-    }
-
-    @Override
-    public Tag getTagById(Long id) {
-        return null;
+    public TagDto createTag(TagDto tag) {
+        // check if name already exists
+        if (tagRepository.existsByName(tag.getName())) {
+            throw new IllegalArgumentException("Tag with name " + tag.getName() + " already exists");
+        }
+        return tagMapper.toDto(tagRepository.save(tagMapper.toEntity(tag)));
     }
 }
