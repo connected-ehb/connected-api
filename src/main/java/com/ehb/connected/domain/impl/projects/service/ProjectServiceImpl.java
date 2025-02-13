@@ -3,6 +3,8 @@ package com.ehb.connected.domain.impl.projects.service;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
+import com.ehb.connected.domain.impl.assignments.entities.Assignment;
+import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
@@ -31,6 +33,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
     private final DeadlineService deadlineService;
+    private final AssignmentRepository assignmentRepository;
 
     @Override
     public List<ProjectDetailsDto> getAllProjects(Long assignmentId) {
@@ -43,9 +46,12 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto createProject(ProjectCreateDto project) {
+    public ProjectDetailsDto createProject(Long assignmentId, ProjectCreateDto project) {
+
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
         // Fetch deadline for the assignment with the restriction PROJECT_CREATION
-        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignmentId(), DeadlineRestriction.PROJECT_CREATION);
+        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
 
         // If a deadline exists and has passed, throw an error
         if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
@@ -54,6 +60,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         // Proceed with project creation since there is no deadline or the deadline is valid
         Project newProject = projectMapper.toEntity(project);
+        newProject.setAssignment(assignment);
         return projectMapper.toDetailsDto(projectRepository.save(newProject));
     }
 

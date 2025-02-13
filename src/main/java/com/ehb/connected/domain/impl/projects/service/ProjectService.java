@@ -11,7 +11,7 @@ import java.util.List;
 public interface ProjectService {
     List<ProjectDetailsDto> getAllProjects(Long assignmentId);
     ProjectDetailsDto getProjectById(Long id);
-    ProjectDetailsDto createProject(ProjectCreateDto project);
+    ProjectDetailsDto createProject(Long assignmentId, ProjectCreateDto project);
     ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project);
     void deleteProject(Long id);
 
