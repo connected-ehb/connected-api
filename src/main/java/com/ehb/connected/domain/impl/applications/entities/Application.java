@@ -19,6 +19,7 @@ public class Application {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "TEXT")
     private String motivationMd;
 
     private ApplicationStatusEnum status;
