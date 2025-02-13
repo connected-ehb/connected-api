@@ -106,4 +106,9 @@ public class ProjectController {
     public ResponseEntity<ApplicationDto> applyForProject(Principal principal, @PathVariable Long id, @RequestBody ApplicationCreateDto application) {
         return ResponseEntity.ok(applicationService.createApplication(principal, id, application));
     }
+
+    @DeleteMapping("/{id}/members/{memberId}")
+    public void removeMember(Principal principal, @PathVariable Long id, @PathVariable Long memberId) {
+        projectService.removeMember(principal, id, memberId);
+    }
 }

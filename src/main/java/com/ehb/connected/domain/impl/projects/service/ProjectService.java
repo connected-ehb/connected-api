@@ -22,4 +22,6 @@ public interface ProjectService {
     List<Application> getAllApplications(Principal principal, Long id);
 
     void reviewApplication(Principal principal, Long id, Long applicationId, String status);
+
+    void removeMember(Principal principal, Long id, Long memberId);
 }

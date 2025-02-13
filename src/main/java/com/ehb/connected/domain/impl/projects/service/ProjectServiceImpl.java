@@ -155,4 +155,13 @@ public class ProjectServiceImpl implements ProjectService {
 
         applicationRepository.save(application);
     }
+
+    @Override
+    public void removeMember(Principal principal, Long id, Long memberId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+
+        project.getMembers().removeIf(member -> member.getId().equals(memberId));
+        projectRepository.save(project);
+    }
 }
