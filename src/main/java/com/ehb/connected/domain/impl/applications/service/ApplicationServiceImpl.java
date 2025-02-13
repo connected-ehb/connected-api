@@ -34,7 +34,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public Application getApplicationById(Long id) {
-        return applicationRepository.findById(id).orElse(null);
+        return applicationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Application not found"));
     }
 
     @Override

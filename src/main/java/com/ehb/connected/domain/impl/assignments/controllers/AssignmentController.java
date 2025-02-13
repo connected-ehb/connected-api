@@ -112,7 +112,6 @@ public class AssignmentController {
         assignmentService.deleteAssignment(id);
     }
 
-
     //TODO mapping should be moved to service layer
     @GetMapping("/{id}/applications")
     public ResponseEntity<List<ApplicationDto>> getAllApplications(@PathVariable Long id){
