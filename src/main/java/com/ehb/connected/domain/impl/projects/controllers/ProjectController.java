@@ -39,8 +39,8 @@ public class ProjectController {
     }
 
     @PostMapping("/create")
-    public ProjectDetailsDto createProject(Principal principal, @RequestHeader Long assignentId, @RequestBody ProjectCreateDto project){
-        return projectService.createProject(assignentId, project);
+    public ProjectDetailsDto createProject(Principal principal, @RequestHeader Long assignmentId, @RequestBody ProjectCreateDto project){
+        return projectService.createProject(principal, assignmentId, project);
     }
 
     @PutMapping("/update/{id}")
