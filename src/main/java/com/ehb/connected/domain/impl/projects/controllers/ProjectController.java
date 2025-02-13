@@ -20,7 +20,7 @@ import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/projects")
+@RequestMapping("/api/projects")
 @RequiredArgsConstructor
 public class ProjectController {
 
@@ -39,8 +39,8 @@ public class ProjectController {
     }
 
     @PostMapping("/create")
-    public ProjectDetailsDto createProject(Principal principal, @RequestBody ProjectCreateDto project){
-        return projectService.createProject(project);
+    public ProjectDetailsDto createProject(Principal principal, @RequestHeader Long assignentId, @RequestBody ProjectCreateDto project){
+        return projectService.createProject(assignentId, project);
     }
 
     @PutMapping("/update/{id}")
