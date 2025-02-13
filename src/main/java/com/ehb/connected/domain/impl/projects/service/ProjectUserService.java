@@ -25,4 +25,8 @@ public class ProjectUserService {
 
         return project.getCreatedBy().getId().equals(currentUser.getId());
     }
+
+    public User getUser(Principal principal) {
+        return userService.getUserByEmail(principal.getName());
+    }
 }

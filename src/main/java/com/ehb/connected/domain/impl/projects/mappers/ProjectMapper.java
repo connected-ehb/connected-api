@@ -52,9 +52,19 @@ public class ProjectMapper {
             dto.setAssignmentId(project.getAssignment().getId());
         }
 
-        dto.setTags(project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()));
+        if (project.getTags() != null) {
+            dto.setTags(project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()));
+        } else {
+            dto.setTags(List.of());
+        }
+
         dto.setCreatedBy(userMapper.toUserDetailsDto(project.getCreatedBy()));
-        dto.setMembers(project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()));
+
+        if (project.getMembers() != null) {
+            dto.setMembers(project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()));
+        } else {
+            dto.setMembers(List.of());
+        }
 
         return dto;
     }

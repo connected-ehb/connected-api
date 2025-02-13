@@ -15,6 +15,7 @@ import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.tags.entities.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -46,10 +47,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto createProject(Long assignmentId, ProjectCreateDto project) {
+    public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project) {
 
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
+        System.out.println(assignment);
         // Fetch deadline for the assignment with the restriction PROJECT_CREATION
         Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
 
@@ -59,7 +61,16 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         // Proceed with project creation since there is no deadline or the deadline is valid
-        Project newProject = projectMapper.toEntity(project);
+        Project newProject = new Project();
+        newProject.setTitle(project.getTitle());
+        newProject.setDescription(project.getDescription());
+        newProject.setRepositoryUrl(project.getRepositoryUrl());
+        newProject.setBoardUrl(project.getBoardUrl());
+        newProject.setBackgroundImage(project.getBackgroundImage());
+        newProject.setTags(project.getTags());
+        newProject.setStatus(ProjectStatusEnum.PENDING);
+
+        newProject.setCreatedBy(projectUserService.getUser(principal));
         newProject.setAssignment(assignment);
         return projectMapper.toDetailsDto(projectRepository.save(newProject));
     }
