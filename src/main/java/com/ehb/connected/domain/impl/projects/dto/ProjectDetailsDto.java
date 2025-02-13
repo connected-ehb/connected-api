@@ -11,6 +11,7 @@ public class ProjectDetailsDto {
     private Long id;
     private String title;
     private String description;
+    private String shortDescription;
     private String status;
     private String repositoryUrl;
     private String boardUrl;

@@ -64,6 +64,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project newProject = new Project();
         newProject.setTitle(project.getTitle());
         newProject.setDescription(project.getDescription());
+        newProject.setShortDescription(project.getShortDescription());
         newProject.setRepositoryUrl(project.getRepositoryUrl());
         newProject.setBoardUrl(project.getBoardUrl());
         newProject.setBackgroundImage(project.getBackgroundImage());

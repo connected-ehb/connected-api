@@ -9,6 +9,7 @@ public class ProjectUpdateDto {
     private String title;
 
     private String description;
+    private String shortDescription;
     private String repositoryUrl;
     private String boardUrl;
     private String backgroundImage;
