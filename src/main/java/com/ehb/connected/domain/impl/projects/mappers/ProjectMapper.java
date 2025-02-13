@@ -43,6 +43,7 @@ public class ProjectMapper {
         dto.setId(project.getId());
         dto.setTitle(project.getTitle());
         dto.setDescription(project.getDescription());
+        dto.setShortDescription(project.getShortDescription());
         dto.setStatus(project.getStatus().name());
         dto.setRepositoryUrl(project.getRepositoryUrl());
         dto.setBoardUrl(project.getBoardUrl());
@@ -73,6 +74,7 @@ public class ProjectMapper {
         Project project = new Project();
         project.setTitle(dto.getTitle());
         project.setDescription(dto.getDescription());
+        project.setShortDescription(dto.getShortDescription());
         project.setRepositoryUrl(dto.getRepositoryUrl());
         project.setBoardUrl(dto.getBoardUrl());
         project.setBackgroundImage(dto.getBackgroundImage());
@@ -92,6 +94,7 @@ public class ProjectMapper {
 
         project.setTitle(dto.getTitle());
         project.setDescription(dto.getDescription());
+        project.setShortDescription(dto.getShortDescription());
         project.setRepositoryUrl(dto.getRepositoryUrl());
         project.setBoardUrl(dto.getBoardUrl());
         project.setBackgroundImage(dto.getBackgroundImage());

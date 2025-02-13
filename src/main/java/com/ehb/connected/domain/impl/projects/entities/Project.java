@@ -26,6 +26,8 @@ public class Project {
     private String title;
     @Column(columnDefinition = "TEXT")
     private String description;
+    @Column(length = 500)
+    private String shortDescription;
     private ProjectStatusEnum status;
     private String repositoryUrl;
     private String boardUrl;

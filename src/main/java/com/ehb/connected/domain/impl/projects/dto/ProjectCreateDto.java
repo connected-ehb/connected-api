@@ -7,11 +7,13 @@ import java.util.List;
 
 @Data
 public class ProjectCreateDto {
+
     private Long assignmentId;
 
     private String title;
-
     private String description;
+    private String shortDescription;
+
     private String repositoryUrl;
     private String boardUrl;
     private String backgroundImage;
