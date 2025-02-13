@@ -4,17 +4,7 @@ import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.users.entities.User;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +24,7 @@ public class Project {
     private Long id;
 
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String description;
     private ProjectStatusEnum status;
     private String repositoryUrl;
