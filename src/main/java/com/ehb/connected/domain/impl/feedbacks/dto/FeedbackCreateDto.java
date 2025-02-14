@@ -1,11 +1,11 @@
-package com.ehb.connected.domain.impl.feedbacks.entities;
+package com.ehb.connected.domain.impl.feedbacks.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class FeedbackDto {
+public class FeedbackCreateDto {
 
     private String comment;
 }

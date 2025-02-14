@@ -4,8 +4,8 @@ package com.ehb.connected.domain.impl.projects.controllers;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
-import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
-import com.ehb.connected.domain.impl.feedbacks.entities.FeedbackDto;
+import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
+import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
 import com.ehb.connected.domain.impl.feedbacks.service.FeedbackService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
@@ -74,16 +74,16 @@ public class ProjectController {
 
     // Feedback endpoints
     @PostMapping("/{id}/feedback")
-    public ResponseEntity<Feedback> giveFeedback(Principal principal, @PathVariable Long id, @RequestBody FeedbackDto feedbackDto) {
+    public ResponseEntity<FeedbackDto> giveFeedback(Principal principal, @PathVariable Long id, @RequestBody FeedbackCreateDto feedbackDto) {
        return ResponseEntity.ok(feedbackService.giveFeedback(principal, id, feedbackDto));
     }
 
     @PutMapping("/{id}/feedback/{feedbackId}")
-    public ResponseEntity<Feedback> updateFeedback(
+    public ResponseEntity<FeedbackDto> updateFeedback(
             Principal principal,
             @PathVariable Long id,
             @PathVariable Long feedbackId,
-            @RequestBody FeedbackDto feedbackDto) {
+            @RequestBody FeedbackCreateDto feedbackDto) {
         return ResponseEntity.ok(feedbackService.updateFeedback(principal, id, feedbackId, feedbackDto));
     }
 
@@ -97,7 +97,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}/feedback")
-    public ResponseEntity<List<Feedback>> getFeedbacks(Principal principal, @PathVariable Long id) {
+    public ResponseEntity<List<FeedbackDto>> getFeedbacks(Principal principal, @PathVariable Long id) {
         return ResponseEntity.ok(feedbackService.getAllFeedbackForProject(principal, id));
     }
 

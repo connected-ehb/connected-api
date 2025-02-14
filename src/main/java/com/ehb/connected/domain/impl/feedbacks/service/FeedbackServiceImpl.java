@@ -1,7 +1,9 @@
 package com.ehb.connected.domain.impl.feedbacks.service;
 
+import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
 import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
-import com.ehb.connected.domain.impl.feedbacks.entities.FeedbackDto;
+import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
+import com.ehb.connected.domain.impl.feedbacks.mappers.FeedbackMapper;
 import com.ehb.connected.domain.impl.feedbacks.repositories.FeedbackRepository;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
@@ -22,6 +24,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final ProjectRepository projectRepository;
     private final FeedbackRepository feedbackRepository;
     private final UserService userService;
+
+    private final FeedbackMapper feedbackMapper;
 
     private Feedback getFeedbackAndCheckPermissions(Principal principal, Long projectId, Long feedbackId) {
         // Check if project exists
@@ -47,26 +51,29 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public Feedback giveFeedback(Principal principal, Long id, FeedbackDto feedbackDto) {
+    public FeedbackDto giveFeedback(Principal principal, Long id, FeedbackCreateDto feedbackDto) {
         final Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
         final User user = userService.getUserByEmail(principal.getName());
-
-        final Feedback feedback = new Feedback(null, feedbackDto.getComment(), user, project, null, null);
+        System.out.println("comment: " + feedbackDto.getComment());
+        final Feedback feedback = new Feedback();
+        feedback.setComment(feedbackDto.getComment());
+        feedback.setUser(user);
+        feedback.setProject(project);
 
         feedbackRepository.save(feedback);
 
-        return feedback;
+        return feedbackMapper.toDto(feedback);
     }
 
     @Override
-    public Feedback updateFeedback(Principal principal, Long id, Long feedbackId, FeedbackDto feedbackDto) {
+    public FeedbackDto updateFeedback(Principal principal, Long id, Long feedbackId, FeedbackCreateDto feedbackDto) {
         final Feedback feedback = getFeedbackAndCheckPermissions(principal, id, feedbackId);
 
         // Update comment
         feedback.setComment(feedbackDto.getComment());
-        return feedbackRepository.save(feedback);
+        return feedbackMapper.toDto(feedbackRepository.save(feedback));
     }
 
     @Override
@@ -78,13 +85,13 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public List<Feedback> getAllFeedbackForProject(Principal principal, Long id) {
+    public List<FeedbackDto> getAllFeedbackForProject(Principal principal, Long id) {
         // Check if project exists
         final Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
         // Return all feedback related to the project
-        return feedbackRepository.findAllByProject(project);
+        return feedbackMapper.toDtoList(feedbackRepository.findAllByProjectOrderByCreatedAtDesc(project));
     }
 }
 
