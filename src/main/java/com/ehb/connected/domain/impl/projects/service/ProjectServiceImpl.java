@@ -1,7 +1,9 @@
 package com.ehb.connected.domain.impl.projects.service;
 
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
@@ -24,6 +26,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +38,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMapper projectMapper;
     private final DeadlineService deadlineService;
     private final AssignmentRepository assignmentRepository;
+    private final ApplicationMapper applicationMapper;
 
     @Override
     public List<ProjectDetailsDto> getAllProjects(Long assignmentId) {
@@ -122,7 +126,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<Application> getAllApplications(Principal principal, Long projectId) {
+    public List<ApplicationDto> getAllApplications(Principal principal, Long projectId) {
         if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
@@ -130,9 +134,12 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
-        return project.getApplications();
+        return project.getApplications().stream()
+                .map(applicationMapper::toDto)
+                .collect(Collectors.toList());
     }
 
+    //check of het project van de user is
     @Override
     public void reviewApplication(Principal principal, Long projectId, Long applicationId, String status) {
         // Check if user owns project

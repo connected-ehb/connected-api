@@ -45,9 +45,6 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "applicant", cascade = CascadeType.ALL)
     private List<Application> applications = new ArrayList<>();
 
-
-
-
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<Project> createdProjects = new ArrayList<>();
 
@@ -56,7 +53,6 @@ public class User implements UserDetails {
 
     @Transient // OAuth2 attributes are not stored in the database
     private Map<String, Object> attributes;
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -84,6 +80,4 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
-
 }
