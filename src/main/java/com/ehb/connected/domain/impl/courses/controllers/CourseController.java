@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -56,24 +58,32 @@ public class CourseController {
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            List<Map<String, Object>> courses = objectMapper.readValue(jsonResponse, new TypeReference<>() {
-            });
-            List<Map<String, Object>> newCourses = new ArrayList<>();
+            // Deserialize the Canvas courses into a list of maps
+            List<Map<String, Object>> canvasCourses = objectMapper.readValue(
+                    jsonResponse, new TypeReference<List<Map<String, Object>>>() {}
+            );
 
-            for (Map<String, Object> course : courses) {
-                Long canvasCourseId = Long.parseLong(course.get("id").toString());
-                try {
-                    courseService.getCourseByCanvasCourseId(canvasCourseId);
-                } catch (EntityNotFoundException e) {
-                    newCourses.add(course);
-                }
-            }
+            // Fetch all courses already imported by this user.
+            List<Course> importedCourses = courseService.getCoursesByOwner(principal);
+            // Create a set of canvas course IDs that are already imported.
+            Set<Long> importedCanvasIds = importedCourses.stream()
+                    .map(Course::getCanvasCourseId)
+                    .collect(Collectors.toSet());
+
+            // Filter out courses that have already been imported.
+            List<Map<String, Object>> newCourses = canvasCourses.stream()
+                    .filter(courseMap -> {
+                        Long canvasCourseId = Long.parseLong(courseMap.get("id").toString());
+                        return !importedCanvasIds.contains(canvasCourseId);
+                    })
+                    .collect(Collectors.toList());
 
             String filteredCoursesJson = objectMapper.writeValueAsString(newCourses);
             return ResponseEntity.ok().body(filteredCoursesJson);
         } catch (Exception e) {
             System.out.println("Error parsing courses: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error parsing courses");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error parsing courses");
         }
     }
 
