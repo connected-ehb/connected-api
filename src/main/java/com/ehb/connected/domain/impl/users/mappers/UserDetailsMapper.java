@@ -38,8 +38,6 @@ public class UserDetailsMapper {
         return userDetailsDto;
     }
 
-
-
     //map a user to a user details dto
     public UserDetailsDto toUserDetailsDto(User user) {
         UserDetailsDto dto = new UserDetailsDto();

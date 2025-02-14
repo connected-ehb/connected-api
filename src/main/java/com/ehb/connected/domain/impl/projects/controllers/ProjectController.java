@@ -3,7 +3,6 @@ package com.ehb.connected.domain.impl.projects.controllers;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.feedbacks.entities.FeedbackDto;
@@ -61,7 +60,7 @@ public class ProjectController {
     public void rejectProject(@PathVariable Long id) { projectService.rejectProject(id);}
 
     @GetMapping("/{id}/applications")
-    public List<Application> getAllApplications(Principal principal, @PathVariable Long id) { return projectService.getAllApplications(principal, id);}
+    public List<ApplicationDto> getAllApplications(Principal principal, @PathVariable Long id) { return projectService.getAllApplications(principal, id);}
 
     @PostMapping("/{id}/applications/{applicationId}/approve")
     public void approveApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {

@@ -22,6 +22,7 @@ public class Application {
     @Column(columnDefinition = "TEXT")
     private String motivationMd;
 
+
     private ApplicationStatusEnum status;
 
     @ManyToOne
