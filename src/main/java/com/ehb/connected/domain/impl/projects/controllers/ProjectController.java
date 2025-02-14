@@ -3,6 +3,7 @@ package com.ehb.connected.domain.impl.projects.controllers;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
@@ -64,12 +65,12 @@ public class ProjectController {
 
     @PostMapping("/{id}/applications/{applicationId}/approve")
     public void approveApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
-        projectService.reviewApplication(principal, id, applicationId, "approve");
+        projectService.reviewApplication(principal, id, applicationId, ApplicationStatusEnum.APPROVED);
     }
 
     @PostMapping("/{id}/applications/{applicationId}/reject")
     public void rejectApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
-        projectService.reviewApplication(principal, id, applicationId, "reject");
+        projectService.reviewApplication(principal, id, applicationId, ApplicationStatusEnum.REJECTED);
     }
 
     // Feedback endpoints
