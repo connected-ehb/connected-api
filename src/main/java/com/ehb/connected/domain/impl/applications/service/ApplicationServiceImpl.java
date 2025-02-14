@@ -44,6 +44,13 @@ public class ApplicationServiceImpl implements ApplicationService {
         if(project.getCreatedBy().equals(currentUser)) {
             throw new RuntimeException("User cannot apply to own project");
         }
+        // Check if user has already applied to the project
+        List<Application> applications = project.getApplications();
+        for (Application app : applications) {
+            if (app.getApplicant().equals(currentUser)) {
+                throw new RuntimeException("User has already applied to this project");
+            }
+        }
         Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignment().getId(), DeadlineRestriction.APPLICATION_SUBMISSION);
         if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Project creation is no longer allowed. The deadline has passed.");
