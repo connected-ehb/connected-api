@@ -12,5 +12,5 @@ import java.util.List;
 public interface TagRepository extends JpaRepository<Tag, Long> {
     List<Tag> findByNameContainingIgnoreCase(String query);
 
-    boolean existsByName(String name);
+    boolean existsByNameIgnoreCase(String name);
 }

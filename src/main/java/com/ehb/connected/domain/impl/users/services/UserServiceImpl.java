@@ -1,18 +1,25 @@
 package com.ehb.connected.domain.impl.users.services;
 
 
+import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
+    private final UserDetailsMapper userDetailsMapper;
+    private final TagMapper tagMapper;
 
     @Override
     public List<User> getAllUsers() {
@@ -30,8 +37,18 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public User updateUser(User user) {
-        return userRepository.save(user);
+    public UserDetailsDto updateUser(Principal principal, UserDetailsDto userDto) {
+        User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!Objects.equals(user.getEmail(), principal.getName())) {
+            throw new RuntimeException("User is not owner of the profile");
+        }
+
+        user.setAboutMe(userDto.getAboutMe());
+        user.setFieldOfStudy(userDto.getFieldOfStudy());
+        user.setLinkedinUrl(userDto.getLinkedinUrl());
+        user.setTags(new ArrayList<>(tagMapper.toEntityList(userDto.getTags())));
+        return userDetailsMapper.toUserDetailsDto(userRepository.save(user));
     }
 
     @Override
