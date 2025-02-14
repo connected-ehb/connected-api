@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface ProjectService {
     List<ProjectDetailsDto> getAllProjects(Long assignmentId);
+    List<ProjectDetailsDto> getAllPublishedProjectsInAssignment(Long assignmentId);
     ProjectDetailsDto getProjectById(Long id);
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
     ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project);

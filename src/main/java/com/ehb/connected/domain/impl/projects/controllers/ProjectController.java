@@ -32,6 +32,11 @@ public class ProjectController {
         return projectService.getAllProjects(assignmentId);
     }
 
+    @GetMapping("/published")
+    public List<ProjectDetailsDto> getAllPublishedProjects(@RequestHeader Long assignmentId){
+        return projectService.getAllPublishedProjectsInAssignment(assignmentId);
+    }
+
     @GetMapping("/{id}")
     public ProjectDetailsDto getProjectById(@PathVariable Long id){
         return projectService.getProjectById(id);

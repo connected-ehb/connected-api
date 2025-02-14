@@ -46,6 +46,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public List<ProjectDetailsDto> getAllPublishedProjectsInAssignment(Long assignmentId) {
+        return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentIdAndStatus(assignmentId, ProjectStatusEnum.PUBLISHED));
+    }
+
+    @Override
     public ProjectDetailsDto getProjectById(Long id) {
         return projectMapper.toDetailsDto(projectRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Project not found")));
     }
