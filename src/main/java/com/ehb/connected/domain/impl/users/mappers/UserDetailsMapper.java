@@ -1,14 +1,19 @@
 package com.ehb.connected.domain.impl.users.mappers;
 
+import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.authUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class UserDetailsMapper {
+
+    private final TagMapper tagMapper;
     //map a user to a auth user details dto without a principal
     public authUserDetailsDto toDto(User user) {
         authUserDetailsDto userDetailsDto = new authUserDetailsDto();
@@ -47,7 +52,7 @@ public class UserDetailsMapper {
         dto.setLinkedinUrl(user.getLinkedinUrl());
         dto.setFieldOfStudy(user.getFieldOfStudy());
         dto.setAboutMe(user.getAboutMe());
-        dto.setTags(user.getTags());
+        dto.setTags(tagMapper.toDtoList(user.getTags()));
         return dto;
     }
 
@@ -63,7 +68,7 @@ public class UserDetailsMapper {
         user.setLinkedinUrl(dto.getLinkedinUrl());
         user.setFieldOfStudy(dto.getFieldOfStudy());
         user.setAboutMe(dto.getAboutMe());
-        user.setTags(dto.getTags());
+        user.setTags(tagMapper.toEntityList(dto.getTags()));
         return user;
     }
 }
