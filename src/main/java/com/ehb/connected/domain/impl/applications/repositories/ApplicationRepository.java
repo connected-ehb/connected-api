@@ -1,6 +1,8 @@
 package com.ehb.connected.domain.impl.applications.repositories;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.users.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,4 +15,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     @Query("SELECT a FROM Application a WHERE a.project.assignment.id = :id")
     List<Application> findAllApplications(@Param("id") Long id);
+
+    List<Application> findByApplicantAndStatus(User applicant, ApplicationStatusEnum applicationStatusEnum);
 }

@@ -17,7 +17,6 @@ import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
-import com.ehb.connected.domain.impl.tags.entities.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -139,10 +138,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .collect(Collectors.toList());
     }
 
-    //check of het project van de user is
+
     @Override
-    public void reviewApplication(Principal principal, Long projectId, Long applicationId, String status) {
-        // Check if user owns project
+    public void reviewApplication(Principal principal, Long projectId, Long applicationId, ApplicationStatusEnum status) {
+        // Check if user owns the project
         if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
@@ -155,7 +154,23 @@ public class ProjectServiceImpl implements ProjectService {
             throw new RuntimeException("Application does not belong to the project");
         }
 
-        if(Objects.equals(status, "approve")){
+        // Prevent reviewing an already reviewed application
+        if (application.getStatus() == ApplicationStatusEnum.APPROVED || application.getStatus() == ApplicationStatusEnum.REJECTED) {
+            throw new RuntimeException("Application has already been reviewed");
+        }
+
+        if (status == ApplicationStatusEnum.APPROVED) {
+            projectRepository.findById(projectId)
+                    .ifPresent(project -> project.getMembers().add(application.getApplicant()));
+            // Reject all other active applications by the same applicant
+            List<Application> otherApplications = applicationRepository.findByApplicantAndStatus(application.getApplicant(), ApplicationStatusEnum.PENDING);
+            otherApplications.forEach(app -> {
+                if (!app.getId().equals(applicationId)) {
+                    app.setStatus(ApplicationStatusEnum.REJECTED);
+                    applicationRepository.save(app);
+                }
+            });
+
             application.setStatus(ApplicationStatusEnum.APPROVED);
         } else {
             application.setStatus(ApplicationStatusEnum.REJECTED);
@@ -163,6 +178,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         applicationRepository.save(application);
     }
+
 
     @Override
     public void removeMember(Principal principal, Long id, Long memberId) {
