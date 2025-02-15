@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
@@ -28,8 +29,7 @@ public interface ProjectService {
 
     List<ApplicationDto> getAllApplications(Principal principal, Long id);
 
-
-    void reviewApplication(Principal principal, Long id, Long applicationId, String status);
+    void reviewApplication(Principal principal, Long id, Long applicationId, ApplicationStatusEnum status);
 
     void removeMember(Principal principal, Long id, Long memberId);
 }

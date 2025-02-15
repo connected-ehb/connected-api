@@ -22,7 +22,7 @@ public class Application {
     @Column(columnDefinition = "TEXT")
     private String motivationMd;
 
-
+    @Enumerated(EnumType.STRING)
     private ApplicationStatusEnum status;
 
     @ManyToOne

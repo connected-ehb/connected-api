@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
-    List<Feedback> findAllByProject(Project project);
+    List<Feedback> findAllByProjectOrderByCreatedAtDesc(Project project);
 }
