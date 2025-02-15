@@ -18,8 +18,11 @@ import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
+import com.ehb.connected.domain.impl.users.entities.Role;
+import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -131,6 +134,21 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status) {
+        User user = projectUserService.getUser(principal);
+
+        if (user.getRole().equals(Role.STUDENT)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+        project.setStatus(status);
+        projectRepository.save(project);
+        return ResponseEntity.ok(projectMapper.toDetailsDto(project));
+    }
+
+    @Override
     public List<ApplicationDto> getAllApplications(Principal principal, Long projectId) {
         if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
@@ -176,5 +194,10 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.getMembers().removeIf(member -> member.getId().equals(memberId));
         projectRepository.save(project);
+    }
+
+    @Override
+    public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
+        return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);
     }
 }
