@@ -12,6 +12,8 @@ import com.ehb.connected.domain.impl.assignments.service.AssignmentService;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
+import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -122,5 +124,8 @@ public class AssignmentController {
         return ResponseEntity.ok(applications);
     }
 
-
+    @PostMapping("/{assignmentId}/projects/publish")
+    public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, @PathVariable Long assignmentId) {
+        return assignmentService.publishAllProjects(principal, assignmentId);
+    }
 }

@@ -11,9 +11,11 @@ import com.ehb.connected.domain.impl.feedbacks.service.FeedbackService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -31,6 +33,11 @@ public class ProjectController {
     @GetMapping
     public List<ProjectDetailsDto> getAllProjects(@RequestHeader Long assignmentId){
         return projectService.getAllProjects(assignmentId);
+    }
+
+    @GetMapping("/published")
+    public List<ProjectDetailsDto> getAllPublishedProjects(@RequestHeader Long assignmentId){
+        return projectService.getAllPublishedProjectsInAssignment(assignmentId);
     }
 
     @GetMapping("/{id}")
@@ -59,6 +66,11 @@ public class ProjectController {
 
     @PatchMapping("/{id}/reject")
     public void rejectProject(@PathVariable Long id) { projectService.rejectProject(id);}
+
+    @PostMapping("/status")
+    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, @RequestHeader Long projectId, @RequestHeader ProjectStatusEnum status) {
+        return projectService.changeProjectStatus(principal, projectId, status);
+    }
 
     @GetMapping("/{id}/applications")
     public List<ApplicationDto> getAllApplications(Principal principal, @PathVariable Long id) { return projectService.getAllApplications(principal, id);}

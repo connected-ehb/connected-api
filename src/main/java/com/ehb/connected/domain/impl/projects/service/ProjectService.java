@@ -5,13 +5,18 @@ import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import org.springframework.http.ResponseEntity;
 
 import java.security.Principal;
 import java.util.List;
 
 public interface ProjectService {
     List<ProjectDetailsDto> getAllProjects(Long assignmentId);
+    List<ProjectDetailsDto> getAllPublishedProjectsInAssignment(Long assignmentId);
     ProjectDetailsDto getProjectById(Long id);
+    List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status);
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
     ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project);
     void deleteProject(Long id);
@@ -19,6 +24,8 @@ public interface ProjectService {
     void approveProject(Long id);
 
     void rejectProject(Long id);
+
+    ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
 
     List<ApplicationDto> getAllApplications(Principal principal, Long id);
 

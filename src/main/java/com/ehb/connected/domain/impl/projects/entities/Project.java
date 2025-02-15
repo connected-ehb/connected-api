@@ -29,6 +29,7 @@ public class Project {
     private String description;
     @Column(length = 500)
     private String shortDescription;
+    @Enumerated(EnumType.STRING)
     private ProjectStatusEnum status;
     private String repositoryUrl;
     private String boardUrl;

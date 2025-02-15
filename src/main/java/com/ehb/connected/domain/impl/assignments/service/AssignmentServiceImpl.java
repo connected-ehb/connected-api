@@ -2,17 +2,23 @@ package com.ehb.connected.domain.impl.assignments.service;
 
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
+import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
+import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class AssignmentServiceImpl implements AssignmentService {
-
-    @Autowired
-    private AssignmentRepository assignmentRepository;
+    private final AssignmentRepository assignmentRepository;
+    private final ProjectService projectService;
 
     @Override
     public List<Assignment> getAllAssignments() {
@@ -47,5 +53,12 @@ public class AssignmentServiceImpl implements AssignmentService {
     @Override
     public Assignment getAssignmentByCanvasAssignmentId(Long canvasAssignmentId) {
         return assignmentRepository.findByCanvasAssignmentId(canvasAssignmentId).orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
+    }
+
+    @Override
+    public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, Long assignmentId) {
+        List<Project> projects = projectService.getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
+        projects.forEach(project -> projectService.changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
+        return ResponseEntity.ok(projectService.getAllPublishedProjectsInAssignment(assignmentId));
     }
 }
