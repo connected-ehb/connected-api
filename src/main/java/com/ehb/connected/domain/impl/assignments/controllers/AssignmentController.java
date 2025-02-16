@@ -13,7 +13,6 @@ import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
-import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
