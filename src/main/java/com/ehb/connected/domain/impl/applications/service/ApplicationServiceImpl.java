@@ -80,5 +80,10 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationRepository.findAllApplications(id);
     }
 
+    @Override
+    public List<Application> findAllApplicationsByUserAndAssignment(Long id, Long assignmentId) {
+        return applicationRepository.findAllApplicationsByUserId(id, assignmentId);
+    }
+
 
 }

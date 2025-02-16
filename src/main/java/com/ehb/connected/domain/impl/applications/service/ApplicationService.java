@@ -14,4 +14,5 @@ public interface ApplicationService {
     void deleteApplication(Long id);
     List<Application> findAllApplications(Long id);
 
+    List<Application> findAllApplicationsByUserAndAssignment(Long id, Long assignmentId);
 }

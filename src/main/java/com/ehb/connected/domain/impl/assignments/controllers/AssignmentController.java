@@ -14,6 +14,7 @@ import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -115,13 +116,19 @@ public class AssignmentController {
     }
 
     //TODO mapping should be moved to service layer
-    @GetMapping("/{id}/applications")
-    public ResponseEntity<List<ApplicationDto>> getAllApplications(@PathVariable Long id){
-        List<ApplicationDto> applications = applicationService.findAllApplications(id).stream()
-                .map(applicationMapper::toDto)
-                .toList();
-
-        return ResponseEntity.ok(applications);
+    @GetMapping("/{assignmentId}/applications")
+    public ResponseEntity<List<ApplicationDto>> getAllApplications(Principal principal, @PathVariable Long assignmentId){
+        User user = userService.getUserByEmail(principal.getName());
+        if(user.getRole() == Role.STUDENT){
+            return ResponseEntity.ok(applicationService.findAllApplicationsByUserAndAssignment(user.getId(), assignmentId).stream()
+                    .map(applicationMapper::toDto)
+                    .toList());
+        } else {
+            List<ApplicationDto> applications = applicationService.findAllApplications(assignmentId).stream()
+                    .map(applicationMapper::toDto)
+                    .toList();
+            return ResponseEntity.ok(applications);
+        }
     }
 
     @PostMapping("/{assignmentId}/projects/publish")

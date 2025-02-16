@@ -153,7 +153,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<ApplicationDto> getAllApplications(Principal principal, Long projectId) {
-        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
+        if (!projectUserService.isUserOwnerOfProject(principal, projectId) && projectUserService.getUser(principal).getRole().equals(Role.STUDENT)) {
             throw new RuntimeException("User is not the owner of the project");
         }
 
