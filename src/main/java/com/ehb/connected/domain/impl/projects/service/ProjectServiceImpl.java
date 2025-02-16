@@ -23,6 +23,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -167,44 +168,64 @@ public class ProjectServiceImpl implements ProjectService {
 
 
     @Override
+    @Transactional
     public void reviewApplication(Principal principal, Long projectId, Long applicationId, ApplicationStatusEnum status) {
-        // Check if user owns the project
+        // Ensure user owns the project
         if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
 
+        // Ensure user is not member of another project
+
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new EntityNotFoundException("Application not found"));
 
-        // Ensure the application belongs to the project before updating it
+        // Ensure the application belongs to the project
         if (!Objects.equals(application.getProject().getId(), projectId)) {
-            throw new RuntimeException("Application does not belong to the project");
+            throw new IllegalArgumentException("Application does not belong to the project");
         }
 
         // Prevent reviewing an already reviewed application
-        if (application.getStatus() == ApplicationStatusEnum.APPROVED || application.getStatus() == ApplicationStatusEnum.REJECTED) {
-            throw new RuntimeException("Application has already been reviewed");
+        if (isApplicationReviewed(application)) {
+            throw new IllegalStateException("Application has already been reviewed");
         }
 
         if (status == ApplicationStatusEnum.APPROVED) {
-            projectRepository.findById(projectId)
-                    .ifPresent(project -> project.getMembers().add(application.getApplicant()));
-            // Reject all other active applications by the same applicant
-            List<Application> otherApplications = applicationRepository.findByApplicantAndStatus(application.getApplicant(), ApplicationStatusEnum.PENDING);
-            otherApplications.forEach(app -> {
-                if (!app.getId().equals(applicationId)) {
-                    app.setStatus(ApplicationStatusEnum.REJECTED);
-                    applicationRepository.save(app);
-                }
-            });
-
-            application.setStatus(ApplicationStatusEnum.APPROVED);
+            approveApplication(application, projectId);
         } else {
             application.setStatus(ApplicationStatusEnum.REJECTED);
+            applicationRepository.save(application);
+        }
+    }
+
+    private boolean isApplicationReviewed(Application application) {
+        return application.getStatus() == ApplicationStatusEnum.APPROVED
+                || application.getStatus() == ApplicationStatusEnum.REJECTED;
+    }
+
+    private void approveApplication(Application application, Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+
+        // Ensure applicant is not already a member
+        if (project.getMembers().stream().noneMatch(member -> member.getId().equals(application.getApplicant().getId()))) {
+            project.getMembers().add(application.getApplicant());
+            projectRepository.save(project);
         }
 
+        // Reject other pending applications from the same applicant
+        List<Application> otherApplications = applicationRepository.findByApplicantAndStatus(application.getApplicant(), ApplicationStatusEnum.PENDING);
+        otherApplications.forEach(app -> {
+            if (!app.getId().equals(application.getId())) {
+                app.setStatus(ApplicationStatusEnum.REJECTED);
+                applicationRepository.save(app);
+            }
+        });
+
+        application.setStatus(ApplicationStatusEnum.APPROVED);
         applicationRepository.save(application);
     }
+
 
     @Override
     public void removeMember(Principal principal, Long id, Long memberId) {
