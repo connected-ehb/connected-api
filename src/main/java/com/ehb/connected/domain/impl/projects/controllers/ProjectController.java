@@ -60,13 +60,6 @@ public class ProjectController {
         projectService.deleteProject(id);
     }
 
-
-    @PatchMapping("/{id}/approve")
-    public void approveProject(@PathVariable Long id) { projectService.approveProject(id);}
-
-    @PatchMapping("/{id}/reject")
-    public void rejectProject(@PathVariable Long id) { projectService.rejectProject(id);}
-
     @PostMapping("/status")
     public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, @RequestHeader Long projectId, @RequestHeader ProjectStatusEnum status) {
         return projectService.changeProjectStatus(principal, projectId, status);
