@@ -17,7 +17,6 @@ import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
-import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.EntityNotFoundException;
@@ -61,6 +60,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project) {
 
+        User user = projectUserService.getUser(principal);
+
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
         System.out.println(assignment);
@@ -82,6 +83,8 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setBackgroundImage(project.getBackgroundImage());
         newProject.setTags(project.getTags());
         newProject.setStatus(ProjectStatusEnum.PENDING);
+        // add current user to members list
+        newProject.setMembers(List.of(user));
 
         newProject.setCreatedBy(projectUserService.getUser(principal));
         newProject.setAssignment(assignment);
