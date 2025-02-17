@@ -7,6 +7,7 @@ import com.ehb.connected.domain.impl.feedbacks.mappers.FeedbackMapper;
 import com.ehb.connected.domain.impl.feedbacks.repositories.FeedbackRepository;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import jakarta.persistence.EntityNotFoundException;
@@ -56,6 +57,9 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
         final User user = userService.getUserByEmail(principal.getName());
+        if (user.getRole() == Role.STUDENT) {
+            throw new AccessDeniedException("Students are not allowed to give feedback");
+        }
         System.out.println("comment: " + feedbackDto.getComment());
         final Feedback feedback = new Feedback();
         feedback.setComment(feedbackDto.getComment());
