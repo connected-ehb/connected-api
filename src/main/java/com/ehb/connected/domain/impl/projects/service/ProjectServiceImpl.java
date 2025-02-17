@@ -63,6 +63,11 @@ public class ProjectServiceImpl implements ProjectService {
 
         User user = projectUserService.getUser(principal);
 
+        // Check if user has pending or approved projects. If so return an error
+        if (projectRepository.existsByMembersContainingAndStatusIn(user, List.of(ProjectStatusEnum.PENDING, ProjectStatusEnum.APPROVED, ProjectStatusEnum.PUBLISHED))) {
+            throw new RuntimeException("User already has a pending or approved or published project");
+        }
+
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
         System.out.println(assignment);
