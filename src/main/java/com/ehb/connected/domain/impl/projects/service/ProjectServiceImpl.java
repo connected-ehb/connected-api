@@ -19,8 +19,10 @@ import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
-import jakarta.persistence.EntityNotFoundException;
+import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,8 @@ public class ProjectServiceImpl implements ProjectService {
     private final AssignmentRepository assignmentRepository;
     private final ApplicationMapper applicationMapper;
 
+    private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
+
     @Override
     public List<ProjectDetailsDto> getAllProjects(Long assignmentId) {
         return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentId(assignmentId));
@@ -55,7 +59,10 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectDetailsDto getProjectById(Long id) {
-        return projectMapper.toDetailsDto(projectRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Project not found")));
+        return projectMapper.toDetailsDto(projectRepository.findById(id).orElseThrow(() -> {
+            logger.error("Project not found for id: {}", id);
+            return new EntityNotFoundException(Project.class, id.toString());
+        }));
     }
 
     @Override
@@ -129,7 +136,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void approveProject(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
         project.setStatus(ProjectStatusEnum.APPROVED);
         projectRepository.save(project);
     }
@@ -137,7 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void rejectProject(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
         project.setStatus(ProjectStatusEnum.REJECTED);
         projectRepository.save(project);
     }
@@ -151,7 +158,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
         project.setStatus(status);
         projectRepository.save(project);
         return ResponseEntity.ok(projectMapper.toDetailsDto(project));
@@ -164,7 +171,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId.toString()));
 
         return project.getApplications().stream()
                 .map(applicationMapper::toDto)
@@ -210,7 +217,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private void approveApplication(Application application, Long projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId.toString()));
 
         // Ensure applicant is not already a member
         if (project.getMembers().stream().noneMatch(member -> member.getId().equals(application.getApplicant().getId()))) {

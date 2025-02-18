@@ -15,7 +15,6 @@ import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -31,8 +30,8 @@ public class ProjectController {
     private final ApplicationService applicationService;
 
     @GetMapping
-    public List<ProjectDetailsDto> getAllProjects(@RequestHeader Long assignmentId){
-        return projectService.getAllProjects(assignmentId);
+    public ResponseEntity<List<ProjectDetailsDto>> getAllProjects(@RequestHeader Long assignmentId){
+        return ResponseEntity.ok(projectService.getAllProjects(assignmentId));
     }
 
     @GetMapping("/published")
