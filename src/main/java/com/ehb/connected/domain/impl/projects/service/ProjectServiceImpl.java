@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final ApplicationRepository applicationRepository;
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
     private final DeadlineService deadlineService;
@@ -69,9 +68,9 @@ public class ProjectServiceImpl implements ProjectService {
 
         User user = projectUserService.getUser(principal);
 
-        // Check if user has pending or approved projects. If so return an error
-        if (projectRepository.existsByMembersContainingAndStatusIn(user, List.of(ProjectStatusEnum.PENDING, ProjectStatusEnum.APPROVED, ProjectStatusEnum.PUBLISHED))) {
-            throw new RuntimeException("User already has a pending or approved or published project");
+        // Check if user has already created a project for this assignment
+        if (projectRepository.existsByAssignmentIdAndMembersContainingAndStatusNotIn(assignmentId, user, List.of(ProjectStatusEnum.REJECTED))) {
+            throw new RuntimeException("User has already created a project for this assignment");
         }
 
         Assignment assignment = assignmentRepository.findById(assignmentId)

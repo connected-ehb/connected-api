@@ -13,6 +13,7 @@ import java.util.List;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findAllByAssignmentId(Long assignmentId);
     List<Project> findAllByAssignmentIdAndStatus(Long AssignmentId, ProjectStatusEnum status);
+    boolean existsByAssignmentIdAndMembersContainingAndStatusNotIn(Long assignmentId, User user, List<ProjectStatusEnum> status);
 
     boolean existsByMembersContainingAndStatusIn(User user, List<ProjectStatusEnum> pending);
 }
