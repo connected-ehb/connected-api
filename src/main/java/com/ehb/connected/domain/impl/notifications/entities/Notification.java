@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @RequiredArgsConstructor
-@NoArgsConstructor
 public class Notification {
     @Id
     private Long id;
@@ -31,4 +30,5 @@ public class Notification {
 
     private LocalDateTime timestamp = LocalDateTime.now();
 
+    private String destinationUrl;
 }

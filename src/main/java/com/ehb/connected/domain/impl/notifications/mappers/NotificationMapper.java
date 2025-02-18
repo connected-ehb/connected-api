@@ -14,6 +14,7 @@ public class NotificationMapper {
         dto.setUser(notification.getUser());
         dto.setMessage(notification.getMessage());
         dto.setRead(notification.isRead());
+        dto.setDestinationUrl(notification.getDestinationUrl());
         dto.setTimestamp(notification.getTimestamp());
         return dto;
     }
@@ -24,6 +25,7 @@ public class NotificationMapper {
         notification.setUser(dto.getUser());
         notification.setMessage(dto.getMessage());
         notification.setRead(dto.isRead());
+        notification.setDestinationUrl(dto.getDestinationUrl());
         notification.setTimestamp(dto.getTimestamp());
         return notification;
     }
