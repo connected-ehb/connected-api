@@ -10,14 +10,17 @@ import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.entities.Project;
-import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
-import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
+import com.ehb.connected.domain.impl.users.services.UserService;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.DeadlineExpiredException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
+import com.ehb.connected.exceptions.UserUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ApplicationServiceImpl implements ApplicationService {
 
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     private final ApplicationRepository applicationRepository;
     private final ProjectService projectService;
@@ -131,7 +134,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application newApplication = new Application();
         newApplication.setStatus(ApplicationStatusEnum.PENDING);
-        newApplication.setMotivationMd(application.getMotivationMd());
+        newApplication.setMotivationMd(applicationDto.getMotivationMd());
         newApplication.setApplicant(currentUser);
         newApplication.setProject(project);
         applicationRepository.save(newApplication);
@@ -153,15 +156,38 @@ public class ApplicationServiceImpl implements ApplicationService {
      * @throws UserUnauthorizedException if the user does not have the STUDENT or TEACHER role.
      */
     @Override
-    public List<Application> findAllApplications(Long id) {
-        return applicationRepository.findAllApplications(id);
+    public List<ApplicationDetailsDto> getAllApplications(Principal principal, Long assignmentId) {
+        User user = userService.getUserByPrincipal(principal);
+        if(user.getRole() == Role.STUDENT){
+            return applicationMapper.toDtoList(applicationRepository.findAllApplicationsByUserIdOrProjectCreatedByAndAssignment(user.getId(), assignmentId));
+        } else if(user.getRole() == Role.TEACHER){
+            return applicationMapper.toDtoList(applicationRepository.findAllApplicationsByAssignmentId(assignmentId));
+        } else {
+            throw new UserUnauthorizedException(user.getId());
+        }
     }
 
-    @Override
-    public List<Application> findAllApplicationsByUserAndAssignment(Long id, Long assignmentId) {
-        return applicationRepository.findAllApplicationsByUserId(id, assignmentId);
-    }
-
+    /**
+     * Reviews an application by updating its status, ensuring that the requesting user is authorized and the application is still pending.
+     * <p>
+     * The method performs the following steps:
+     * <ol>
+     *   <li>Retrieves the application by its ID, throwing an {@link EntityNotFoundException} if not found.</li>
+     *   <li>Verifies that the user owns the project associated with the application; otherwise, throws a {@link UserNotOwnerOfProjectException}.</li>
+     *   <li>Checks that the application is still pending; if it has already been reviewed, throws a {@link BaseRuntimeException} with a conflict status.</li>
+     *   <li>If the new status is {@code APPROVED}, it rejects all other pending applications for the same applicant by calling {@code rejectAllOtherApplications()}.</li>
+     *   <li>Sets the application's status to the provided value (approved or rejected) and saves the update.</li>
+     * </ol>
+     * </p>
+     *
+     * @param principal the security principal representing the currently authenticated user.
+     * @param applicationId the unique identifier of the application to review.
+     * @param status the new status to set for the application; typically either {@code APPROVED} or {@code REJECTED}.
+     * @return an {@link ApplicationDetailsDto} representing the updated application.
+     * @throws EntityNotFoundException if no application is found for the given ID.
+     * @throws UserNotOwnerOfProjectException if the user is not the owner of the project associated with the application.
+     * @throws BaseRuntimeException if the application has already been reviewed.
+     */
     @Override
     @Transactional
     public ApplicationDetailsDto reviewApplication(Principal principal, Long applicationId, ApplicationStatusEnum status) {

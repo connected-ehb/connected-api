@@ -13,10 +13,11 @@ import java.util.List;
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
 
     @Query("SELECT a FROM Application a WHERE a.project.assignment.id = :id")
-    List<Application> findAllApplications(@Param("id") Long id);
+    List<Application> findAllApplicationsByAssignmentId(@Param("id") Long id);
 
-    List<Application> findByApplicant(User applicant);
+    @Query("SELECT a FROM Application a WHERE a.project.assignment.id = :assignmentId AND a.applicant = :applicant")
+    List<Application> findByApplicantInAssignment(@Param("assignmentId") Long assignmentId, @Param("applicant") User applicant);
 
-    @Query("SELECT a FROM Application a WHERE a.applicant.id = :id AND a.project.assignment.id = :assignmentId")
-    List<Application> findAllApplicationsByUserId(Long id, Long assignmentId);
+    @Query("SELECT a FROM Application a WHERE (a.applicant.id = :userId OR a.project.createdBy.id = :userId) AND a.project.assignment.id = :assignmentId")
+    List<Application> findAllApplicationsByUserIdOrProjectCreatedByAndAssignment(@Param("userId") Long userId, @Param("assignmentId") Long assignmentId);
 }

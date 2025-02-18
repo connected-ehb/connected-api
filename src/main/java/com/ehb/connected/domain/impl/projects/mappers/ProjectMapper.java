@@ -18,6 +18,7 @@ public class ProjectMapper {
     private final TagMapper tagMapper;
     private final UserDetailsMapper userMapper;
 
+
     public List<ProjectDetailsDto> toDetailsDtoList(List<Project> projects) {
         return projects.stream().map(this::toDetailsDto).toList();
     }

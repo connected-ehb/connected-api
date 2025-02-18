@@ -188,8 +188,11 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         final Project project = getProjectById(projectId);
+        ProjectStatusEnum previousStatus = project.getStatus();
         project.setStatus(status);
         projectRepository.save(project);
+        logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
+                ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
         return projectMapper.toDetailsDto(project);
     }
 
@@ -225,8 +228,14 @@ public class ProjectServiceImpl implements ProjectService {
         final User user = userService.getUserByPrincipal(principal);
 
         if (user.getRole().equals(Role.TEACHER)) {
-            project.getMembers().removeIf(member -> member.getId().equals(memberId));
-            projectRepository.save(project);
+            final boolean removed = project.getMembers().removeIf(member -> member.getId().equals(memberId));
+            if (removed) {
+                logger.info("[{}] Member ID: {} was successfully removed from project ID: {} by User ID: {}",
+                        ProjectService.class.getSimpleName(), memberId, projectId, user.getId());
+                projectRepository.save(project);
+            } else {
+                throw new EntityNotFoundException(User.class, memberId);
+            }
         } else {
             throw new UserUnauthorizedException(user.getId());
         }

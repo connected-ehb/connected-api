@@ -3,7 +3,6 @@ package com.ehb.connected.domain.impl.applications.controllers;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
-import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.service.ApplicationServiceImpl;
 
 import lombok.RequiredArgsConstructor;
@@ -22,13 +21,11 @@ public class ApplicationController {
 
     @PostMapping("/{applicationId}/review")
     public ResponseEntity<ApplicationDetailsDto> reviewApplication(Principal principal, @PathVariable Long applicationId, @RequestHeader ApplicationStatusEnum status) {
-        applicationService.reviewApplication(principal, applicationId, status);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(applicationService.reviewApplication(principal, applicationId, status));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApplicationDetailsDto> getApplicationById(@PathVariable Long id) {
-        ApplicationDetailsDto applicationDetailsDto = applicationMapper.toDto(applicationService.getApplicationById(id));
-        return ResponseEntity.ok(applicationDetailsDto);
+    @GetMapping("/{applicationId}")
+    public ResponseEntity<ApplicationDetailsDto> getApplicationById(Principal principal, @PathVariable Long applicationId) {
+        return ResponseEntity.ok(applicationService.getApplicationById(principal, applicationId));
     }
 }

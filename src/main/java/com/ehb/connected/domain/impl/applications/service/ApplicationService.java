@@ -2,7 +2,6 @@ package com.ehb.connected.domain.impl.applications.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
-import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 
 import java.security.Principal;
