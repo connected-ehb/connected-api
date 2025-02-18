@@ -6,6 +6,7 @@ import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.service.ApplicationServiceImpl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,15 +15,11 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("api/applications")
+@RequiredArgsConstructor
 public class ApplicationController {
 
     private final ApplicationServiceImpl applicationService;
     private final ApplicationMapper applicationMapper;
-
-    public ApplicationController(ApplicationServiceImpl applicationService, ApplicationMapper applicationMapper) {
-        this.applicationService = applicationService;
-        this.applicationMapper = applicationMapper;
-    }
 
     @PostMapping("/{applicationId}/review")
     public ResponseEntity<ApplicationDetailsDto> reviewApplication(Principal principal, @PathVariable Long applicationId, @RequestHeader ApplicationStatusEnum status) {

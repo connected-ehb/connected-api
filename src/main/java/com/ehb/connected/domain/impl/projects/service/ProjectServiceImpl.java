@@ -14,6 +14,7 @@ import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
@@ -79,10 +80,18 @@ public class ProjectServiceImpl implements ProjectService {
      * @return ProjectDetailsDto
      */
     @Override
-    public ProjectDetailsDto getProjectById(Long projectId) {
-        return projectMapper.toDetailsDto(projectRepository.findById(projectId).orElseThrow(() ->
-            new EntityNotFoundException(Project.class, projectId)
-        ));
+    public ProjectDetailsDto getProjectById(Principal principal, Long projectId) {
+        User user = userService.getUserByPrincipal(principal);
+        Project project = getProjectById(projectId);
+
+        // Check if user is the owner of the project or a teacher and the project is not published
+        if (project.getStatus() == ProjectStatusEnum.PUBLISHED) {
+            return projectMapper.toDetailsDto(project);
+        } else if (user.getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
+            return projectMapper.toDetailsDto(project);
+        } else {
+            throw new UserUnauthorizedException(user.getId());
+        }
     }
 
     /**
@@ -227,5 +236,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
         return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);
+    }
+
+    public Project getProjectById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
     }
 }

@@ -8,9 +8,9 @@ import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
-
-import static java.util.stream.Collectors.toList;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -48,7 +48,7 @@ public class ProjectMapper {
         project.setRepositoryUrl(dto.getRepositoryUrl());
         project.setBoardUrl(dto.getBoardUrl());
         project.setBackgroundImage(dto.getBackgroundImage());
-        project.setTags(dto.getTags());
+        project.setTags(tagMapper.toEntityList(dto.getTags()));
 
         return project;
     }
