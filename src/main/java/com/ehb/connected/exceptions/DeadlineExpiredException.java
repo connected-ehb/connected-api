@@ -8,10 +8,6 @@ import org.springframework.http.HttpStatus;
 public class DeadlineExpiredException extends BaseRuntimeException {
         private final HttpStatus status = HttpStatus.GONE;
 
-        public DeadlineExpiredException() {
-                super("Deadline has passed", HttpStatus.GONE);
-        }
-
         public DeadlineExpiredException(DeadlineRestriction restriction) {
                 super("Deadline for " + restriction + " has passed.", HttpStatus.GONE);
         }

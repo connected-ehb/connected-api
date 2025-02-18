@@ -1,29 +1,9 @@
 package com.ehb.connected.domain.impl.projects.service;
 
-import com.ehb.connected.domain.impl.projects.entities.Project;
-import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
-import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-import java.security.Principal;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
 public class ProjectServiceImplTest {
-
-    @Mock
-    private ProjectRepository projectRepository;
-
-    @Mock
-    private Principal principal;
-    @InjectMocks
-    private ProjectServiceImpl projectServiceImpl;
 
     @Test
     public void testGetProjectById() {

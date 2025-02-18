@@ -3,7 +3,6 @@ package com.ehb.connected.domain.impl.projects.controllers;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;

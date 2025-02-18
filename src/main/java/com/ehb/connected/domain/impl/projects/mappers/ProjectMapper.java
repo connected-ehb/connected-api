@@ -1,31 +1,22 @@
 package com.ehb.connected.domain.impl.projects.mappers;
 
-import com.ehb.connected.domain.impl.assignments.entities.Assignment;
-import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
-import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
 @Component
+@RequiredArgsConstructor
 public class ProjectMapper {
     private final TagMapper tagMapper;
     private final UserDetailsMapper userMapper;
-    private final AssignmentRepository assignmentRepository;
-
-    public ProjectMapper(TagMapper tagMapper, UserDetailsMapper userMapper, AssignmentRepository assignmentRepository) {
-        this.tagMapper = tagMapper;
-        this.userMapper = userMapper;
-        this.assignmentRepository = assignmentRepository;
-    }
 
     public List<ProjectDetailsDto> toDetailsDtoList(List<Project> projects) {
         return projects.stream().map(this::toDetailsDto).toList();
@@ -78,18 +69,5 @@ public class ProjectMapper {
         project.setTags(dto.getTags());
 
         return project;
-    }
-
-    public void updateEntity(ProjectUpdateDto dto, Project project) {
-        if (dto == null || project == null) {
-            return;
-        }
-
-        project.setTitle(dto.getTitle());
-        project.setDescription(dto.getDescription());
-        project.setShortDescription(dto.getShortDescription());
-        project.setRepositoryUrl(dto.getRepositoryUrl());
-        project.setBoardUrl(dto.getBoardUrl());
-        project.setBackgroundImage(dto.getBackgroundImage());
     }
 }

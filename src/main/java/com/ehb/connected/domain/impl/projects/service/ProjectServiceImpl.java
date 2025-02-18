@@ -53,7 +53,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId) {
         return projectMapper.toDetailsDtoList(
-                projectRepository.findAllByAssignmentIdAndStatusOrAssignmentIdAndCreatedBy(
+                projectRepository.findAllByAssignmentIdAndStatusOrOwnedBy(
                         assignmentId,
                         ProjectStatusEnum.PUBLISHED,
                         userService.getUserByPrincipal(principal)
