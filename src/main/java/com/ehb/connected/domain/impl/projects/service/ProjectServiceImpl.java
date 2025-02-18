@@ -50,6 +50,32 @@ public class ProjectServiceImpl implements ProjectService {
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
     /**
+     * Get a project by id
+     * @param projectId the id of the project to get
+     * @return ProjectDetailsDto
+     */
+    @Override
+    public ProjectDetailsDto getProjectById(Principal principal, Long projectId) {
+        User user = userService.getUserByPrincipal(principal);
+        Project project = getProjectById(projectId);
+
+        // Check if user is the owner of the project or a teacher and the project is not published
+        if (project.getStatus() == ProjectStatusEnum.PUBLISHED) {
+            return projectMapper.toDetailsDto(project);
+        } else if (user.getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
+            return projectMapper.toDetailsDto(project);
+        } else {
+            throw new UserUnauthorizedException(user.getId());
+        }
+    }
+
+    @Override
+    public Project getProjectById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+    }
+
+    /**
      * Get all projects for a specific assignment (For Teachers)
      * @param assignmentId the id of the assignment for which to get the projects
      * @return List of ProjectDetailsDto
@@ -75,26 +101,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     /**
-     * Get a project by id
-     * @param projectId the id of the project to get
-     * @return ProjectDetailsDto
-     */
-    @Override
-    public ProjectDetailsDto getProjectById(Principal principal, Long projectId) {
-        User user = userService.getUserByPrincipal(principal);
-        Project project = getProjectById(projectId);
-
-        // Check if user is the owner of the project or a teacher and the project is not published
-        if (project.getStatus() == ProjectStatusEnum.PUBLISHED) {
-            return projectMapper.toDetailsDto(project);
-        } else if (user.getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
-            return projectMapper.toDetailsDto(project);
-        } else {
-            throw new UserUnauthorizedException(user.getId());
-        }
-    }
-
-    /**
      * Create a project
      * @param principal the principal of the user creating the project
      * @param assignmentId the id of the assignment for which to create the project
@@ -107,8 +113,8 @@ public class ProjectServiceImpl implements ProjectService {
         final User user = userService.getUserByPrincipal(principal);
 
         // Check if user has already created a project for this assignment
-        if (projectRepository.existsByAssignmentIdAndMembersContainingAndStatusNotIn(assignmentId, user, List.of(ProjectStatusEnum.REJECTED))) {
-            throw new BaseRuntimeException("User has already created a project for this assignment", HttpStatus.CONFLICT);
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, assignmentId)) {
+            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
         final Assignment assignment = assignmentRepository.findById(assignmentId)
@@ -161,7 +167,7 @@ public class ProjectServiceImpl implements ProjectService {
         existingProject.setTags(tagMapper.toEntityList(project.getTags().stream().distinct().toList()));
 
         Project savedProject = projectRepository.save(existingProject);
-        logger.info("[{}] Project has been updated", ProjectService.class.getName());
+        logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
 
         return projectMapper.toDetailsDto(savedProject);
     }
@@ -236,10 +242,5 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
         return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);
-    }
-
-    public Project getProjectById(Long projectId) {
-        return projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
     }
 }

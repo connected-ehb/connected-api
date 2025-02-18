@@ -19,7 +19,6 @@ import java.security.Principal;
 public class ApplicationController {
 
     private final ApplicationServiceImpl applicationService;
-    private final ApplicationMapper applicationMapper;
 
     @PostMapping("/{applicationId}/review")
     public ResponseEntity<ApplicationDetailsDto> reviewApplication(Principal principal, @PathVariable Long applicationId, @RequestHeader ApplicationStatusEnum status) {
@@ -27,14 +26,9 @@ public class ApplicationController {
         return ResponseEntity.ok().build();
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationDetailsDto> getApplicationById(@PathVariable Long id) {
         ApplicationDetailsDto applicationDetailsDto = applicationMapper.toDto(applicationService.getApplicationById(id));
         return ResponseEntity.ok(applicationDetailsDto);
     }
-
-
-
-
 }

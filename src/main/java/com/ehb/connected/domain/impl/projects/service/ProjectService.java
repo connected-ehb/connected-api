@@ -12,6 +12,7 @@ import java.util.List;
 
 public interface ProjectService {
     ProjectDetailsDto getProjectById(Principal principal, Long id);
+    Project getProjectById(Long id);
     List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId);
     List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId);
     List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status);

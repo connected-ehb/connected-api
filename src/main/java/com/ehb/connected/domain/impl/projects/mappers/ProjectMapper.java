@@ -39,7 +39,6 @@ public class ProjectMapper {
         );
     }
 
-
     public Project toEntity(ProjectCreateDto dto) {
         Project project = new Project();
         project.setTitle(dto.getTitle());
