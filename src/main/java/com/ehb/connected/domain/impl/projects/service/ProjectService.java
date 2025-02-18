@@ -1,29 +1,22 @@
 package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
-import org.springframework.http.ResponseEntity;
 
 import java.security.Principal;
 import java.util.List;
 
 public interface ProjectService {
     List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId);
-    List<ProjectDetailsDto> getAllPublishedProjectsByAssignmentId(Long assignmentId);
+    List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId);
     ProjectDetailsDto getProjectById(Long id);
     List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status);
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
     ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project);
-    void deleteProject(Long id);
-
-    void approveProject(Long id);
-
-    void rejectProject(Long id);
 
     ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
 

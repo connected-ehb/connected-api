@@ -14,8 +14,12 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findAllByAssignmentId(Long assignmentId);
-    List<Project> findAllByAssignmentIdAndStatus(Long AssignmentId, ProjectStatusEnum status);
-    boolean existsByAssignmentIdAndMembersContainingAndStatusNotIn(Long assignmentId, User user, List<ProjectStatusEnum> status);
 
-    boolean existsByMembersContainingAndStatusIn(User user, List<ProjectStatusEnum> pending);
+    @Query("SELECT p FROM Project p WHERE p.assignment.id = :assignmentId AND (p.status = :status OR p.createdBy = :user)")
+    List<Project> findAllByAssignmentIdAndStatusOrOwnedBy(@Param("assignmentId") Long assignmentId,
+                                                          @Param("status") ProjectStatusEnum status,
+                                                          @Param("user") User user);
+
+    List<Project> findAllByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
+    boolean existsByAssignmentIdAndMembersContainingAndStatusNotIn(Long assignmentId, User user, List<ProjectStatusEnum> status);
 }

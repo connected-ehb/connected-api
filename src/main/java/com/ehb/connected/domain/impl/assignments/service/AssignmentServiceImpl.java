@@ -9,7 +9,6 @@ import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -61,6 +60,6 @@ public class AssignmentServiceImpl implements AssignmentService {
     public List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId) {
         List<Project> projects = projectService.getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
         projects.forEach(project -> projectService.changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
-        return projectService.getAllPublishedProjectsByAssignmentId(assignmentId);
+        return projectMapper.toDetailsDtoList(projects);
     }
 }

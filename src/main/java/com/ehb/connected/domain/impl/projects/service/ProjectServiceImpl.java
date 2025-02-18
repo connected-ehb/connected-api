@@ -1,10 +1,7 @@
 package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.entities.Application;
-import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
-import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
@@ -19,18 +16,21 @@ import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.services.UserService;
+import com.ehb.connected.exceptions.BaseRuntimeException;
+import com.ehb.connected.exceptions.DeadlineExpiredException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
+import com.ehb.connected.exceptions.UserUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,17 +39,29 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
+
     private final DeadlineService deadlineService;
     private final AssignmentRepository assignmentRepository;
     private final ApplicationMapper applicationMapper;
+    private final UserService userService;
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
+    /**
+     * Get all projects for a specific assignment (For Teachers)
+     * @param assignmentId the id of the assignment for which to get the projects
+     * @return List of ProjectDetailsDto
+     */
     @Override
     public List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId) {
         return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentId(assignmentId));
     }
 
+    /**
+     * Get all published projects (For Students)
+     * @param assignmentId the id of the assignment for which to get the published projects
+     * @return List of ProjectDetailsDto
+     */
     @Override
     public List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId) {
         return projectMapper.toDetailsDtoList(
@@ -80,42 +92,34 @@ public class ProjectServiceImpl implements ProjectService {
      * @return ProjectDetailsDto
      */
     @Override
-    public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project) {
+    public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto projectDto) {
 
-        User user = projectUserService.getUser(principal);
+        final User user = userService.getUserByPrincipal(principal);
 
         // Check if user has already created a project for this assignment
         if (projectRepository.existsByAssignmentIdAndMembersContainingAndStatusNotIn(assignmentId, user, List.of(ProjectStatusEnum.REJECTED))) {
-            throw new RuntimeException("User has already created a project for this assignment");
+            throw new BaseRuntimeException("User has already created a project for this assignment", HttpStatus.CONFLICT);
         }
 
-        Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
-        System.out.println(assignment);
+        final Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
+
         // Fetch deadline for the assignment with the restriction PROJECT_CREATION
-        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
+        final Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
 
         // If a deadline exists and has passed, throw an error
         if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Project creation is no longer allowed. The deadline has passed.");
+            throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
         }
 
-        // Proceed with project creation since there is no deadline or the deadline is valid
-        Project newProject = new Project();
-        newProject.setTitle(project.getTitle());
-        newProject.setDescription(project.getDescription());
-        newProject.setShortDescription(project.getShortDescription());
-        newProject.setRepositoryUrl(project.getRepositoryUrl());
-        newProject.setBoardUrl(project.getBoardUrl());
-        newProject.setBackgroundImage(project.getBackgroundImage());
-        newProject.setTags(project.getTags());
+        Project newProject = projectMapper.toEntity(projectDto);
         newProject.setStatus(ProjectStatusEnum.PENDING);
-        // add current user to members list
         newProject.setMembers(List.of(user));
-
-        newProject.setCreatedBy(projectUserService.getUser(principal));
+        newProject.setCreatedBy(userService.getUserByPrincipal(principal));
         newProject.setAssignment(assignment);
-        return projectMapper.toDetailsDto(projectRepository.save(newProject));
+        Project savedProject = projectRepository.save(newProject);
+        logger.info("[{}] Project has been created", ProjectService.class.getName());
+        return projectMapper.toDetailsDto(savedProject);
     }
 
     /**
@@ -127,8 +131,8 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
-        Project existingProject = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+        final Project existingProject = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
         // only pending projects can be updated
         if (existingProject.getStatus() != ProjectStatusEnum.PENDING) {
@@ -137,7 +141,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         // Check if user is the owner of the project
         if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
-            throw new RuntimeException("User is not the owner of the project");
+            throw new UserNotOwnerOfProjectException();
         }
 
         existingProject.setTitle(project.getTitle());
@@ -145,7 +149,10 @@ public class ProjectServiceImpl implements ProjectService {
         existingProject.setRepositoryUrl(project.getRepositoryUrl());
         existingProject.setBackgroundImage(project.getBackgroundImage());
 
-        return projectMapper.toDetailsDto(projectRepository.save(existingProject));
+        Project savedProject = projectRepository.save(existingProject);
+        logger.info("[{}] Project has been updated", ProjectService.class.getName());
+
+        return projectMapper.toDetailsDto(savedProject);
     }
 
     /**
@@ -156,15 +163,15 @@ public class ProjectServiceImpl implements ProjectService {
      * @return ProjectDetailsDto
      */
     @Override
-    public ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status) {
-        User user = projectUserService.getUser(principal);
+    public ProjectDetailsDto changeProjectStatus(Principal principal, Long projectId, ProjectStatusEnum status) {
+        final User user = userService.getUserByPrincipal(principal);
 
         if (user.getRole().equals(Role.STUDENT)) {
-            throw new RuntimeException("User is not authorized to change project status");
+            throw new UserUnauthorizedException(user.getId());
         }
 
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
+        final Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
         project.setStatus(status);
         projectRepository.save(project);
         return projectMapper.toDetailsDto(project);
@@ -178,8 +185,13 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     public List<ApplicationDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
-        if (!projectUserService.isUserOwnerOfProject(principal, projectId) && projectUserService.getUser(principal).getRole().equals(Role.STUDENT)) {
-            throw new RuntimeException("User is not the owner of the project");
+        if (projectUserService.isUserOwnerOfProject(principal, projectId) || userService.getUserByPrincipal(principal).getRole().equals(Role.TEACHER)) {
+            final Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+
+            return applicationMapper.toDtoList(project.getApplications());
+        } else {
+            throw new UserNotOwnerOfProjectException();
         }
     }
 
