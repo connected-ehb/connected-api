@@ -23,40 +23,22 @@ public class ProjectMapper {
     }
 
     public ProjectDetailsDto toDetailsDto(Project project) {
-        if (project == null) {
-            return null;
-        }
-
-        ProjectDetailsDto dto = new ProjectDetailsDto();
-        dto.setId(project.getId());
-        dto.setTitle(project.getTitle());
-        dto.setDescription(project.getDescription());
-        dto.setShortDescription(project.getShortDescription());
-        dto.setStatus(project.getStatus().name());
-        dto.setRepositoryUrl(project.getRepositoryUrl());
-        dto.setBoardUrl(project.getBoardUrl());
-        dto.setBackgroundImage(project.getBackgroundImage());
-
-        if (project.getAssignment() != null) {
-            dto.setAssignmentId(project.getAssignment().getId());
-        }
-
-        if (project.getTags() != null) {
-            dto.setTags(project.getTags().stream().map(tagMapper::toDto).collect(toList()));
-        } else {
-            dto.setTags(List.of());
-        }
-
-        dto.setCreatedBy(userMapper.toUserDetailsDto(project.getCreatedBy()));
-
-        if (project.getMembers() != null) {
-            dto.setMembers(project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(toList()));
-        } else {
-            dto.setMembers(List.of());
-        }
-
-        return dto;
+        return new ProjectDetailsDto(
+                project.getId(),
+                project.getTitle(),
+                project.getDescription(),
+                project.getShortDescription(),
+                project.getStatus(),
+                project.getRepositoryUrl(),
+                project.getBoardUrl(),
+                project.getBackgroundImage(),
+                project.getAssignment() != null ? project.getAssignment().getId() : null,
+                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList(),
+                userMapper.toUserDetailsDto(project.getCreatedBy()),
+                project.getMembers() != null ? project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()) : Collections.emptyList()
+        );
     }
+
 
     public Project toEntity(ProjectCreateDto dto) {
         Project project = new Project();

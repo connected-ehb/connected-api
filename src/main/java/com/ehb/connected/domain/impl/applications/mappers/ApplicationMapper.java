@@ -1,6 +1,6 @@
 package com.ehb.connected.domain.impl.applications.mappers;
 
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
@@ -16,8 +16,8 @@ public class ApplicationMapper {
     private final UserDetailsMapper userDetailsMapper;
     private final ProjectMapper projectMapper;
 
-    public ApplicationDto toDto(Application application) {
-        return new ApplicationDto(
+    public ApplicationDetailsDto toDto(Application application) {
+        return new ApplicationDetailsDto(
                 application.getId(),
                 application.getMotivationMd(),
                 application.getStatus(),
@@ -25,7 +25,7 @@ public class ApplicationMapper {
                 userDetailsMapper.toUserDetailsDto(application.getApplicant())
         );
     }
-    public List<ApplicationDto> toDtoList(List<Application> applications) {
+    public List<ApplicationDetailsDto> toDtoList(List<Application> applications) {
         return applications.stream().map(this::toDto).toList();
     }
 

@@ -1,7 +1,7 @@
 package com.ehb.connected.domain.impl.assignments.controllers;
 
 
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.service.ApplicationServiceImpl;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentCreateDto;
@@ -116,14 +116,14 @@ public class AssignmentController {
 
     //TODO mapping should be moved to service layer
     @GetMapping("/{assignmentId}/applications")
-    public ResponseEntity<List<ApplicationDto>> getAllApplications(Principal principal, @PathVariable Long assignmentId){
+    public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Principal principal, @PathVariable Long assignmentId){
         User user = userService.getUserByEmail(principal.getName());
         if(user.getRole() == Role.STUDENT){
             return ResponseEntity.ok(applicationService.findAllApplicationsByUserAndAssignment(user.getId(), assignmentId).stream()
                     .map(applicationMapper::toDto)
                     .toList());
         } else {
-            List<ApplicationDto> applications = applicationService.findAllApplications(assignmentId).stream()
+            List<ApplicationDetailsDto> applications = applicationService.findAllApplications(assignmentId).stream()
                     .map(applicationMapper::toDto)
                     .toList();
             return ResponseEntity.ok(applications);

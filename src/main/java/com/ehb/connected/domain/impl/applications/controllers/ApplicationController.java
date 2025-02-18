@@ -1,7 +1,7 @@
 package com.ehb.connected.domain.impl.applications.controllers;
 
 
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.service.ApplicationServiceImpl;
@@ -25,16 +25,16 @@ public class ApplicationController {
     }
 
     @PostMapping("/{applicationId}/review")
-    public ResponseEntity<ApplicationDto> reviewApplication(Principal principal, @PathVariable Long applicationId, @RequestHeader ApplicationStatusEnum status) {
+    public ResponseEntity<ApplicationDetailsDto> reviewApplication(Principal principal, @PathVariable Long applicationId, @RequestHeader ApplicationStatusEnum status) {
         applicationService.reviewApplication(principal, applicationId, status);
         return ResponseEntity.ok().build();
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApplicationDto> getApplicationById(@PathVariable Long id) {
-        ApplicationDto applicationDto = applicationMapper.toDto(applicationService.getApplicationById(id));
-        return ResponseEntity.ok(applicationDto);
+    public ResponseEntity<ApplicationDetailsDto> getApplicationById(@PathVariable Long id) {
+        ApplicationDetailsDto applicationDetailsDto = applicationMapper.toDto(applicationService.getApplicationById(id));
+        return ResponseEntity.ok(applicationDetailsDto);
     }
 
 

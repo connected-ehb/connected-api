@@ -1,7 +1,7 @@
 package com.ehb.connected.domain.impl.applications.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
@@ -49,7 +49,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDto createApplication(Principal principal, Long projectId, ApplicationCreateDto application) {
+    public ApplicationDetailsDto createApplication(Principal principal, Long projectId, ApplicationCreateDto application) {
         Project project = projectRepository.findById(projectId).orElseThrow(() -> new EntityNotFoundException("Project not found"));
         User currentUser = userService.getUserByEmail(principal.getName());
         if(project.getCreatedBy().equals(currentUser)) {

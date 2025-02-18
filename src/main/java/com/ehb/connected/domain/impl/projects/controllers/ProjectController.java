@@ -2,7 +2,7 @@ package com.ehb.connected.domain.impl.projects.controllers;
 
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
@@ -29,8 +29,8 @@ public class ProjectController {
     private final ApplicationService applicationService;
 
     @GetMapping("/{projectId}")
-    public ResponseEntity<ProjectDetailsDto> getProjectById(@PathVariable Long projectId){
-        return ResponseEntity.ok(projectService.getProjectById(projectId));
+    public ResponseEntity<ProjectDetailsDto> getProjectById(Principal principal, @PathVariable Long projectId){
+        return ResponseEntity.ok(projectService.getProjectById(principal, projectId));
     }
 
     //TODO: find better endpoint
@@ -60,7 +60,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{projectId}/applications")
-    public ResponseEntity<List<ApplicationDto>> getAllApplications(Principal principal, @PathVariable Long projectId) {
+    public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Principal principal, @PathVariable Long projectId) {
         return ResponseEntity.ok(projectService.getAllApplicationsByProjectId(principal, projectId));
     }
 
@@ -94,7 +94,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/apply")
-    public ResponseEntity<ApplicationDto> applyForProject(Principal principal, @PathVariable Long projectId, @RequestBody ApplicationCreateDto application) {
+    public ResponseEntity<ApplicationDetailsDto> applyForProject(Principal principal, @PathVariable Long projectId, @RequestBody ApplicationCreateDto application) {
         return ResponseEntity.ok(applicationService.createApplication(principal, projectId, application));
     }
 

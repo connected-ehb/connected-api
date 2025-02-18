@@ -1,6 +1,6 @@
 package com.ehb.connected.domain.impl.projects.service;
 
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
@@ -39,6 +39,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
+    private final TagMapper tagMapper;
 
     private final DeadlineService deadlineService;
     private final AssignmentRepository assignmentRepository;
@@ -131,8 +132,7 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
-        final Project existingProject = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+        final Project existingProject = getProjectById(projectId);
 
         // only pending projects can be updated
         if (existingProject.getStatus() != ProjectStatusEnum.PENDING) {
@@ -148,6 +148,8 @@ public class ProjectServiceImpl implements ProjectService {
         existingProject.setDescription(project.getDescription());
         existingProject.setRepositoryUrl(project.getRepositoryUrl());
         existingProject.setBackgroundImage(project.getBackgroundImage());
+
+        existingProject.setTags(tagMapper.toEntityList(project.getTags().stream().distinct().toList()));
 
         Project savedProject = projectRepository.save(existingProject);
         logger.info("[{}] Project has been updated", ProjectService.class.getName());
@@ -170,8 +172,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new UserUnauthorizedException(user.getId());
         }
 
-        final Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+        final Project project = getProjectById(projectId);
         project.setStatus(status);
         projectRepository.save(project);
         return projectMapper.toDetailsDto(project);
@@ -184,7 +185,7 @@ public class ProjectServiceImpl implements ProjectService {
      * @return List of ApplicationDto
      */
     @Override
-    public List<ApplicationDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
+    public List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
         if (projectUserService.isUserOwnerOfProject(principal, projectId) || userService.getUserByPrincipal(principal).getRole().equals(Role.TEACHER)) {
             final Project project = projectRepository.findById(projectId)
                     .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
@@ -204,8 +205,7 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     public void removeMember(Principal principal, Long projectId, Long memberId) {
-        final Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+        final Project project = getProjectById(projectId);
 
         final User user = userService.getUserByPrincipal(principal);
 

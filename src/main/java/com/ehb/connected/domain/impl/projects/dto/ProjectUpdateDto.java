@@ -14,5 +14,5 @@ public class ProjectUpdateDto {
     private String boardUrl;
     private String backgroundImage;
 
-    private List<Long> tagIds;
+    private List<TagDto> tags;
 }
