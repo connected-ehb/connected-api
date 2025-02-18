@@ -29,7 +29,13 @@ public class ProjectController {
     private final FeedbackService feedbackService;
     private final ApplicationService applicationService;
 
-    @GetMapping("/{assignmentId}")
+    @GetMapping("/{projectId}")
+    public ResponseEntity<ProjectDetailsDto> getProjectById(@PathVariable Long projectId){
+        return ResponseEntity.ok(projectService.getProjectById(projectId));
+    }
+
+    //TODO: find better endpoint
+    @GetMapping("/assignment/{assignmentId}")
     public ResponseEntity<List<ProjectDetailsDto>> getAllProjects(@PathVariable Long assignmentId){
         return ResponseEntity.ok(projectService.getAllProjectsByAssignmentId(assignmentId));
     }
@@ -37,11 +43,6 @@ public class ProjectController {
     @GetMapping("/{assignmentId}/published")
     public ResponseEntity<List<ProjectDetailsDto>> getAllPublishedProjects(@PathVariable Long assignmentId){
         return ResponseEntity.ok(projectService.getAllPublishedProjectsByAssignmentId(assignmentId));
-    }
-
-    @GetMapping("/{projectId}")
-    public ResponseEntity<ProjectDetailsDto> getProjectById(@PathVariable Long projectId){
-        return ResponseEntity.ok(projectService.getProjectById(projectId));
     }
 
     @PostMapping("/{assignmentId}")

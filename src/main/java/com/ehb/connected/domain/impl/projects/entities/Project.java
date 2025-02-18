@@ -55,9 +55,6 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Application> applications = new ArrayList<>();
 
-
-
-    //MTM with users: multiple users can be in the same project
     @ManyToMany
     @JoinTable(
             name = "members",
