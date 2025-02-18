@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Setter
 @RequiredArgsConstructor
 @NoArgsConstructor
-public class notification {
+public class Notification {
     @Id
     private Long id;
 
