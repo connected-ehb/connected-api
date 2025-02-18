@@ -56,9 +56,9 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, Long assignmentId) {
+    public List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId) {
         List<Project> projects = projectService.getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
         projects.forEach(project -> projectService.changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
-        return ResponseEntity.ok(projectService.getAllPublishedProjectsInAssignment(assignmentId));
+        return projectService.getAllPublishedProjectsByAssignmentId(assignmentId);
     }
 }

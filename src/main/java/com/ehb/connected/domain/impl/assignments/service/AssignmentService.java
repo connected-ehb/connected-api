@@ -18,5 +18,5 @@ public interface AssignmentService {
     List<Assignment> getAllAssignmentsByCourse(Long courseId);
 
     Assignment getAssignmentByCanvasAssignmentId(Long canvasAssignmentId);
-    ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, Long assignmentId);
+    List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId);
 }

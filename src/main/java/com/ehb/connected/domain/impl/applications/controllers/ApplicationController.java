@@ -2,14 +2,14 @@ package com.ehb.connected.domain.impl.applications.controllers;
 
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.service.ApplicationServiceImpl;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 
 @RestController
@@ -24,6 +24,11 @@ public class ApplicationController {
         this.applicationMapper = applicationMapper;
     }
 
+    @PostMapping("/{applicationId}/review")
+    public ResponseEntity<ApplicationDto> reviewApplication(Principal principal, @PathVariable Long applicationId, @RequestHeader ApplicationStatusEnum status) {
+        applicationService.reviewApplication(principal, applicationId, status);
+        return ResponseEntity.ok().build();
+    }
 
 
     @GetMapping("/{id}")

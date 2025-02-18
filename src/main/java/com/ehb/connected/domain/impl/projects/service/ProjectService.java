@@ -13,8 +13,8 @@ import java.security.Principal;
 import java.util.List;
 
 public interface ProjectService {
-    List<ProjectDetailsDto> getAllProjects(Long assignmentId);
-    List<ProjectDetailsDto> getAllPublishedProjectsInAssignment(Long assignmentId);
+    List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId);
+    List<ProjectDetailsDto> getAllPublishedProjectsByAssignmentId(Long assignmentId);
     ProjectDetailsDto getProjectById(Long id);
     List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status);
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
@@ -25,11 +25,9 @@ public interface ProjectService {
 
     void rejectProject(Long id);
 
-    ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
+    ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
 
-    List<ApplicationDto> getAllApplications(Principal principal, Long id);
-
-    void reviewApplication(Principal principal, Long id, Long applicationId, ApplicationStatusEnum status);
+    List<ApplicationDto> getAllApplicationsByProjectId(Principal principal, Long projectId);
 
     void removeMember(Principal principal, Long id, Long memberId);
 }

@@ -132,6 +132,6 @@ public class AssignmentController {
 
     @PostMapping("/{assignmentId}/projects/publish")
     public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, @PathVariable Long assignmentId) {
-        return assignmentService.publishAllProjects(principal, assignmentId);
+        return ResponseEntity.ok(assignmentService.publishAllProjects(principal, assignmentId));
     }
 }

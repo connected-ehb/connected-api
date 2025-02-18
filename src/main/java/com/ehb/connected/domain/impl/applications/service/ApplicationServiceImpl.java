@@ -11,11 +11,18 @@ import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
-import jakarta.persistence.EntityNotFoundException;
+import com.ehb.connected.exceptions.BaseRuntimeException;
+import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -31,6 +38,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ProjectRepository projectRepository;
     private final DeadlineService deadlineService;
     private final ApplicationMapper applicationMapper;
+
+    private final ProjectUserService projectUserService;
+
+    private final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
 
     @Override
     public Application getApplicationById(Long id) {
@@ -65,17 +76,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Application updateApplication(Application application) {
-        return applicationRepository.save(application);
-    }
-
-    @Override
-    public void deleteApplication(Long id) {
-        applicationRepository.deleteById(id);
-
-    }
-
-    @Override
     public List<Application> findAllApplications(Long id) {
         return applicationRepository.findAllApplications(id);
     }
@@ -85,5 +85,43 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationRepository.findAllApplicationsByUserId(id, assignmentId);
     }
 
+    @Override
+    @Transactional
+    public void reviewApplication(Principal principal, Long applicationId, ApplicationStatusEnum status) {
 
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> {
+                    logger.error("Application not found for id: {}", applicationId);
+                    return new EntityNotFoundException("Application not found");
+                });
+
+        // Ensure user owns the project
+        if (!projectUserService.isUserOwnerOfProject(principal, application.getProject().getId())) {
+            throw new UserNotOwnerOfProjectException();
+        }
+
+        // Prevent reviewing an already reviewed application
+        if (application.getStatus() != ApplicationStatusEnum.PENDING) {
+            logger.error("Application has already been reviewed");
+            throw new BaseRuntimeException("Application has already been reviewed", HttpStatus.CONFLICT);
+        }
+
+        if (status == ApplicationStatusEnum.APPROVED) {
+            rejectAllOtherApplications(application);
+            application.setStatus(ApplicationStatusEnum.APPROVED);
+            applicationRepository.save(application);
+        } else {
+            application.setStatus(ApplicationStatusEnum.REJECTED);
+            applicationRepository.save(application);
+        }
+    }
+    private void rejectAllOtherApplications(Application application) {
+        List<Application> otherApplications = applicationRepository.findByApplicant(application.getApplicant());
+        otherApplications.forEach(app -> {
+            if (!app.getId().equals(application.getId())) {
+                app.setStatus(ApplicationStatusEnum.REJECTED);
+                applicationRepository.save(app);
+            }
+        });
+    }
 }

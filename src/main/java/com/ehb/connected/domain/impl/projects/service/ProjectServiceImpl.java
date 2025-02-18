@@ -23,7 +23,6 @@ import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,20 +47,20 @@ public class ProjectServiceImpl implements ProjectService {
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
     @Override
-    public List<ProjectDetailsDto> getAllProjects(Long assignmentId) {
+    public List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId) {
         return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentId(assignmentId));
     }
 
     @Override
-    public List<ProjectDetailsDto> getAllPublishedProjectsInAssignment(Long assignmentId) {
+    public List<ProjectDetailsDto> getAllPublishedProjectsByAssignmentId(Long assignmentId) {
         return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentIdAndStatus(assignmentId, ProjectStatusEnum.PUBLISHED));
     }
 
     @Override
-    public ProjectDetailsDto getProjectById(Long id) {
-        return projectMapper.toDetailsDto(projectRepository.findById(id).orElseThrow(() -> {
-            logger.error("Project not found for id: {}", id);
-            return new EntityNotFoundException(Project.class, id.toString());
+    public ProjectDetailsDto getProjectById(Long projectId) {
+        return projectMapper.toDetailsDto(projectRepository.findById(projectId).orElseThrow(() -> {
+            logger.error("Project not found for id: {}", projectId);
+            return new EntityNotFoundException(Project.class, projectId.toString());
         }));
     }
 
@@ -105,8 +104,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project) {
-        Project existingProject = projectRepository.findById(id)
+    public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
+        Project existingProject = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
         // If the project is approved, return as it cannot be updated
@@ -115,7 +114,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         // Check if user is the owner of the project
-        if (!projectUserService.isUserOwnerOfProject(principal, id)) {
+        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new RuntimeException("User is not the owner of the project");
         }
 
@@ -150,22 +149,22 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status) {
+    public ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status) {
         User user = projectUserService.getUser(principal);
 
         if (user.getRole().equals(Role.STUDENT)) {
-            return ResponseEntity.status(403).build();
+            throw new RuntimeException("User is not authorized to change project status");
         }
 
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
         project.setStatus(status);
         projectRepository.save(project);
-        return ResponseEntity.ok(projectMapper.toDetailsDto(project));
+        return projectMapper.toDetailsDto(project);
     }
 
     @Override
-    public List<ApplicationDto> getAllApplications(Principal principal, Long projectId) {
+    public List<ApplicationDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
         if (!projectUserService.isUserOwnerOfProject(principal, projectId) && projectUserService.getUser(principal).getRole().equals(Role.STUDENT)) {
             throw new RuntimeException("User is not the owner of the project");
         }
@@ -177,67 +176,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(applicationMapper::toDto)
                 .collect(Collectors.toList());
     }
-
-
-    @Override
-    @Transactional
-    public void reviewApplication(Principal principal, Long projectId, Long applicationId, ApplicationStatusEnum status) {
-        // Ensure user owns the project
-        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
-            throw new RuntimeException("User is not the owner of the project");
-        }
-
-        // Ensure user is not member of another project
-
-        Application application = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new EntityNotFoundException("Application not found"));
-
-        // Ensure the application belongs to the project
-        if (!Objects.equals(application.getProject().getId(), projectId)) {
-            throw new IllegalArgumentException("Application does not belong to the project");
-        }
-
-        // Prevent reviewing an already reviewed application
-        if (isApplicationReviewed(application)) {
-            throw new IllegalStateException("Application has already been reviewed");
-        }
-
-        if (status == ApplicationStatusEnum.APPROVED) {
-            approveApplication(application, projectId);
-        } else {
-            application.setStatus(ApplicationStatusEnum.REJECTED);
-            applicationRepository.save(application);
-        }
-    }
-
-    private boolean isApplicationReviewed(Application application) {
-        return application.getStatus() == ApplicationStatusEnum.APPROVED
-                || application.getStatus() == ApplicationStatusEnum.REJECTED;
-    }
-
-    private void approveApplication(Application application, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId.toString()));
-
-        // Ensure applicant is not already a member
-        if (project.getMembers().stream().noneMatch(member -> member.getId().equals(application.getApplicant().getId()))) {
-            project.getMembers().add(application.getApplicant());
-            projectRepository.save(project);
-        }
-
-        // Reject other pending applications from the same applicant
-        List<Application> otherApplications = applicationRepository.findByApplicantAndStatus(application.getApplicant(), ApplicationStatusEnum.PENDING);
-        otherApplications.forEach(app -> {
-            if (!app.getId().equals(application.getId())) {
-                app.setStatus(ApplicationStatusEnum.REJECTED);
-                applicationRepository.save(app);
-            }
-        });
-
-        application.setStatus(ApplicationStatusEnum.APPROVED);
-        applicationRepository.save(application);
-    }
-
 
     @Override
     public void removeMember(Principal principal, Long id, Long memberId) {

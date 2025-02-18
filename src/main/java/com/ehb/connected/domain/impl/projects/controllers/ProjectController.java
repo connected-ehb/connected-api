@@ -29,90 +29,84 @@ public class ProjectController {
     private final FeedbackService feedbackService;
     private final ApplicationService applicationService;
 
-    @GetMapping
-    public ResponseEntity<List<ProjectDetailsDto>> getAllProjects(@RequestHeader Long assignmentId){
-        return ResponseEntity.ok(projectService.getAllProjects(assignmentId));
+    @GetMapping("/{assignmentId}")
+    public ResponseEntity<List<ProjectDetailsDto>> getAllProjects(@PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getAllProjectsByAssignmentId(assignmentId));
     }
 
-    @GetMapping("/published")
-    public List<ProjectDetailsDto> getAllPublishedProjects(@RequestHeader Long assignmentId){
-        return projectService.getAllPublishedProjectsInAssignment(assignmentId);
+    @GetMapping("/{assignmentId}/published")
+    public ResponseEntity<List<ProjectDetailsDto>> getAllPublishedProjects(@PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getAllPublishedProjectsByAssignmentId(assignmentId));
     }
 
-    @GetMapping("/{id}")
-    public ProjectDetailsDto getProjectById(@PathVariable Long id){
-        return projectService.getProjectById(id);
+    @GetMapping("/{projectId}")
+    public ResponseEntity<ProjectDetailsDto> getProjectById(@PathVariable Long projectId){
+        return ResponseEntity.ok(projectService.getProjectById(projectId));
     }
 
-    @PostMapping("/create")
-    public ProjectDetailsDto createProject(Principal principal, @RequestHeader Long assignmentId, @RequestBody ProjectCreateDto project){
-        return projectService.createProject(principal, assignmentId, project);
+    @PostMapping("/{assignmentId}")
+    public ResponseEntity<ProjectDetailsDto> createProject(Principal principal, @PathVariable Long assignmentId, @RequestBody ProjectCreateDto project){
+        return ResponseEntity.ok(projectService.createProject(principal, assignmentId, project));
     }
 
-    @PutMapping("/update/{id}")
-    public ProjectDetailsDto updateProject(Principal principal, @PathVariable Long id, @RequestBody ProjectUpdateDto project){
-        return projectService.updateProject(principal, id, project);
+    @PutMapping("/{projectId}")
+    public ResponseEntity<ProjectDetailsDto> updateProject(Principal principal, @PathVariable Long projectId, @RequestBody ProjectUpdateDto project){
+        return ResponseEntity.ok(projectService.updateProject(principal, projectId, project));
     }
 
-    @DeleteMapping("/delete/{id}")
-    public void deleteProject(@PathVariable Long id){
-        projectService.deleteProject(id);
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(@PathVariable Long projectId){
+        projectService.deleteProject(projectId);
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/status")
-    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, @RequestHeader Long projectId, @RequestHeader ProjectStatusEnum status) {
-        return projectService.changeProjectStatus(principal, projectId, status);
+    @PostMapping("/{projectId}/status")
+    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, @PathVariable Long projectId, @RequestHeader ProjectStatusEnum status) {
+        return ResponseEntity.ok(projectService.changeProjectStatus(principal, projectId, status));
     }
 
-    @GetMapping("/{id}/applications")
-    public List<ApplicationDto> getAllApplications(Principal principal, @PathVariable Long id) { return projectService.getAllApplications(principal, id);}
-
-    @PostMapping("/{id}/applications/{applicationId}/approve")
-    public void approveApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
-        projectService.reviewApplication(principal, id, applicationId, ApplicationStatusEnum.APPROVED);
-    }
-
-    @PostMapping("/{id}/applications/{applicationId}/reject")
-    public void rejectApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
-        projectService.reviewApplication(principal, id, applicationId, ApplicationStatusEnum.REJECTED);
+    @GetMapping("/{projectId}/applications")
+    public ResponseEntity<List<ApplicationDto>> getAllApplications(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.getAllApplicationsByProjectId(principal, projectId));
     }
 
     // Feedback endpoints
-    @PostMapping("/{id}/feedback")
-    public ResponseEntity<FeedbackDto> giveFeedback(Principal principal, @PathVariable Long id, @RequestBody FeedbackCreateDto feedbackDto) {
-       return ResponseEntity.ok(feedbackService.giveFeedback(principal, id, feedbackDto));
+    @PostMapping("/{projectId}/feedback")
+    public ResponseEntity<FeedbackDto> giveFeedback(Principal principal, @PathVariable Long projectId, @RequestBody FeedbackCreateDto feedbackDto) {
+       return ResponseEntity.ok(feedbackService.giveFeedback(principal, projectId, feedbackDto));
     }
 
-    @PutMapping("/{id}/feedback/{feedbackId}")
+    @PutMapping("/{projectId}/feedback/{feedbackId}")
     public ResponseEntity<FeedbackDto> updateFeedback(
             Principal principal,
-            @PathVariable Long id,
+            @PathVariable Long projectId,
             @PathVariable Long feedbackId,
             @RequestBody FeedbackCreateDto feedbackDto) {
-        return ResponseEntity.ok(feedbackService.updateFeedback(principal, id, feedbackId, feedbackDto));
+        return ResponseEntity.ok(feedbackService.updateFeedback(principal, projectId, feedbackId, feedbackDto));
     }
 
-    @DeleteMapping("/{id}/feedback/{feedbackId}")
+    @DeleteMapping("/{projectId}/feedback/{feedbackId}")
     public ResponseEntity<Void> deleteFeedback(
             Principal principal,
-            @PathVariable Long id,
+            @PathVariable Long projectId,
             @PathVariable Long feedbackId) {
-        feedbackService.deleteFeedback(principal, id, feedbackId);
+        feedbackService.deleteFeedback(principal, projectId, feedbackId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}/feedback")
-    public ResponseEntity<List<FeedbackDto>> getFeedbacks(Principal principal, @PathVariable Long id) {
-        return ResponseEntity.ok(feedbackService.getAllFeedbackForProject(principal, id));
+    @GetMapping("/{projectId}/feedback")
+    public ResponseEntity<List<FeedbackDto>> getFeedbacks(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(feedbackService.getAllFeedbackForProject(principal, projectId));
     }
 
-    @PostMapping("/{id}/apply")
-    public ResponseEntity<ApplicationDto> applyForProject(Principal principal, @PathVariable Long id, @RequestBody ApplicationCreateDto application) {
-        return ResponseEntity.ok(applicationService.createApplication(principal, id, application));
+    @PostMapping("/{projectId}/apply")
+    public ResponseEntity<ApplicationDto> applyForProject(Principal principal, @PathVariable Long projectId, @RequestBody ApplicationCreateDto application) {
+        return ResponseEntity.ok(applicationService.createApplication(principal, projectId, application));
     }
 
-    @DeleteMapping("/{id}/members/{memberId}")
-    public void removeMember(Principal principal, @PathVariable Long id, @PathVariable Long memberId) {
-        projectService.removeMember(principal, id, memberId);
+    @DeleteMapping("/{projectId}/members/{memberId}")
+    public ResponseEntity<Void> removeMember(Principal principal, @PathVariable Long projectId, @PathVariable Long memberId) {
+        projectService.removeMember(principal, projectId, memberId);
+        return ResponseEntity.ok().build();
     }
 }
