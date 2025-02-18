@@ -23,12 +23,6 @@ public class NotificationController {
         this.notificationService = notificationService;
     }
 
-    @PostMapping
-    public ResponseEntity<NotificationDto> createNotification(@RequestBody NotificationDto notificationDto) {
-        return ResponseEntity.ok(notificationService.createNotification(notificationDto));
-    }
-
-
     @GetMapping("/{id}")
     public ResponseEntity<NotificationDto> getNotificationById(@PathVariable Long id) {
         return ResponseEntity.ok(notificationService.getNotificationById(id));
@@ -39,7 +33,8 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getAllNotificationsByUserId(userId));
     }
 
-    //not sure if use notification update?
+    //nodig voor Read boolean aan te passen
+    //redirecten en read op true zetten
     @PutMapping("/{id}")
     public ResponseEntity<NotificationDto> updateNotification(@PathVariable Long id, @RequestBody NotificationDto notificationDto) {
         return ResponseEntity.ok(notificationService.updateNotification(id, notificationDto));

@@ -4,6 +4,7 @@ import com.ehb.connected.domain.impl.notifications.dto.NotificationDto;
 import com.ehb.connected.domain.impl.notifications.entities.Notification;
 import com.ehb.connected.domain.impl.notifications.mappers.NotificationMapper;
 import com.ehb.connected.domain.impl.notifications.repositories.NotificationRepository;
+import com.ehb.connected.domain.impl.users.entities.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,10 +17,14 @@ public class NotificationServiceImpl implements NotificationService{
 
 
     @Override
-    public NotificationDto createNotification(NotificationDto notificationDto) {
-        Notification notification = notificationMapper.DtoToNotification(notificationDto);
+    public void createNotification(User recipient, String message, String destinationUrl) {
+        Notification notification = new Notification();
+
+        notification.setUser(recipient);
+        notification.setMessage(message);
+        notification.setDestinationUrl(destinationUrl);
+
         notificationRepository.save(notification);
-        return notificationMapper.NotificationToDto(notification);
     }
 
     @Override

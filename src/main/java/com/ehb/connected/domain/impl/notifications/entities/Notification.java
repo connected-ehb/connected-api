@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
@@ -26,9 +27,10 @@ public class Notification {
 
     private String message;
 
-    private boolean read;
+    private boolean read = false;
 
-    private LocalDateTime timestamp = LocalDateTime.now();
+    @CreationTimestamp
+    private LocalDateTime timestamp;
 
     private String destinationUrl;
 }
