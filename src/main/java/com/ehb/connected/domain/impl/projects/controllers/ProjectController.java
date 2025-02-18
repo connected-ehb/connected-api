@@ -41,8 +41,8 @@ public class ProjectController {
     }
 
     @GetMapping("/{assignmentId}/published")
-    public ResponseEntity<List<ProjectDetailsDto>> getAllPublishedProjects(@PathVariable Long assignmentId){
-        return ResponseEntity.ok(projectService.getAllPublishedProjectsByAssignmentId(assignmentId));
+    public ResponseEntity<List<ProjectDetailsDto>> getAllPublishedProjects(Principal principal, @PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getAllPublishedOrOwnedProjectsByAssignmentId(principal, assignmentId));
     }
 
     @PostMapping("/{assignmentId}")
@@ -53,12 +53,6 @@ public class ProjectController {
     @PutMapping("/{projectId}")
     public ResponseEntity<ProjectDetailsDto> updateProject(Principal principal, @PathVariable Long projectId, @RequestBody ProjectUpdateDto project){
         return ResponseEntity.ok(projectService.updateProject(principal, projectId, project));
-    }
-
-    @DeleteMapping("/{projectId}")
-    public ResponseEntity<Void> deleteProject(@PathVariable Long projectId){
-        projectService.deleteProject(projectId);
-        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{projectId}/status")

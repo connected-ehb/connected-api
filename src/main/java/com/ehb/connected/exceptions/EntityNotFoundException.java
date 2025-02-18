@@ -14,15 +14,15 @@ public class EntityNotFoundException extends BaseRuntimeException {
         super(message, BASE_HTTP_STATUS);
     }
 
-    public EntityNotFoundException(@NotNull Class<?> clazz, @NotNull String id) {
-        this("%s %s %s".formatted(clazz.getSimpleName(), BASE_MESSAGE, id));
+    public EntityNotFoundException(@NotNull Class<?> clazz, @NotNull Long id) {
+        this("%s %s %s".formatted(clazz.getSimpleName(), BASE_MESSAGE, id.toString()));
     }
 
     public static Supplier<EntityNotFoundException> error(String message) {
         return () -> new EntityNotFoundException(message);
     }
 
-    public static Supplier<EntityNotFoundException> error(Class<?> classType, String id) {
-        return () -> new EntityNotFoundException("%s %s %s".formatted(classType.getSimpleName(), BASE_MESSAGE, id));
+    public static Supplier<EntityNotFoundException> error(Class<?> classType, Long id) {
+        return () -> new EntityNotFoundException("%s %s %s".formatted(classType.getSimpleName(), BASE_MESSAGE, id.toString()));
     }
 }

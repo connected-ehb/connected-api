@@ -25,11 +25,6 @@ public class ProjectServiceImplTest {
     @InjectMocks
     private ProjectServiceImpl projectServiceImpl;
 
-    @BeforeEach
-    public void setUp(){
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
     public void testGetProjectById() {
         //TODO
@@ -55,10 +50,7 @@ public class ProjectServiceImplTest {
 
     @Test
     public void testDeleteProject(){
-        Long projectId = 1L;
-        doNothing().when(projectRepository).deleteById(1L);
-        projectServiceImpl.deleteProject(projectId);
-        verify(projectRepository, times(1)).deleteById(projectId);
+        //TODO
     }
 
 

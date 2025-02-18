@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 @Component
 public class ProjectMapper {
     private final TagMapper tagMapper;
@@ -26,12 +28,7 @@ public class ProjectMapper {
     }
 
     public List<ProjectDetailsDto> toDetailsDtoList(List<Project> projects) {
-        if (projects == null || projects.isEmpty()) {
-            return List.of();
-        }
-        return projects.stream()
-                .map(this::toDetailsDto)
-                .collect(Collectors.toList());
+        return projects.stream().map(this::toDetailsDto).toList();
     }
 
     public ProjectDetailsDto toDetailsDto(Project project) {
@@ -54,7 +51,7 @@ public class ProjectMapper {
         }
 
         if (project.getTags() != null) {
-            dto.setTags(project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()));
+            dto.setTags(project.getTags().stream().map(tagMapper::toDto).collect(toList()));
         } else {
             dto.setTags(List.of());
         }
@@ -62,7 +59,7 @@ public class ProjectMapper {
         dto.setCreatedBy(userMapper.toUserDetailsDto(project.getCreatedBy()));
 
         if (project.getMembers() != null) {
-            dto.setMembers(project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()));
+            dto.setMembers(project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(toList()));
         } else {
             dto.setMembers(List.of());
         }
@@ -79,10 +76,6 @@ public class ProjectMapper {
         project.setBoardUrl(dto.getBoardUrl());
         project.setBackgroundImage(dto.getBackgroundImage());
         project.setTags(dto.getTags());
-
-        Assignment assignment = assignmentRepository.findById(dto.getAssignmentId())
-                .orElseThrow(() -> new IllegalArgumentException("Assignment not found"));
-        project.setAssignment(assignment);
 
         return project;
     }

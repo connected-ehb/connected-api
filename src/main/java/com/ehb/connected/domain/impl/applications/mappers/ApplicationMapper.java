@@ -7,6 +7,8 @@ import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class ApplicationMapper {
@@ -23,4 +25,8 @@ public class ApplicationMapper {
                 userDetailsMapper.toUserDetailsDto(application.getApplicant())
         );
     }
+    public List<ApplicationDto> toDtoList(List<Application> applications) {
+        return applications.stream().map(this::toDto).toList();
+    }
+
 }

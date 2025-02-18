@@ -6,6 +6,7 @@ import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
+import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -57,14 +58,13 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+    public User getUserByPrincipal(Principal principal) {
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new EntityNotFoundException("User not found for email: " + principal.getName()));
     }
 
     @Override
-    public User getUserByCanvasUserId(Long canvasUserId) {
-        return userRepository.findByCanvasUserId(canvasUserId).orElseThrow(() -> new RuntimeException("User not found"));
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
     }
-
-
 }
