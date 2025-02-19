@@ -28,7 +28,7 @@ public class CourseMapper {
         course.setEndAt(courseCreateDto.getEndAt());
         course.setAssignments(new ArrayList<>());
         course.setOwner(userService.getUserByEmail(principal.getName()));
-        course.setCanvasCourseId(courseCreateDto.getCanvasCourseId());
+        course.setCanvasId(courseCreateDto.getCanvasId());
         return course;
     }
 
@@ -40,7 +40,7 @@ public class CourseMapper {
         courseDto.setStartAt(course.getStartAt());
         courseDto.setEndAt(course.getEndAt());
         courseDto.setOwnerId(course.getOwner().getId());
-        courseDto.setCanvasCourseId(course.getCanvasCourseId());
+        courseDto.setCanvasId(course.getCanvasId());
         if (course.getAssignments() != null) {
             courseDto.setAssignments(assignmentMapper.toAssignmentDetailsDtoList(course.getAssignments()));
         }
@@ -57,7 +57,7 @@ public class CourseMapper {
 
     public CourseDetailsDto fromCanvasMapToCourseDetailsDto(Map<String, Object> canvasCourseMap) {
         CourseDetailsDto courseDto = new CourseDetailsDto();
-        courseDto.setCanvasCourseId(Long.parseLong(canvasCourseMap.get("id").toString()));
+        courseDto.setCanvasId(Long.parseLong(canvasCourseMap.get("id").toString()));
         courseDto.setName(canvasCourseMap.get("name").toString());
         if (canvasCourseMap.containsKey("start_at") && canvasCourseMap.get("start_at") != null) {
             courseDto.setStartAt(LocalDateTime.parse(canvasCourseMap.get("start_at").toString()));

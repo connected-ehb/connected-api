@@ -30,9 +30,9 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String uuid;
+    private Long canvasId;
 
-    private Long canvasCourseId;
+    private String uuid;
 
     private String name;
 
