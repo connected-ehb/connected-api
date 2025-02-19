@@ -93,7 +93,7 @@ public class CourseServiceImpl implements CourseService {
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            List<Map<String, Object>> enrollments = objectMapper.readValue(enrollmentsResponse, new TypeReference<List<Map<String, Object>>>() {});
+            List<Map<String, Object>> enrollments = objectMapper.readValue(enrollmentsResponse, new TypeReference<>() {});
             // Enroll each user based on the Canvas enrollment data.
             for (Map<String, Object> enrollment : enrollments) {
                 Long canvasUserId = Long.parseLong(enrollment.get("user_id").toString());

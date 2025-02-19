@@ -46,6 +46,4 @@ public class DeadlineController {
     public void deleteDeadline(@PathVariable Long id) {
         deadlineService.deleteDeadline(id);
     }
-
-
 }

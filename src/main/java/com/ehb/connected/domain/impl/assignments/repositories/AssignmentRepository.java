@@ -10,6 +10,5 @@ import java.util.Optional;
 @Repository
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     List<Assignment> findByCourseId(Long courseId);
-    Optional<Assignment> findByCanvasAssignmentId(Long canvasAssignmentId);
     boolean existsByCanvasAssignmentId(Long canvasAssignmentId);
 }
