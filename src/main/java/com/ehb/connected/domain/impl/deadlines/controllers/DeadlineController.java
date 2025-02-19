@@ -25,7 +25,7 @@ public class DeadlineController {
 
     private final DeadlineService deadlineService;
 
-    @GetMapping("/{assignmentId}")
+    @GetMapping("/assignment/{assignmentId}")
     public ResponseEntity<List<DeadlineDetailsDto>> getAllDeadlinesForAssignmentId(@PathVariable Long assignmentId){
         return ResponseEntity.ok(deadlineService.getAllDeadlinesByAssignmentId(assignmentId));
     }
