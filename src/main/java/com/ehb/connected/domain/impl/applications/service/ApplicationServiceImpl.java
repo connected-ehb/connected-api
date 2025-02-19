@@ -9,6 +9,8 @@ import com.ehb.connected.domain.impl.applications.repositories.ApplicationReposi
 import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
+import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
+import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
@@ -43,6 +45,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ProjectService projectService;
     private final DeadlineService deadlineService;
     private final ApplicationMapper applicationMapper;
+    private final NotificationServiceImpl notificationService;
+    private final UrlHelper urlHelper;
+    private final UserServiceImpl userServiceImpl;
 
     private final ProjectUserService projectUserService;
 
@@ -140,6 +145,17 @@ public class ApplicationServiceImpl implements ApplicationService {
         newApplication.setProject(project);
         applicationRepository.save(newApplication);
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
+
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(project.getAssignment().getName()),
+                "projects", project.getId().toString(),
+                "applications");
+        notificationService.createNotification(
+                        project.getCreatedBy(),
+                " "+ currentUser.getFirstName() + " " +
+                        currentUser.getLastName() + " applied for your project.",
+                        destinationUrl );
         return applicationMapper.toDto(newApplication);
     }
 
