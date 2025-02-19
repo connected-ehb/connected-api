@@ -4,8 +4,16 @@ import org.springframework.stereotype.Component;
 @Component
 public  class UrlHelper {
 
-    public static String Sluggify(String input){
-        return input.toLowerCase().replace(" ", "-");
+    public static String Sluggify(String input) {
+        // Replace spaces with hyphens
+        String slug = input.replace(" ", "-");
+        //to lowercase
+        slug = slug.toLowerCase();
+        // Replace multiple consecutive hyphens with a single hyphen
+        slug = slug.replaceAll("-+", "-");
+        // Trim trailing hyphens
+        slug = slug.replaceAll("-$", "");
+        return slug;
     }
 
     public static String UrlBuilder(String... parts){

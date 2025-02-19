@@ -71,7 +71,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                 UrlHelper.Sluggify(project.getAssignment().getName()),
                 "projects", project.getId().toString(),
-                "applications", newApplication.getId().toString());
+                "applications");
         notificationService.createNotification(
                         project.getCreatedBy(),
                 " "+ currentUser.getFirstName() + " " +
