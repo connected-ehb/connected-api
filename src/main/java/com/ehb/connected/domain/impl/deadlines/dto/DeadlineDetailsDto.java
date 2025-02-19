@@ -13,7 +13,7 @@ public class DeadlineDetailsDto {
 
     private Long id;
     private String title;
-    private LocalDateTime dateTime;
+    private LocalDateTime dueDate;
     private String description;
     private DeadlineRestriction restriction;
     private AssignmentDetailsDto assignment;
