@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 public class DeadlineCreateDto {
     private String title;
-    private LocalDateTime dateTime;
+    private LocalDateTime dueDate;
     private String description;
     private String timeZone;
     private DeadlineRestriction restriction;

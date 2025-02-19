@@ -123,7 +123,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignment().getId(), DeadlineRestriction.APPLICATION_SUBMISSION);
-        if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+        if (deadlineDto != null && deadlineDto.getDueDate().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
             throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
         }
 

@@ -13,9 +13,9 @@ import java.util.List;
 @Repository
 public interface DeadlineRepository extends JpaRepository<Deadline, Long> {
 
-    @Query("SELECT d FROM Deadline d WHERE d.assignment.id = :assignmentId AND d.dateTime > :now ORDER BY d.dateTime ASC")
+    @Query("SELECT d FROM Deadline d WHERE d.assignment.id = :assignmentId AND d.dueDate > :now ORDER BY d.dueDate ASC")
     List<Deadline> findUpcomingDeadlines(@Param("assignmentId") Long assignmentId, @Param("now") LocalDateTime now);
 
-    Deadline findTopByAssignmentIdAndRestrictionOrderByDateTimeDesc(Long assignmentId, DeadlineRestriction restriction);
+    Deadline findTopByAssignmentIdAndRestrictionOrderByDueDateDesc(Long assignmentId, DeadlineRestriction restriction);
 
 }

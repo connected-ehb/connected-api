@@ -27,7 +27,7 @@ public class Deadline {
     private Long id;
 
     private String title;
-    private LocalDateTime dateTime;
+    private LocalDateTime dueDate;
     private String description;
     private DeadlineRestriction restriction;
     private String timeZone;

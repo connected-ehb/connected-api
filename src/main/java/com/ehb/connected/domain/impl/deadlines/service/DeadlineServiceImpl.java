@@ -41,7 +41,7 @@ public class DeadlineServiceImpl implements DeadlineService {
 
     @Override
     public DeadlineDetailsDto getDeadlineByAssignmentIdAndRestrictions(Long assignmentId, DeadlineRestriction restriction) {
-        return deadlineMapper.toDeadlineDetailsDto(deadlineRepository.findTopByAssignmentIdAndRestrictionOrderByDateTimeDesc(assignmentId, restriction));
+        return deadlineMapper.toDeadlineDetailsDto(deadlineRepository.findTopByAssignmentIdAndRestrictionOrderByDueDateDesc(assignmentId, restriction));
     }
 
     @Override
@@ -55,17 +55,17 @@ public class DeadlineServiceImpl implements DeadlineService {
     public DeadlineDetailsDto createDeadline(Long assignmentId, DeadlineCreateDto deadlineDto) {
         try {
             // Convert the local time to UTC
-            LocalDateTime deadlineUtc = convertToUTC(deadlineDto.getDateTime(), deadlineDto.getTimeZone());
+            LocalDateTime deadlineUtc = convertToUTC(deadlineDto.getDueDate(), deadlineDto.getTimeZone());
 
             // Log the received data
             logger.info("Creating a new deadline with title: '{}' and datetime: '{}', timezone: '{}'",
-                    deadlineDto.getTitle(), deadlineDto.getDateTime(), deadlineDto.getTimeZone());
+                    deadlineDto.getTitle(), deadlineDto.getDueDate(), deadlineDto.getTimeZone());
 
             Assignment assignment = assignmentService.getAssignmentById(assignmentId);
 
             // Map DTO to entity
             Deadline deadline = deadlineMapper.toEntity(deadlineDto);
-            deadline.setDateTime(deadlineUtc);
+            deadline.setDueDate(deadlineUtc);
             deadline.setAssignment(assignment);
 
             // Save and return the created deadline
@@ -96,7 +96,7 @@ public class DeadlineServiceImpl implements DeadlineService {
                 .orElseThrow(() -> new EntityNotFoundException(Deadline.class, deadlineId));
         deadline.setTitle(deadlineDto.getTitle());
         deadline.setDescription(deadline.getDescription());
-        deadline.setDateTime(convertToUTC(deadlineDto.getDateTime(), deadline.getTimeZone()));
+        deadline.setDueDate(convertToUTC(deadlineDto.getDueDate(), deadline.getTimeZone()));
         deadline.setRestriction(deadlineDto.getRestriction());
 
         return deadlineMapper.toDeadlineDetailsDto(deadlineRepository.save(deadlineMapper.toEntity(deadlineDto)));

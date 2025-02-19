@@ -116,7 +116,7 @@ public class ProjectServiceImpl implements ProjectService {
             final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
             // If a deadline exists and has passed, throw an error
             //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
-            if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+            if (deadlineDto != null && deadlineDto.getDueDate().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
                 throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
             }
         } catch (EntityNotFoundException e) {
