@@ -17,4 +17,5 @@ public class DeadlineDetailsDto {
     private String description;
     private DeadlineRestriction restriction;
     private AssignmentDetailsDto assignment;
+    private String timeZone;
 }
