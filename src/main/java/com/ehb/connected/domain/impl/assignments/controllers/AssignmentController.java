@@ -1,6 +1,5 @@
 package com.ehb.connected.domain.impl.assignments.controllers;
 
-
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentCreateDto;

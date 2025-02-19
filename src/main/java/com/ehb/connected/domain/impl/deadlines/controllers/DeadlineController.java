@@ -27,9 +27,9 @@ public class DeadlineController {
         return deadlineService.getAllDeadlinesByAssignmentId(assignmentId);
     }
 
-    @GetMapping("/{id}")
-    public Deadline getDeadlineById(@PathVariable Long id) {
-        return deadlineService.getDeadlineById(id);
+    @GetMapping("/{deadlineId}")
+    public Deadline getDeadlineById(@PathVariable Long deadlineId) {
+        return deadlineService.getDeadlineById(deadlineId);
     }
 
     @PostMapping()
@@ -37,13 +37,13 @@ public class DeadlineController {
         return deadlineService.createDeadline(deadline);
     }
 
-    @PatchMapping("/{id}")
-    public Deadline updateDeadline(@PathVariable Long id, @RequestBody Deadline deadline) {
+    @PatchMapping("/{deadlineId}")
+    public Deadline updateDeadline(@PathVariable Long deadlineId, @RequestBody Deadline deadline) {
         return deadlineService.updateDeadline(deadline);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteDeadline(@PathVariable Long id) {
-        deadlineService.deleteDeadline(id);
+    @DeleteMapping("/{deadlineId}")
+    public void deleteDeadline(@PathVariable Long deadlineId) {
+        deadlineService.deleteDeadline(deadlineId);
     }
 }

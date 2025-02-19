@@ -15,5 +15,4 @@ public interface CourseService {
     List<CourseDetailsDto> getCoursesByEnrollment(Principal principal);
     Course getCourseById(Long courseId);
 
-    Course getCourseByCanvasCourseId(Long canvasCourseId);
 }

@@ -24,6 +24,8 @@ public class ProjectDetailsDto {
     private String boardUrl;
     private String backgroundImage;
 
+    private Integer teamSize;
+
     private Long assignmentId;
     private List<TagDto> tags;
     private UserDetailsDto createdBy;

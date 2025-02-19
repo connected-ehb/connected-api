@@ -6,7 +6,6 @@ import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,11 +35,7 @@ public class AssignmentMapper {
     }
 
     public List<AssignmentDetailsDto> toAssignmentDetailsDtoList(List<Assignment> assignments) {
-        List<AssignmentDetailsDto> assignmentDtos = new ArrayList<>();
-        for (Assignment assignment : assignments) {
-            assignmentDtos.add(toAssignmentDetailsDto(assignment));
-        }
-        return assignmentDtos;
+        return assignments.stream().map(this::toAssignmentDetailsDto).toList();
     }
 
     public AssignmentDetailsDto fromCanvasMapToAssignmentDetailsDto(Map<String, Object> canvasAssignment, Long courseId) {

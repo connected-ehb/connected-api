@@ -35,6 +35,8 @@ public class Project {
     private String boardUrl;
     private String backgroundImage;
 
+    private int teamSize;
+
     @ManyToOne
     @JoinColumn(name = "assignment_id")
     private Assignment assignment;

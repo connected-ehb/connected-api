@@ -7,10 +7,10 @@ import lombok.Setter;
 @Setter
 public class AssignmentDetailsDto {
 
-    Long id;
-    String name;
-    String description;
-    Integer defaultTeamSize;
-    Long canvasAssignmentId;
-    Long courseId;
+    private Long id;
+    private String name;
+    private String description;
+    private Integer defaultTeamSize;
+    private Long canvasAssignmentId;
+    private Long courseId;
 }

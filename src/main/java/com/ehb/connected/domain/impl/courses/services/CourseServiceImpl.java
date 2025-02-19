@@ -8,7 +8,9 @@ import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.enrollments.services.EnrollmentService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
-import jakarta.persistence.EntityNotFoundException;
+import com.ehb.connected.exceptions.BaseRuntimeException;
+import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,36 +109,29 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public List<Course> getCoursesByOwner(Principal principal) {
-        return courseRepository.findByOwner(userService.getUserByEmail(principal.getName()));
+    public List<CourseDetailsDto> getCoursesByOwner(Principal principal) {
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByOwner(userService.getUserByEmail(principal.getName())));
     }
 
     @Override
-    public List<Course> getCoursesByEnrollment(Principal principal) {
-        return courseRepository.findByEnrollmentsCanvasUserId(userService.getUserByEmail(principal.getName()).getCanvasUserId());
+    public List<CourseDetailsDto> getCoursesByEnrollment(Principal principal) {
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(userService.getUserByEmail(principal.getName()).getCanvasUserId()));
     }
 
-
-
-    @Override
-    public void createCourse(Course course) {
+    private void importCourse(Course course) {
+        if (course == null) {
+            throw new BaseRuntimeException("Course cannot be null", HttpStatus.BAD_REQUEST);
+        }
         try {
             courseRepository.save(course);
         } catch (Exception e) {
-            System.out.println("Error while creating course: " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new BaseRuntimeException("An unexpected error occurred while saving the course", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public Course getCourseById(Long courseId) {
         return courseRepository.findById(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("Course does not exist"));
-    }
-
-    @Override
-    public Course getCourseByCanvasCourseId(Long canvasCourseId) {
-        return courseRepository.findByCanvasCourseId(canvasCourseId)
-                .orElseThrow(() -> new EntityNotFoundException("Course does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException(Course.class, courseId));
     }
 }

@@ -30,6 +30,7 @@ import java.util.List;
 public class AssignmentServiceImpl implements AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
+
     private final ProjectService projectService;
     private final CourseService courseService;
     private final UserService userService;
@@ -56,8 +57,9 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Override
     public List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId) {
-        List<Project> projects = projectService.getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
+        final List<Project> projects = projectService.getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
         projects.forEach(project -> projectService.changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
+        logger.info("All approved projects have been published.");
         return projectMapper.toDetailsDtoList(projects);
     }
 

@@ -33,6 +33,7 @@ public class ProjectMapper {
                 project.getRepositoryUrl(),
                 project.getBoardUrl(),
                 project.getBackgroundImage(),
+                project.getTeamSize(),
                 project.getAssignment() != null ? project.getAssignment().getId() : null,
                 project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList(),
                 userMapper.toUserDetailsDto(project.getCreatedBy()),
@@ -47,6 +48,7 @@ public class ProjectMapper {
         project.setShortDescription(dto.getShortDescription());
         project.setRepositoryUrl(dto.getRepositoryUrl());
         project.setBoardUrl(dto.getBoardUrl());
+        project.setTeamSize(dto.getTeamSize());
         project.setBackgroundImage(dto.getBackgroundImage());
         project.setTags(tagMapper.toEntityList(dto.getTags()));
 

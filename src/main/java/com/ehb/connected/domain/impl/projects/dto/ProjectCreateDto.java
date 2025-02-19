@@ -16,6 +16,8 @@ public class ProjectCreateDto {
     private String description;
     private String shortDescription;
 
+    private Integer teamSize;
+
     private String repositoryUrl;
     private String boardUrl;
     private String backgroundImage;
