@@ -9,6 +9,8 @@ import com.ehb.connected.domain.impl.applications.repositories.ApplicationReposi
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
+import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
+import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
@@ -31,6 +33,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ProjectRepository projectRepository;
     private final DeadlineService deadlineService;
     private final ApplicationMapper applicationMapper;
+    private final NotificationServiceImpl notificationService;
+    private final UrlHelper urlHelper;
+    private final UserServiceImpl userServiceImpl;
 
     @Override
     public Application getApplicationById(Long id) {
@@ -61,6 +66,17 @@ public class ApplicationServiceImpl implements ApplicationService {
         newApplication.setApplicant(currentUser);
         newApplication.setProject(project);
         applicationRepository.save(newApplication);
+
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(project.getAssignment().getName()),
+                "projects", project.getId().toString(),
+                "applications");
+        notificationService.createNotification(
+                        project.getCreatedBy(),
+                " "+ currentUser.getFirstName() + " " +
+                        currentUser.getLastName() + " applied for your project.",
+                        destinationUrl );
         return applicationMapper.toDto(newApplication);
     }
 
