@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
@@ -8,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +28,8 @@ public class ProjectUserService {
         return project.getCreatedBy().getId().equals(currentUser.getId());
     }
 
-    public User getUser(Principal principal) {
-        return userService.getUserByEmail(principal.getName());
+    public boolean isUserMemberOfAnyProjectInAssignment(Principal principal, Long assignmentId) {
+        User currentUser = userService.getUserByEmail(principal.getName());
+        return projectRepository.existsByAssignmentIdAndMembersContainingAndStatusNotIn(assignmentId, currentUser, List.of(ProjectStatusEnum.REJECTED));
     }
 }

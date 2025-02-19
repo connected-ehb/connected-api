@@ -1,35 +1,30 @@
 package com.ehb.connected.domain.impl.projects.service;
 
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
-import org.springframework.http.ResponseEntity;
 
 import java.security.Principal;
 import java.util.List;
 
 public interface ProjectService {
-    List<ProjectDetailsDto> getAllProjects(Long assignmentId);
-    List<ProjectDetailsDto> getAllPublishedProjectsInAssignment(Long assignmentId);
-    ProjectDetailsDto getProjectById(Long id);
+    ProjectDetailsDto getProjectById(Principal principal, Long id);
+    Project getProjectById(Long id);
+    List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId);
+    List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId);
     List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status);
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
     ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project);
-    void deleteProject(Long id);
 
-    void approveProject(Long id);
+    void updateProject(Project project);
 
-    void rejectProject(Long id);
+    ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
+    List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId);
 
-    ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
-
-    List<ApplicationDto> getAllApplications(Principal principal, Long id);
-
-    void reviewApplication(Principal principal, Long id, Long applicationId, ApplicationStatusEnum status);
+    List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId);
 
     void removeMember(Principal principal, Long id, Long memberId);
 }

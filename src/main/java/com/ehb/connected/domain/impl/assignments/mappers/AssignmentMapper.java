@@ -6,8 +6,8 @@ import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 @Component
@@ -35,10 +35,17 @@ public class AssignmentMapper {
     }
 
     public List<AssignmentDetailsDto> toAssignmentDetailsDtoList(List<Assignment> assignments) {
-        List<AssignmentDetailsDto> assignmentDtos = new ArrayList<>();
-        for (Assignment assignment : assignments) {
-            assignmentDtos.add(toAssignmentDetailsDto(assignment));
-        }
-        return assignmentDtos;
+        return assignments.stream().map(this::toAssignmentDetailsDto).toList();
+    }
+
+    public AssignmentDetailsDto fromCanvasMapToAssignmentDetailsDto(Map<String, Object> canvasAssignment, Long courseId) {
+        AssignmentDetailsDto dto = new AssignmentDetailsDto();
+        dto.setId(null);
+        dto.setName(canvasAssignment.get("name").toString());
+        dto.setDescription(canvasAssignment.get("description") != null ? canvasAssignment.get("description").toString() : "");
+        dto.setDefaultTeamSize(null);
+        dto.setCanvasAssignmentId(Long.parseLong(canvasAssignment.get("id").toString()));
+        dto.setCourseId(courseId);
+        return dto;
     }
 }

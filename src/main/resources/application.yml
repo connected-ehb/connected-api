@@ -34,15 +34,15 @@ spring:
             authorization-uri: https://canvas.mertenshome.com/login/oauth2/auth
             token-uri: https://canvas.mertenshome.com/login/oauth2/token
             user-info-uri: https://canvas.mertenshome.com/api/v1/users/self?include[]=email
-logging:
-  level:
-    org.springframework.web: TRACE
-    org.springframework.security: TRACE
-    org.springframework.security.oauth2: TRACE
-    org.springframework.security.oauth2.client: TRACE
-    org.springframework.security.oauth2.client.web: TRACE
-    org.springframework.security.oauth2.client.endpoint: TRACE
-    org.springframework.security.oauth2.client.authentication: TRACE
-    org.springframework.security.oauth2.client.registration: TRACE
-    org.springframework.security.oauth2.client.registration.ClientRegistration: TRACE
-    org.springframework.security.oauth2.client.registration.ClientRegistrationRepository: TRACE
+#logging:
+#  level:
+#    org.springframework.web: TRACE
+#    org.springframework.security: TRACE
+#    org.springframework.security.oauth2: TRACE
+#    org.springframework.security.oauth2.client: TRACE
+#    org.springframework.security.oauth2.client.web: TRACE
+#    org.springframework.security.oauth2.client.endpoint: TRACE
+#    org.springframework.security.oauth2.client.authentication: TRACE
+#    org.springframework.security.oauth2.client.registration: TRACE
+#    org.springframework.security.oauth2.client.registration.ClientRegistration: TRACE
+#    org.springframework.security.oauth2.client.registration.ClientRegistrationRepository: TRACE

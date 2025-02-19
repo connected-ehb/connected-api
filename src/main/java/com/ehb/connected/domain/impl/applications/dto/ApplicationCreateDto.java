@@ -1,8 +1,10 @@
 package com.ehb.connected.domain.impl.applications.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ApplicationCreateDto {
     private String motivationMd;
 }

@@ -30,6 +30,7 @@ public class Deadline {
     private LocalDateTime dateTime;
     private String description;
     private DeadlineRestriction restriction;
+    private String timeZone;
 
     @ManyToOne
     @JoinColumn(name = "assignment_id", nullable = false)
