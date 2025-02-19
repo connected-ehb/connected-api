@@ -216,6 +216,11 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Set status (approved or rejected) and save
         application.setStatus(status);
+        Project project = application.getProject();
+        List<User> members = project.getMembers();
+        members.add(application.getApplicant());
+        project.setMembers(members);
+        projectService.updateProject(project);
         applicationRepository.save(application);
         return applicationMapper.toDto(application);
     }

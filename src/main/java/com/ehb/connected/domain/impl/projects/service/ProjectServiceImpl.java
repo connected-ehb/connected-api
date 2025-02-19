@@ -112,12 +112,15 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
 
         // Fetch deadline for the assignment with the restriction PROJECT_CREATION
-        final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
-
-        // If a deadline exists and has passed, throw an error
-        //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
-        if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
-            throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
+        try {
+            final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
+            // If a deadline exists and has passed, throw an error
+            //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
+            if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+                throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
+            }
+        } catch (EntityNotFoundException e) {
+            // If no deadline exists, do nothing
         }
 
         Project newProject = projectMapper.toEntity(projectDto);
@@ -155,6 +158,11 @@ public class ProjectServiceImpl implements ProjectService {
         logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
 
         return projectMapper.toDetailsDto(savedProject);
+    }
+
+    @Override
+    public void updateProject(Project project) {
+        projectRepository.save(project);
     }
 
     /**

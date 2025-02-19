@@ -49,7 +49,7 @@ public class CourseServiceImpl implements CourseService {
         final List<Map<String, Object>> canvasCourses = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/v1/courses")
-                        .queryParam("EnrollmentType", "student") // adjust as needed or pass as parameter
+                        .queryParam("EnrollmentType", "teacher") // adjust as needed or pass as parameter
                         .build())
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
@@ -115,7 +115,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public List<CourseDetailsDto> getCoursesByEnrollment(Principal principal) {
-        return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(userService.getUserByEmail(principal.getName()).getCanvasUserId()));
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(userService.getUserByPrincipal(principal).getCanvasUserId()));
     }
 
     private void importCourse(Course course) {

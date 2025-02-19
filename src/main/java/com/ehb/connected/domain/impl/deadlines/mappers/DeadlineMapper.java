@@ -17,6 +17,9 @@ public class DeadlineMapper {
     private final AssignmentMapper assignmentMapper;
 
     public DeadlineDetailsDto toDeadlineDetailsDto(Deadline deadline) {
+        if (deadline == null) {
+            return null;
+        }
         DeadlineDetailsDto deadlineDetailsDto = new DeadlineDetailsDto();
         deadlineDetailsDto.setId(deadline.getId());
         deadlineDetailsDto.setTitle(deadline.getTitle());
