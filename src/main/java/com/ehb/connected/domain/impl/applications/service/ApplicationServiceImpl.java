@@ -35,7 +35,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationMapper applicationMapper;
     private final NotificationServiceImpl notificationService;
     private final UrlHelper urlHelper;
-    private final UserServiceImpl userServiceImpl;
 
     @Override
     public Application getApplicationById(Long id) {
