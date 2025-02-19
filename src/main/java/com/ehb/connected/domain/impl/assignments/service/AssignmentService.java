@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface AssignmentService {
     AssignmentDetailsDto createAssignment(AssignmentCreateDto assignmentDto);
+    Assignment getAssignmentById(Long assignmentId);
     List<AssignmentDetailsDto> getAllAssignmentsByCourse(Long courseId);
-    List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId);
     List<AssignmentDetailsDto> getNewAssignmentsFromCanvas(Principal principal, Long courseId);
 }

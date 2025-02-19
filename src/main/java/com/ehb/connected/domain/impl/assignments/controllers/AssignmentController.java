@@ -39,9 +39,4 @@ public class AssignmentController {
     public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Principal principal, @PathVariable Long assignmentId){
         return ResponseEntity.ok(applicationService.getAllApplications(principal, assignmentId));
     }
-
-    @PostMapping("/{assignmentId}/projects/publish")
-    public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, @PathVariable Long assignmentId) {
-        return ResponseEntity.ok(assignmentService.publishAllProjects(principal, assignmentId));
-    }
 }

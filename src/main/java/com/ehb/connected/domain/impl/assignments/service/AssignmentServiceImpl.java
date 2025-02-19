@@ -29,14 +29,18 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     private final WebClient webClient;
 
-    private final Logger logger = LoggerFactory.getLogger(AssignmentService.class);
-
     @Override
     public AssignmentDetailsDto createAssignment(AssignmentCreateDto assignmentDto) {
         final Course course = courseService.getCourseById(assignmentDto.getCourseId());
         final Assignment assignmentEntity = assignmentMapper.AssignmentCreateToEntity(assignmentDto);
         assignmentEntity.setCourse(course);
         return assignmentMapper.toAssignmentDetailsDto(assignmentRepository.save(assignmentEntity));
+    }
+
+    @Override
+    public Assignment getAssignmentById(Long assignmentId) {
+       return assignmentRepository.findById(assignmentId)
+               .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
     }
 
     @Override

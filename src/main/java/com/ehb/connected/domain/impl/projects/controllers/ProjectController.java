@@ -103,4 +103,9 @@ public class ProjectController {
         projectService.removeMember(principal, projectId, memberId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{assignmentId}/publish")
+    public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, @PathVariable Long assignmentId) {
+        return ResponseEntity.ok(projectService.publishAllProjects(principal, assignmentId));
+    }
 }

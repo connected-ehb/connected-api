@@ -4,7 +4,7 @@ import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
-import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
@@ -50,11 +50,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
-    /**
-     * Get a project by id
-     * @param projectId the id of the project to get
-     * @return ProjectDetailsDto
-     */
     @Override
     public ProjectDetailsDto getProjectById(Principal principal, Long projectId) {
         User user = userService.getUserByPrincipal(principal);
@@ -76,11 +71,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
     }
 
-    /**
-     * Get all projects for a specific assignment (For Teachers)
-     * @param assignmentId the id of the assignment for which to get the projects
-     * @return List of ProjectDetailsDto
-     */
     @Override
     public List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId) {
         return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentId(assignmentId));
@@ -122,10 +112,11 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
 
         // Fetch deadline for the assignment with the restriction PROJECT_CREATION
-        final Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
+        final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
 
         // If a deadline exists and has passed, throw an error
-        if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
+        //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
+        if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
             throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
         }
 
@@ -139,13 +130,6 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toDetailsDto(savedProject);
     }
 
-    /**
-     * Update a project (only for project owners)
-     * @param principal the principal of the user updating the project
-     * @param projectId the id of the project to update
-     * @param project the UpdateDto containing the new project data
-     * @return ProjectDetailsDto
-     */
     @Override
     public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
         final Project existingProject = getProjectById(projectId);
