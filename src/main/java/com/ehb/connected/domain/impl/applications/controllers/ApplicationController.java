@@ -1,38 +1,31 @@
 package com.ehb.connected.domain.impl.applications.controllers;
 
 
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.service.ApplicationServiceImpl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 
 @RestController
 @RequestMapping("api/applications")
+@RequiredArgsConstructor
 public class ApplicationController {
 
     private final ApplicationServiceImpl applicationService;
-    private final ApplicationMapper applicationMapper;
 
-    public ApplicationController(ApplicationServiceImpl applicationService, ApplicationMapper applicationMapper) {
-        this.applicationService = applicationService;
-        this.applicationMapper = applicationMapper;
+    @PostMapping("/{applicationId}/review")
+    public ResponseEntity<ApplicationDetailsDto> reviewApplication(Principal principal, @PathVariable Long applicationId, @RequestHeader ApplicationStatusEnum status) {
+        return ResponseEntity.ok(applicationService.reviewApplication(principal, applicationId, status));
     }
 
-
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApplicationDto> getApplicationById(@PathVariable Long id) {
-        ApplicationDto applicationDto = applicationMapper.toDto(applicationService.getApplicationById(id));
-        return ResponseEntity.ok(applicationDto);
+    @GetMapping("/{applicationId}")
+    public ResponseEntity<ApplicationDetailsDto> getApplicationById(Principal principal, @PathVariable Long applicationId) {
+        return ResponseEntity.ok(applicationService.getApplicationById(principal, applicationId));
     }
-
-
-
-
 }

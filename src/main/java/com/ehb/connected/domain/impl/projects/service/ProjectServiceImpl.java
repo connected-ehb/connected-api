@@ -1,13 +1,10 @@
 package com.ehb.connected.domain.impl.projects.service;
 
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.entities.Application;
-import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
-import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
-import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
@@ -17,106 +14,137 @@ import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.services.UserService;
+import com.ehb.connected.exceptions.BaseRuntimeException;
+import com.ehb.connected.exceptions.DeadlineExpiredException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
+import com.ehb.connected.exceptions.UserUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final ApplicationRepository applicationRepository;
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
+    private final TagMapper tagMapper;
+
     private final DeadlineService deadlineService;
     private final AssignmentRepository assignmentRepository;
     private final ApplicationMapper applicationMapper;
+    private final UserService userService;
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
     @Override
-    public List<ProjectDetailsDto> getAllProjects(Long assignmentId) {
+    public ProjectDetailsDto getProjectById(Principal principal, Long projectId) {
+        User user = userService.getUserByPrincipal(principal);
+        Project project = getProjectById(projectId);
+
+        // Check if user is the owner of the project or a teacher and the project is not published
+        if (project.getStatus() == ProjectStatusEnum.PUBLISHED) {
+            return projectMapper.toDetailsDto(project);
+        } else if (user.getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
+            return projectMapper.toDetailsDto(project);
+        } else {
+            throw new UserUnauthorizedException(user.getId());
+        }
+    }
+
+    @Override
+    public Project getProjectById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+    }
+
+    @Override
+    public List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId) {
         return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentId(assignmentId));
     }
 
+    /**
+     * Get all published projects (For Students)
+     * @param assignmentId the id of the assignment for which to get the published projects
+     * @return List of ProjectDetailsDto
+     */
     @Override
-    public List<ProjectDetailsDto> getAllPublishedProjectsInAssignment(Long assignmentId) {
-        return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentIdAndStatus(assignmentId, ProjectStatusEnum.PUBLISHED));
+    public List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId) {
+        return projectMapper.toDetailsDtoList(
+                projectRepository.findAllByAssignmentIdAndStatusOrOwnedBy(
+                        assignmentId,
+                        ProjectStatusEnum.PUBLISHED,
+                        userService.getUserByPrincipal(principal)
+                ));
     }
 
+    /**
+     * Create a project
+     * @param principal the principal of the user creating the project
+     * @param assignmentId the id of the assignment for which to create the project
+     * @param projectDto the CreateDto containing the project data
+     * @return ProjectDetailsDto
+     */
     @Override
-    public ProjectDetailsDto getProjectById(Long id) {
-        return projectMapper.toDetailsDto(projectRepository.findById(id).orElseThrow(() -> {
-            logger.error("Project not found for id: {}", id);
-            return new EntityNotFoundException(Project.class, id.toString());
-        }));
-    }
+    public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto projectDto) {
 
-    @Override
-    public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project) {
+        final User user = userService.getUserByPrincipal(principal);
 
-        User user = projectUserService.getUser(principal);
-
-        // Check if user has pending or approved projects. If so return an error
-        if (projectRepository.existsByMembersContainingAndStatusIn(user, List.of(ProjectStatusEnum.PENDING, ProjectStatusEnum.APPROVED, ProjectStatusEnum.PUBLISHED))) {
-            throw new RuntimeException("User already has a pending or approved or published project");
+        // Check if user has already created a project for this assignment
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, assignmentId)) {
+            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
-        Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
-        System.out.println(assignment);
+        final Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
+
         // Fetch deadline for the assignment with the restriction PROJECT_CREATION
-        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
-
-        // If a deadline exists and has passed, throw an error
-        if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Project creation is no longer allowed. The deadline has passed.");
+        try {
+            final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
+            // If a deadline exists and has passed, throw an error
+            //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
+            if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+                throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
+            }
+        } catch (EntityNotFoundException e) {
+            // If no deadline exists, do nothing
         }
 
-        // Proceed with project creation since there is no deadline or the deadline is valid
-        Project newProject = new Project();
-        newProject.setTitle(project.getTitle());
-        newProject.setDescription(project.getDescription());
-        newProject.setShortDescription(project.getShortDescription());
-        newProject.setRepositoryUrl(project.getRepositoryUrl());
-        newProject.setBoardUrl(project.getBoardUrl());
-        newProject.setBackgroundImage(project.getBackgroundImage());
-        newProject.setTags(project.getTags());
+        Project newProject = projectMapper.toEntity(projectDto);
         newProject.setStatus(ProjectStatusEnum.PENDING);
-        // add current user to members list
         newProject.setMembers(List.of(user));
-
-        newProject.setCreatedBy(projectUserService.getUser(principal));
+        newProject.setCreatedBy(userService.getUserByPrincipal(principal));
         newProject.setAssignment(assignment);
-        return projectMapper.toDetailsDto(projectRepository.save(newProject));
+        Project savedProject = projectRepository.save(newProject);
+        logger.info("[{}] Project has been created", ProjectService.class.getName());
+        return projectMapper.toDetailsDto(savedProject);
     }
 
     @Override
-    public ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project) {
-        Project existingProject = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+    public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
+        final Project existingProject = getProjectById(projectId);
 
-        // If the project is approved, return as it cannot be updated
-        if (existingProject.getStatus() == ProjectStatusEnum.APPROVED) {
-            return projectMapper.toDetailsDto(existingProject);
+        // only pending projects can be updated
+        if (existingProject.getStatus() != ProjectStatusEnum.PENDING) {
+            throw new BaseRuntimeException("Project cannot be updated because it is no longer in the pending state.", HttpStatus.CONFLICT);
         }
 
         // Check if user is the owner of the project
-        if (!projectUserService.isUserOwnerOfProject(principal, id)) {
-            throw new RuntimeException("User is not the owner of the project");
+        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
+            throw new UserNotOwnerOfProjectException();
         }
 
         existingProject.setTitle(project.getTitle());
@@ -124,130 +152,103 @@ public class ProjectServiceImpl implements ProjectService {
         existingProject.setRepositoryUrl(project.getRepositoryUrl());
         existingProject.setBackgroundImage(project.getBackgroundImage());
 
-        return projectMapper.toDetailsDto(projectRepository.save(existingProject));
+        existingProject.setTags(tagMapper.toEntityList(project.getTags().stream().distinct().toList()));
+
+        Project savedProject = projectRepository.save(existingProject);
+        logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
+
+        return projectMapper.toDetailsDto(savedProject);
     }
 
-
     @Override
-    public void deleteProject(Long id) {
-        projectRepository.deleteById(id);
-    }
-
-    @Override
-    public void approveProject(Long id) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
-        project.setStatus(ProjectStatusEnum.APPROVED);
+    public void updateProject(Project project) {
         projectRepository.save(project);
     }
 
+    /**
+     * Change the status of a project (only for teachers)
+     * @param principal the principal of the user changing the status
+     * @param projectId the id of the project to change the status of
+     * @param status the new status of the project
+     * @return ProjectDetailsDto
+     */
     @Override
-    public void rejectProject(Long id) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
-        project.setStatus(ProjectStatusEnum.REJECTED);
-        projectRepository.save(project);
-    }
-
-    @Override
-    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status) {
-        User user = projectUserService.getUser(principal);
+    public ProjectDetailsDto changeProjectStatus(Principal principal, Long projectId, ProjectStatusEnum status) {
+        final User user = userService.getUserByPrincipal(principal);
 
         if (user.getRole().equals(Role.STUDENT)) {
-            return ResponseEntity.status(403).build();
+            throw new UserUnauthorizedException(user.getId());
         }
 
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, id.toString()));
+        final Project project = getProjectById(projectId);
+        ProjectStatusEnum previousStatus = project.getStatus();
         project.setStatus(status);
         projectRepository.save(project);
-        return ResponseEntity.ok(projectMapper.toDetailsDto(project));
+        logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
+                ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
+        return projectMapper.toDetailsDto(project);
     }
 
     @Override
-    public List<ApplicationDto> getAllApplications(Principal principal, Long projectId) {
-        if (!projectUserService.isUserOwnerOfProject(principal, projectId) && projectUserService.getUser(principal).getRole().equals(Role.STUDENT)) {
-            throw new RuntimeException("User is not the owner of the project");
-        }
-
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId.toString()));
-
-        return project.getApplications().stream()
-                .map(applicationMapper::toDto)
-                .collect(Collectors.toList());
+    public List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId) {
+        final List<Project> projects = getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
+        projects.forEach(project -> changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
+        logger.info("All approved projects have been published.");
+        return projectMapper.toDetailsDtoList(projects);
     }
 
-
+    /**
+     * Get all applications for a project (only for teachers and project owners)
+     * @param principal the principal of the user getting the applications
+     * @param projectId the id of the project for which to get the applications
+     * @return List of ApplicationDto
+     */
     @Override
-    @Transactional
-    public void reviewApplication(Principal principal, Long projectId, Long applicationId, ApplicationStatusEnum status) {
-        // Ensure user owns the project
-        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
-            throw new RuntimeException("User is not the owner of the project");
-        }
+    public List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
+        if (projectUserService.isUserOwnerOfProject(principal, projectId) || userService.getUserByPrincipal(principal).getRole().equals(Role.TEACHER)) {
+            final Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        // Ensure user is not member of another project
-
-        Application application = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new EntityNotFoundException("Application not found"));
-
-        // Ensure the application belongs to the project
-        if (!Objects.equals(application.getProject().getId(), projectId)) {
-            throw new IllegalArgumentException("Application does not belong to the project");
-        }
-
-        // Prevent reviewing an already reviewed application
-        if (isApplicationReviewed(application)) {
-            throw new IllegalStateException("Application has already been reviewed");
-        }
-
-        if (status == ApplicationStatusEnum.APPROVED) {
-            approveApplication(application, projectId);
+            return applicationMapper.toDtoList(project.getApplications());
         } else {
-            application.setStatus(ApplicationStatusEnum.REJECTED);
-            applicationRepository.save(application);
+            throw new UserNotOwnerOfProjectException();
         }
     }
 
-    private boolean isApplicationReviewed(Application application) {
-        return application.getStatus() == ApplicationStatusEnum.APPROVED
-                || application.getStatus() == ApplicationStatusEnum.REJECTED;
-    }
 
-    private void approveApplication(Application application, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId.toString()));
-
-        // Ensure applicant is not already a member
-        if (project.getMembers().stream().noneMatch(member -> member.getId().equals(application.getApplicant().getId()))) {
-            project.getMembers().add(application.getApplicant());
-            projectRepository.save(project);
-        }
-
-        // Reject other pending applications from the same applicant
-        List<Application> otherApplications = applicationRepository.findByApplicantAndStatus(application.getApplicant(), ApplicationStatusEnum.PENDING);
-        otherApplications.forEach(app -> {
-            if (!app.getId().equals(application.getId())) {
-                app.setStatus(ApplicationStatusEnum.REJECTED);
-                applicationRepository.save(app);
-            }
-        });
-
-        application.setStatus(ApplicationStatusEnum.APPROVED);
-        applicationRepository.save(application);
-    }
-
-
+    /**
+     * Remove a member from a project (only for teachers)
+     * @param principal the principal of the user removing the member
+     * @param projectId the id of the project from which to remove the member
+     * @param memberId the id of the member to remove
+     */
     @Override
-    public void removeMember(Principal principal, Long id, Long memberId) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+    public void removeMember(Principal principal, Long projectId, Long memberId) {
+        final Project project = getProjectById(projectId);
 
-        project.getMembers().removeIf(member -> member.getId().equals(memberId));
-        projectRepository.save(project);
+        final User user = userService.getUserByPrincipal(principal);
+
+        if (user.getRole().equals(Role.TEACHER)) {
+            final boolean removed = project.getMembers().removeIf(member -> member.getId().equals(memberId));
+            if (removed) {
+                logger.info("[{}] Member ID: {} was successfully removed from project ID: {} by User ID: {}",
+                        ProjectService.class.getSimpleName(), memberId, projectId, user.getId());
+                projectRepository.save(project);
+            } else {
+                throw new EntityNotFoundException(User.class, memberId);
+            }
+        } else {
+            throw new UserUnauthorizedException(user.getId());
+        }
     }
 
+
+    /**
+     * Get all projects for a specific assignment with a specific status
+     * @param assignmentId the id of the assignment for which to get the projects
+     * @param status the status of the projects to get
+     * @return List of Project
+    */
     @Override
     public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
         return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);

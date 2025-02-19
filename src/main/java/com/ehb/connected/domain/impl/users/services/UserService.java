@@ -14,7 +14,6 @@ public interface UserService {
     User createUser(User user);
     UserDetailsDto updateUser(Principal principal, UserDetailsDto user);
     void deleteUser(Long id);
+    User getUserByPrincipal(Principal principal);
     User getUserByEmail(String email);
-
-    User getUserByCanvasUserId(Long canvasUserId);
 }

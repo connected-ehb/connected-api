@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class ApplicationDto {
+public class ApplicationDetailsDto {
     private Long id;
     private String motivationMd;
     private ApplicationStatusEnum status;
