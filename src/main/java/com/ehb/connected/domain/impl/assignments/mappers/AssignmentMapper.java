@@ -19,7 +19,7 @@ public class AssignmentMapper {
         assignment.setName(assignmentCreateDto.getName());
         assignment.setDescription(assignmentCreateDto.getDescription());
         assignment.setDefaultTeamSize(assignmentCreateDto.getDefaultTeamSize());
-        assignment.setCanvasAssignmentId(assignmentCreateDto.getCanvasAssignmentId());
+        assignment.setCanvasId(assignmentCreateDto.getCanvasId());
         return assignment;
     }
 
@@ -29,7 +29,7 @@ public class AssignmentMapper {
         assignmentDetailsDto.setName(assignment.getName());
         assignmentDetailsDto.setDescription(assignment.getDescription());
         assignmentDetailsDto.setDefaultTeamSize(assignment.getDefaultTeamSize());
-        assignmentDetailsDto.setCanvasAssignmentId(assignment.getCanvasAssignmentId());
+        assignmentDetailsDto.setCanvasId(assignment.getCanvasId());
         assignmentDetailsDto.setCourseId(assignment.getCourse().getId());
         return assignmentDetailsDto;
     }
@@ -44,7 +44,7 @@ public class AssignmentMapper {
         dto.setName(canvasAssignment.get("name").toString());
         dto.setDescription(canvasAssignment.get("description") != null ? canvasAssignment.get("description").toString() : "");
         dto.setDefaultTeamSize(null);
-        dto.setCanvasAssignmentId(Long.parseLong(canvasAssignment.get("id").toString()));
+        dto.setCanvasId(Long.parseLong(canvasAssignment.get("id").toString()));
         dto.setCourseId(courseId);
         return dto;
     }

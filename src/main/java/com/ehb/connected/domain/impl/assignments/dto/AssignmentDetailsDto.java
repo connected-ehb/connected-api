@@ -8,9 +8,9 @@ import lombok.Setter;
 public class AssignmentDetailsDto {
 
     private Long id;
+    private Long canvasId;
     private String name;
     private String description;
     private Integer defaultTeamSize;
-    private Long canvasAssignmentId;
     private Long courseId;
 }
