@@ -2,16 +2,25 @@ package com.ehb.connected.domain.impl.notifications.mappers;
 
 import com.ehb.connected.domain.impl.notifications.dto.NotificationDto;
 import com.ehb.connected.domain.impl.notifications.entities.Notification;
+import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 @Component
 public class NotificationMapper {
 
 
+    private final UserDetailsMapper userDetailsMapper;
+
+    public NotificationMapper(UserDetailsMapper userDetailsMapper) {
+        this.userDetailsMapper = userDetailsMapper;
+    }
+
     public NotificationDto NotificationToDto(Notification notification){
         NotificationDto dto = new NotificationDto();
         dto.setNotificationId(notification.getId());
-        dto.setUser(notification.getUser());
+        userDetailsMapper.toUserDetailsDto(notification.getUser());
         dto.setMessage(notification.getMessage());
         dto.setRead(notification.isRead());
         dto.setDestinationUrl(notification.getDestinationUrl());

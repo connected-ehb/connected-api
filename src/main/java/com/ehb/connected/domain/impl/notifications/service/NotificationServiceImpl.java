@@ -8,13 +8,18 @@ import com.ehb.connected.domain.impl.users.entities.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class NotificationServiceImpl implements NotificationService{
-    private NotificationMapper notificationMapper;
-    private NotificationRepository notificationRepository;
+    private final NotificationMapper notificationMapper;
+    private final NotificationRepository notificationRepository;
 
+    public NotificationServiceImpl(NotificationMapper notificationMapper, NotificationRepository notificationRepository) {
+        this.notificationMapper = notificationMapper;
+        this.notificationRepository = notificationRepository;
+    }
 
     @Override
     public void createNotification(User recipient, String message, String destinationUrl) {
@@ -29,7 +34,8 @@ public class NotificationServiceImpl implements NotificationService{
 
     @Override
     public NotificationDto getNotificationById(Long id) {
-        Notification notification = notificationRepository.findById(id);
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
         return notificationMapper.NotificationToDto(notification);
     }
 
@@ -42,7 +48,8 @@ public class NotificationServiceImpl implements NotificationService{
 
     @Override
     public NotificationDto updateNotification(Long id, NotificationDto notificationDto) {
-        Notification notification = notificationRepository.findById(id);
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
         notification.setMessage(notificationDto.getMessage());
         notification.setRead(notificationDto.isRead());
         notificationRepository.save(notification);

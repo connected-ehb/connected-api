@@ -35,6 +35,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationMapper applicationMapper;
     private final NotificationServiceImpl notificationService;
     private final UrlHelper urlHelper;
+    private final UserServiceImpl userServiceImpl;
 
     @Override
     public Application getApplicationById(Long id) {
@@ -71,7 +72,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                 UrlHelper.Sluggify(project.getAssignment().getName()),
                 "projects", project.getId().toString(),
                 "applications", newApplication.getId().toString());
-        notificationService.createNotification(project.getCreatedBy(),"You have successfully applied to the project", destinationUrl );
+        notificationService.createNotification(
+                        project.getCreatedBy(),
+                " "+ currentUser.getFirstName() + " " +
+                        currentUser.getLastName() + " applied for your project.",
+                        destinationUrl );
         return applicationMapper.toDto(newApplication);
     }
 
