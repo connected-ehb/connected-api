@@ -6,7 +6,7 @@ import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
-import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.projects.entities.Project;
@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -117,9 +118,9 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BaseRuntimeException("Project is not published", HttpStatus.CONFLICT);
         }
 
-        Deadline deadline = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignment().getId(), DeadlineRestriction.APPLICATION_SUBMISSION);
-        if (deadline != null && deadline.getDateTime().isBefore(LocalDateTime.now())) {
-            throw new DeadlineExpiredException(DeadlineRestriction.APPLICATION_SUBMISSION);
+        DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(project.getAssignment().getId(), DeadlineRestriction.APPLICATION_SUBMISSION);
+        if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+            throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
         }
 
         // Check if user has already created or joined a project in this assignment

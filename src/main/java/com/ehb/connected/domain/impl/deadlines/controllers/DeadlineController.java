@@ -45,5 +45,6 @@ public class DeadlineController {
     @DeleteMapping("/{deadlineId}")
     public void deleteDeadline(@PathVariable Long deadlineId) {
         deadlineService.deleteDeadline(deadlineId);
+        return ResponseEntity.noContent().build();
     }
 }

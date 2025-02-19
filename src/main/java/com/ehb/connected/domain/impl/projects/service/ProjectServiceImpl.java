@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -194,6 +195,14 @@ public class ProjectServiceImpl implements ProjectService {
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
         return projectMapper.toDetailsDto(project);
+    }
+
+    @Override
+    public List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId) {
+        final List<Project> projects = getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
+        projects.forEach(project -> changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
+        logger.info("All approved projects have been published.");
+        return projectMapper.toDetailsDtoList(projects);
     }
 
     /**

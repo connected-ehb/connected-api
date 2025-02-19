@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.tags.services;
 
 import com.ehb.connected.domain.impl.tags.dto.TagDto;
+import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.tags.repositories.TagRepository;
 import lombok.RequiredArgsConstructor;

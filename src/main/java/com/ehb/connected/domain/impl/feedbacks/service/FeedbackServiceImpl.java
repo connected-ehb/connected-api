@@ -45,7 +45,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         // Ensure that the user can modify this feedback
         final User currentUser = userService.getUserByEmail(principal.getName());
         if (!feedback.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You do not have permission to modify this feedback");
+            throw new UserUnauthorizedException(currentUser.getId());
         }
 
         return feedback;

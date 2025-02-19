@@ -1,8 +1,6 @@
 package com.ehb.connected.domain.impl.assignments.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 
 public class AssignmentServiceImplTest {
 

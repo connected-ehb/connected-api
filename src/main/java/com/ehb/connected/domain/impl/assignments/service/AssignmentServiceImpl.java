@@ -7,17 +7,10 @@ import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
-import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
-import com.ehb.connected.domain.impl.projects.entities.Project;
-import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
-import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
-import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import java.util.Map;
@@ -30,12 +23,8 @@ import java.util.List;
 public class AssignmentServiceImpl implements AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
-
-    private final ProjectService projectService;
     private final CourseService courseService;
     private final UserService userService;
-
-    private final ProjectMapper projectMapper;
     private final AssignmentMapper assignmentMapper;
 
     private final WebClient webClient;
@@ -54,15 +43,6 @@ public class AssignmentServiceImpl implements AssignmentService {
     public List<AssignmentDetailsDto> getAllAssignmentsByCourse(Long courseId) {
         return assignmentMapper.toAssignmentDetailsDtoList(assignmentRepository.findByCourseId(courseId));
     }
-
-    @Override
-    public List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId) {
-        final List<Project> projects = projectService.getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
-        projects.forEach(project -> projectService.changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
-        logger.info("All approved projects have been published.");
-        return projectMapper.toDetailsDtoList(projects);
-    }
-
 
     /**
      * Retrieves new assignments from Canvas for a given course that have not yet been imported into the system.

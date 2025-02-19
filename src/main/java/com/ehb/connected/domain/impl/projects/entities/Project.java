@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.projects.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
+import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.persistence.*;
@@ -64,5 +65,8 @@ public class Project {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> members = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Feedback> feedbacks = new ArrayList<>();
 
 }

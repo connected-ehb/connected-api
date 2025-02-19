@@ -20,6 +20,7 @@ public interface ProjectService {
     ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project);
 
     ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
+    List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId);
 
     List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId);
 
