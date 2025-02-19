@@ -4,9 +4,7 @@ import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
 import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.assignments.service.AssignmentService;
 import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
-import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
-import com.ehb.connected.domain.impl.courses.mappers.CourseMapper;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.domain.impl.enrollments.services.EnrollmentService;
 import com.ehb.connected.domain.impl.users.entities.User;
@@ -40,61 +38,12 @@ public class CourseController {
     private final AssignmentMapper assignmentMapper;
     private final EnrollmentService enrollmentService;
 
-    //TODO: is EnrollmentType necessary? && move logic to service
     @PostMapping("/canvas")
-    public ResponseEntity<String> getCourses(Principal principal, @RequestParam String EnrollmentType) {
-        User user = userService.getUserByEmail(principal.getName());
-        String token = user.getAccessToken();
-
-        String jsonResponse = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/v1/courses")
-                        .queryParam("EnrollmentType", EnrollmentType.toLowerCase())
-                        .build())
-                .header("Authorization", "Bearer " + token)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            // Deserialize the Canvas courses into a list of maps
-            List<Map<String, Object>> canvasCourses = objectMapper.readValue(
-                    jsonResponse, new TypeReference<List<Map<String, Object>>>() {}
-            );
-
-            // Fetch all courses already imported by this user.
-            List<Course> importedCourses = courseService.getCoursesByOwner(principal);
-            // Create a set of canvas course IDs that are already imported.
-            Set<Long> importedCanvasIds = importedCourses.stream()
-                    .map(Course::getCanvasCourseId)
-                    .collect(Collectors.toSet());
-
-            // Filter out courses that have already been imported.
-            List<Map<String, Object>> newCourses = canvasCourses.stream()
-                    .filter(courseMap -> {
-                        Long canvasCourseId = Long.parseLong(courseMap.get("id").toString());
-                        return !importedCanvasIds.contains(canvasCourseId);
-                    })
-                    .collect(Collectors.toList());
-
-            String filteredCoursesJson = objectMapper.writeValueAsString(newCourses);
-            return ResponseEntity.ok().body(filteredCoursesJson);
-        } catch (Exception e) {
-            System.out.println("Error parsing courses: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error parsing courses");
-        }
+    public ResponseEntity<List<CourseDetailsDto>> getNewCoursesFromCanvas(Principal principal) {
+        List<CourseDetailsDto> newCourses = courseService.getNewCoursesFromCanvas(principal);
+        return ResponseEntity.ok(newCourses);
     }
 
-    /**
-     * Create a course
-     * @param principal the security principal of the user creating the course
-     * @param course the courseCreateDto object containing the course information to be created
-     * @return a response entity with a message indicating the course was created
-     */
-    //TODO: use getAuthorities() to check if user has permission to create course
-    //@PreAuthorize("hasAuthority('course:create')")
     @PostMapping("/")
     public ResponseEntity<Map<String, String>> createCourse(Principal principal, @RequestBody CourseCreateDto course) {
         User user = userService.getUserByEmail(principal.getName());
