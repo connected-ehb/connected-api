@@ -57,8 +57,8 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}/users")
-    public List<UserDetailsDto> getAllEnrolledUsersByCourse(@PathVariable Long courseId){
-        return userService.getAllUsersByCourseId(courseId);
+    public List<UserDetailsDto> getAllEnrolledStudentsByCourse(@PathVariable Long courseId){
+        return userService.getAllStudentsByCourseId(courseId);
     }
 
 }

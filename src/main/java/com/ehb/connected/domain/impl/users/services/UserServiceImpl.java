@@ -5,6 +5,7 @@ import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
@@ -27,12 +28,12 @@ public class UserServiceImpl implements UserService{
     private final EnrollmentRepository enrollmentRepository;
 
     @Override
-    public List<UserDetailsDto> getAllUsersByCourseId(Long courseId) {
+    public List<UserDetailsDto> getAllStudentsByCourseId(Long courseId) {
         List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
         List<Long> canvasUserIds = enrollments.stream()
                 .map(Enrollment::getCanvasUserId)
                 .toList();
-        List<User> users = userRepository.findByCanvasUserIdIn(canvasUserIds);
+        List<User> users = userRepository.findByCanvasUserIdInAndRole(canvasUserIds, Role.STUDENT);
         return users.stream()
                 .map(userDetailsMapper::toUserDetailsDto)
                 .collect(Collectors.toList());
