@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface UserService {
 
-    List<User> getAllUsers();
+    List<UserDetailsDto> getAllUsersByCourseId(Long courseId);
     User getUserById(Long id);
     User createUser(User user);
     UserDetailsDto updateUser(Principal principal, UserDetailsDto user);

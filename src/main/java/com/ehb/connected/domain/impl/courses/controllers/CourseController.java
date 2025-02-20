@@ -5,6 +5,8 @@ import com.ehb.connected.domain.impl.assignments.service.AssignmentService;
 import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
+import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
+import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +27,7 @@ public class CourseController {
 
     private final CourseService courseService;
     private final AssignmentService assignmentService;
+    private final UserService userService;
 
     @PostMapping("/canvas")
     public ResponseEntity<List<CourseDetailsDto>> getNewCoursesFromCanvas(Principal principal) {
@@ -51,6 +54,11 @@ public class CourseController {
     @GetMapping("/{courseId}/assignments")
     public ResponseEntity<List<AssignmentDetailsDto>> getAllAssignmentsByCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(assignmentService.getAllAssignmentsByCourse(courseId));
+    }
+
+    @GetMapping("/{courseId}/users")
+    public List<UserDetailsDto> getAllEnrolledUsersByCourse(@PathVariable Long courseId){
+        return userService.getAllUsersByCourseId(courseId);
     }
 
 }

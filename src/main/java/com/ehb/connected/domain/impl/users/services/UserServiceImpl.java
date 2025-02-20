@@ -1,6 +1,8 @@
 package com.ehb.connected.domain.impl.users.services;
 
 
+import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
+import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
@@ -14,6 +16,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +24,18 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final UserDetailsMapper userDetailsMapper;
     private final TagMapper tagMapper;
+    private final EnrollmentRepository enrollmentRepository;
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDetailsDto> getAllUsersByCourseId(Long courseId) {
+        List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        List<Long> canvasUserIds = enrollments.stream()
+                .map(Enrollment::getCanvasUserId)
+                .toList();
+        List<User> users = userRepository.findByCanvasUserIdIn(canvasUserIds);
+        return users.stream()
+                .map(userDetailsMapper::toUserDetailsDto)
+                .collect(Collectors.toList());
     }
 
     @Override
