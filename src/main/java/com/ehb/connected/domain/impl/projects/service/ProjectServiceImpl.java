@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
@@ -33,7 +34,6 @@ import java.security.Principal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -232,9 +232,13 @@ public class ProjectServiceImpl implements ProjectService {
         if (user.getRole().equals(Role.TEACHER)) {
             final boolean removed = project.getMembers().removeIf(member -> member.getId().equals(memberId));
             if (removed) {
-                if (Objects.equals(project.getCreatedBy().getId(), memberId)) {
+                if (projectUserService.isUserOwnerOfProject(memberId, projectId)) {
                     project.setCreatedBy(null);
                 }
+                project.getApplications().stream()
+                        .filter(application -> application.getApplicant().getId().equals(memberId))
+                        .findFirst()
+                        .ifPresent(application -> application.setStatus(ApplicationStatusEnum.REJECTED));
                 logger.info("[{}] Member ID: {} was successfully removed from project ID: {} by User ID: {}",
                         ProjectService.class.getSimpleName(), memberId, projectId, user.getId());
                 projectRepository.save(project);
