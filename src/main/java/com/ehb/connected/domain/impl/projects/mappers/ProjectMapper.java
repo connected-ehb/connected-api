@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.projects.mappers;
 
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
+import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
@@ -53,5 +54,29 @@ public class ProjectMapper {
         project.setTags(tagMapper.toEntityList(dto.getTags()));
 
         return project;
+    }
+
+    public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
+        if (dto.getTitle() != null) {
+            entity.setTitle(dto.getTitle());
+        }
+        if (dto.getDescription() != null) {
+            entity.setDescription(dto.getDescription());
+        }
+        if (dto.getShortDescription() != null) {
+            entity.setShortDescription(dto.getShortDescription());
+        }
+        if (dto.getRepositoryUrl() != null) {
+            entity.setRepositoryUrl(dto.getRepositoryUrl());
+        }
+        if (dto.getBoardUrl() != null) {
+            entity.setBoardUrl(dto.getBoardUrl());
+        }
+        if (dto.getBackgroundImage() != null) {
+            entity.setBackgroundImage(dto.getBackgroundImage());
+        }
+        if (dto.getTags() != null) {
+            entity.setTags(tagMapper.toEntityList(dto.getTags()));
+        }
     }
 }

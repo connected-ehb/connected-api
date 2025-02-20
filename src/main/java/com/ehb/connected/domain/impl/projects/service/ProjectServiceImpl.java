@@ -147,12 +147,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new UserNotOwnerOfProjectException();
         }
 
-        existingProject.setTitle(project.getTitle());
-        existingProject.setDescription(project.getDescription());
-        existingProject.setRepositoryUrl(project.getRepositoryUrl());
-        existingProject.setBackgroundImage(project.getBackgroundImage());
-
-        existingProject.setTags(tagMapper.toEntityList(project.getTags().stream().distinct().toList()));
+        projectMapper.updateEntityFromDto(project, existingProject);
 
         Project savedProject = projectRepository.save(existingProject);
         logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
