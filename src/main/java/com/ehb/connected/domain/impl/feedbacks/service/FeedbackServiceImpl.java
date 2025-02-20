@@ -5,6 +5,8 @@ import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
 import com.ehb.connected.domain.impl.feedbacks.mappers.FeedbackMapper;
 import com.ehb.connected.domain.impl.feedbacks.repositories.FeedbackRepository;
+import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
+import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -25,6 +27,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final ProjectRepository projectRepository;
     private final FeedbackRepository feedbackRepository;
     private final UserService userService;
+    private final UrlHelper urlHelper;
+    private final NotificationServiceImpl notificationService;
 
     private final FeedbackMapper feedbackMapper;
 
@@ -62,6 +66,18 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedback.setProject(project);
 
         feedbackRepository.save(feedback);
+
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(project.getAssignment().getName()),
+                "projects/" + project.getId(),
+                "feedback");
+
+        notificationService.createNotification(
+                project.getCreatedBy(),
+                "feedback has been written for  " + project.getTitle(),
+                destinationUrl
+        );
 
         return feedbackMapper.toDto(feedback);
     }

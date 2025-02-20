@@ -8,6 +8,9 @@ import com.ehb.connected.domain.impl.assignments.repositories.AssignmentReposito
 import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
+import com.ehb.connected.domain.impl.notifications.entities.Notification;
+import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
+import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
@@ -48,6 +51,8 @@ public class ProjectServiceImpl implements ProjectService {
     private final AssignmentRepository assignmentRepository;
     private final ApplicationMapper applicationMapper;
     private final UserService userService;
+    private final UrlHelper urlHelper;
+    private final NotificationServiceImpl notificationService;
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
@@ -131,6 +136,23 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
         logger.info("[{}] Project has been created", ProjectService.class.getName());
+
+        List<User> teachers = userService.getAllUsersByRole(Role.TEACHER);
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(newProject.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(newProject.getAssignment().getName()),
+                "projects/" + newProject.getId());
+
+        for (User teacher : teachers) {
+            notificationService.createNotification(
+                    teacher,
+                    "A new project has been created: " +
+                            newProject.getTitle() + " by " +
+                            newProject.getCreatedBy().getFirstName() + " " +
+                            newProject.getCreatedBy().getLastName(),
+                    destinationUrl
+            );
+        }
         return projectMapper.toDetailsDto(savedProject);
     }
 
@@ -187,6 +209,18 @@ public class ProjectServiceImpl implements ProjectService {
         projectRepository.save(project);
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
+
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(project.getAssignment().getName()),
+                "projects/" + project.getId());
+
+        notificationService.createNotification(
+                project.getCreatedBy(),
+                "Status for your project has been changed to: " + project.getStatus(),
+                destinationUrl
+        );
+
         return projectMapper.toDetailsDto(project);
     }
 

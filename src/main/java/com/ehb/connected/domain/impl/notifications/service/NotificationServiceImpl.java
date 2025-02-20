@@ -5,6 +5,8 @@ import com.ehb.connected.domain.impl.notifications.entities.Notification;
 import com.ehb.connected.domain.impl.notifications.mappers.NotificationMapper;
 import com.ehb.connected.domain.impl.notifications.repositories.NotificationRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.websockets.WebSocketService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,21 +17,25 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService{
     private final NotificationMapper notificationMapper;
     private final NotificationRepository notificationRepository;
+    private WebSocketService webSocketService;
 
-    public NotificationServiceImpl(NotificationMapper notificationMapper, NotificationRepository notificationRepository) {
+    @Autowired
+    public NotificationServiceImpl(NotificationMapper notificationMapper, NotificationRepository notificationRepository, WebSocketService webSocketService) {
         this.notificationMapper = notificationMapper;
         this.notificationRepository = notificationRepository;
+        this.webSocketService = webSocketService;
     }
 
     @Override
     public void createNotification(User recipient, String message, String destinationUrl) {
         Notification notification = new Notification();
-
         notification.setUser(recipient);
         notification.setMessage(message);
         notification.setDestinationUrl(destinationUrl);
-
         notificationRepository.save(notification);
+        //create notificationDto and send it to the recipient via the destinationUrl
+        NotificationDto notificationDto = notificationMapper.NotificationToDto(notification);
+        webSocketService.sendNotification("/user/"+ recipient.getId()+ "/notifications", notificationDto);
     }
 
     @Override
