@@ -135,6 +135,23 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
         logger.info("[{}] Project has been created", ProjectService.class.getName());
+
+        List<User> teachers = userService.getAllUsersByRole(Role.TEACHER);
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(newProject.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(newProject.getAssignment().getName()),
+                "projects/" + newProject.getId());
+
+        for (User teacher : teachers) {
+            notificationService.createNotification(
+                    teacher,
+                    "A new project has been created: " +
+                            newProject.getTitle() + " by " +
+                            newProject.getCreatedBy().getFirstName() + " " +
+                            newProject.getCreatedBy().getLastName(),
+                    destinationUrl
+            );
+        }
         return projectMapper.toDetailsDto(savedProject);
     }
 

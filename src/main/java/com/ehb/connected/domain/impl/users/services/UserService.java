@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.users.services;
 
 
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 
 import java.security.Principal;
@@ -16,4 +17,6 @@ public interface UserService {
     void deleteUser(Long id);
     User getUserByPrincipal(Principal principal);
     User getUserByEmail(String email);
+
+    List<User> getAllUsersByRole(Role role);
 }
