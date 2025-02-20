@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationMapper applicationMapper;
     private final NotificationServiceImpl notificationService;
     private final UrlHelper urlHelper;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private final ProjectUserService projectUserService;
 
@@ -145,16 +147,18 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationRepository.save(newApplication);
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
 
+        //build url for notification to send to project owner
         String destinationUrl = urlHelper.UrlBuilder(
                 UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                 UrlHelper.Sluggify(project.getAssignment().getName()),
                 "projects", project.getId().toString(),
                 "applications");
+
         notificationService.createNotification(
-                        project.getCreatedBy(),
-                " "+ currentUser.getFirstName() + " " +
-                        currentUser.getLastName() + " applied for your project.",
-                        destinationUrl );
+                project.getCreatedBy(),
+                currentUser.getFirstName() + " " + currentUser.getLastName() + " applied for your project.",
+                destinationUrl
+        );
         return applicationMapper.toDto(newApplication);
     }
 

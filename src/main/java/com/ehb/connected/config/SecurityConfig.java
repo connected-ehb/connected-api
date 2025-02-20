@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login/**", "/login/oauth2/authorization/canvas", "/api/logout", "/oauth2/authorization/canvas", "/error").permitAll()
+                        .requestMatchers("/login/**", "/login/oauth2/authorization/canvas", "/api/logout", "/oauth2/authorization/canvas", "/error","/ws/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
