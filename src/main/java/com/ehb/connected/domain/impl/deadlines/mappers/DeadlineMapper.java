@@ -27,7 +27,7 @@ public class DeadlineMapper {
         deadlineDetailsDto.setDueDate(deadline.getDueDate());
         deadlineDetailsDto.setRestriction(deadline.getRestriction());
         deadlineDetailsDto.setAssignment(assignmentMapper.toAssignmentDetailsDto(deadline.getAssignment()));
-
+        deadlineDetailsDto.setTimeZone(deadline.getTimeZone());
         return deadlineDetailsDto;
     }
 
@@ -51,7 +51,6 @@ public class DeadlineMapper {
         deadline.setDescription(deadlineUpdateDto.getDescription());
         deadline.setDueDate(deadlineUpdateDto.getDueDate());
         deadline.setRestriction(deadlineUpdateDto.getRestriction());
-
         return deadline;
     }
 }
