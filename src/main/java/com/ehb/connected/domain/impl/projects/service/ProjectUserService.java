@@ -5,6 +5,7 @@ import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
+import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +21,20 @@ public class ProjectUserService {
 
     public boolean isUserOwnerOfProject(Principal principal, Long projectId) {
 
-        User currentUser = userService.getUserByEmail(principal.getName());
+        User currentUser = userService.getUserByPrincipal(principal);
 
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+
+        return project.getCreatedBy().getId().equals(currentUser.getId());
+    }
+
+    public boolean isUserOwnerOfProject(long userId, Long projectId) {
+
+        User currentUser = userService.getUserById(userId);
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
         return project.getCreatedBy().getId().equals(currentUser.getId());
     }

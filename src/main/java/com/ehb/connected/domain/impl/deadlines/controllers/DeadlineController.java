@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/deadlines")
+@RequestMapping("/api/deadlines")
 @RequiredArgsConstructor
 public class DeadlineController {
 
     private final DeadlineService deadlineService;
 
-    @GetMapping("/{assignmentId}")
+    @GetMapping("/assignment/{assignmentId}")
     public ResponseEntity<List<DeadlineDetailsDto>> getAllDeadlinesForAssignmentId(@PathVariable Long assignmentId){
         return ResponseEntity.ok(deadlineService.getAllDeadlinesByAssignmentId(assignmentId));
     }

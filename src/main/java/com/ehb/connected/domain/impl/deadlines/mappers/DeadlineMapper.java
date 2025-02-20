@@ -24,10 +24,10 @@ public class DeadlineMapper {
         deadlineDetailsDto.setId(deadline.getId());
         deadlineDetailsDto.setTitle(deadline.getTitle());
         deadlineDetailsDto.setDescription(deadline.getDescription());
-        deadlineDetailsDto.setDateTime(deadline.getDateTime());
+        deadlineDetailsDto.setDueDate(deadline.getDueDate());
         deadlineDetailsDto.setRestriction(deadline.getRestriction());
         deadlineDetailsDto.setAssignment(assignmentMapper.toAssignmentDetailsDto(deadline.getAssignment()));
-
+        deadlineDetailsDto.setTimeZone(deadline.getTimeZone());
         return deadlineDetailsDto;
     }
 
@@ -39,7 +39,7 @@ public class DeadlineMapper {
         Deadline deadline = new Deadline();
         deadline.setTitle(deadlineCreateDto.getTitle());
         deadline.setDescription(deadlineCreateDto.getDescription());
-        deadline.setDateTime(deadlineCreateDto.getDateTime());
+        deadline.setDueDate(deadlineCreateDto.getDueDate());
         deadline.setRestriction(deadlineCreateDto.getRestriction());
         deadline.setTimeZone(deadlineCreateDto.getTimeZone());
         return deadline;
@@ -49,9 +49,8 @@ public class DeadlineMapper {
         Deadline deadline = new Deadline();
         deadline.setTitle(deadlineUpdateDto.getTitle());
         deadline.setDescription(deadlineUpdateDto.getDescription());
-        deadline.setDateTime(deadlineUpdateDto.getDateTime());
+        deadline.setDueDate(deadlineUpdateDto.getDueDate());
         deadline.setRestriction(deadlineUpdateDto.getRestriction());
-
         return deadline;
     }
 }

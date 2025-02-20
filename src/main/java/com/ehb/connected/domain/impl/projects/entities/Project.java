@@ -51,7 +51,7 @@ public class Project {
     private List<Tag> tags = new ArrayList<>();
 
     @ManyToOne(fetch= FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User createdBy;
 
     @JsonIgnore

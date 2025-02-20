@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
@@ -121,7 +122,7 @@ public class ProjectServiceImpl implements ProjectService {
             final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
             // If a deadline exists and has passed, throw an error
             //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
-            if (deadlineDto != null && deadlineDto.getDateTime().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+            if (deadlineDto != null && deadlineDto.getDueDate().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
                 throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
             }
         } catch (EntityNotFoundException e) {
@@ -265,6 +266,13 @@ public class ProjectServiceImpl implements ProjectService {
         if (user.getRole().equals(Role.TEACHER)) {
             final boolean removed = project.getMembers().removeIf(member -> member.getId().equals(memberId));
             if (removed) {
+                if (projectUserService.isUserOwnerOfProject(memberId, projectId)) {
+                    project.setCreatedBy(null);
+                }
+                project.getApplications().stream()
+                        .filter(application -> application.getApplicant().getId().equals(memberId))
+                        .findFirst()
+                        .ifPresent(application -> application.setStatus(ApplicationStatusEnum.REJECTED));
                 logger.info("[{}] Member ID: {} was successfully removed from project ID: {} by User ID: {}",
                         ProjectService.class.getSimpleName(), memberId, projectId, user.getId());
                 projectRepository.save(project);

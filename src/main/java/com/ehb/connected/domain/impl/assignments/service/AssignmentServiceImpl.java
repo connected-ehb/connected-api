@@ -73,7 +73,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         final User user = userService.getUserByEmail(principal.getName());
         final String token = user.getAccessToken();
         final Course course = courseService.getCourseById(courseId);
-        final Long canvasCourseId = course.getCanvasCourseId();
+        final Long canvasCourseId = course.getCanvasId();
 
         // Retrieve assignments from Canvas as a List of Maps.
         final List<Map<String, Object>> assignments = webClient.get()
@@ -89,12 +89,12 @@ public class AssignmentServiceImpl implements AssignmentService {
         return assignments.stream()
                 .filter(assignment -> {
                     Long canvasAssignmentId = Long.parseLong(assignment.get("id").toString());
-                    return !existsAssignmentByCanvasAssignmentId(canvasAssignmentId);
+                    return !existsAssignmentByCanvasId(canvasAssignmentId);
                 })
                 .map(assignment -> assignmentMapper.fromCanvasMapToAssignmentDetailsDto(assignment, course.getId())).toList();
     }
 
-    private boolean existsAssignmentByCanvasAssignmentId(Long canvasAssignmentId) {
-        return assignmentRepository.existsByCanvasAssignmentId(canvasAssignmentId);
+    private boolean existsAssignmentByCanvasId(Long canvasAssignmentId) {
+        return assignmentRepository.existsByCanvasId(canvasAssignmentId);
     }
 }

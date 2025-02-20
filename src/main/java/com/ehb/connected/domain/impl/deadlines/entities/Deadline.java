@@ -4,6 +4,8 @@ package com.ehb.connected.domain.impl.deadlines.entities;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,8 +29,9 @@ public class Deadline {
     private Long id;
 
     private String title;
-    private LocalDateTime dateTime;
+    private LocalDateTime dueDate;
     private String description;
+    @Enumerated(EnumType.STRING)
     private DeadlineRestriction restriction;
     private String timeZone;
 

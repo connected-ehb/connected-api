@@ -11,11 +11,11 @@ import java.util.List;
 @Setter
 public class CourseDetailsDto {
     private Long id;
+    private Long canvasId;
     private String uuid;
     private String name;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private Long ownerId;
-    private Long canvasCourseId;
     private List<AssignmentDetailsDto> assignments;
 }
