@@ -36,7 +36,7 @@ public class ProjectMapper {
                 project.getTeamSize(),
                 project.getAssignment() != null ? project.getAssignment().getId() : null,
                 project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList(),
-                userMapper.toUserDetailsDto(project.getCreatedBy()),
+                project.getCreatedBy() != null ? userMapper.toUserDetailsDto(project.getCreatedBy()) : null,
                 project.getMembers() != null ? project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()) : Collections.emptyList()
         );
     }
