@@ -56,7 +56,7 @@ public class CourseController {
         return ResponseEntity.ok(assignmentService.getAllAssignmentsByCourse(courseId));
     }
 
-    @GetMapping("/{courseId}/users")
+    @GetMapping("/{courseId}/students")
     public List<UserDetailsDto> getAllEnrolledStudentsByCourse(@PathVariable Long courseId){
         return userService.getAllStudentsByCourseId(courseId);
     }
