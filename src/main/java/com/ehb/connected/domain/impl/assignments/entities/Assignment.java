@@ -36,7 +36,7 @@ public class Assignment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long canvasAssignmentId;
+    private Long canvasId;
 
     private String name;
 

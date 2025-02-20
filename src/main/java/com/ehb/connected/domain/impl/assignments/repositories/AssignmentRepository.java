@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     List<Assignment> findByCourseId(Long courseId);
-    boolean existsByCanvasAssignmentId(Long canvasAssignmentId);
+    boolean existsByCanvasId(Long canvasId);
 }

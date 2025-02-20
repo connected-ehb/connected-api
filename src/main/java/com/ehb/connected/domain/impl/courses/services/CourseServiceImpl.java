@@ -66,8 +66,8 @@ public class CourseServiceImpl implements CourseService {
         assert canvasCourses != null;
         return canvasCourses.stream()
                 .filter(courseMap -> {
-                    Long canvasCourseId = Long.parseLong(courseMap.get("id").toString());
-                    return !importedCanvasIds.contains(canvasCourseId);
+                    Long canvasId = Long.parseLong(courseMap.get("id").toString());
+                    return !importedCanvasIds.contains(canvasId);
                 })
                 .map(courseMapper::fromCanvasMapToCourseDetailsDto)
                 .toList();
@@ -83,7 +83,7 @@ public class CourseServiceImpl implements CourseService {
         importCourse(courseEntity);  // Persist the course (assumed to save via repository)
 
         // Retrieve enrollments from Canvas using the Canvas course ID.
-        final String courseId = courseEntity.getCanvasCourseId().toString();
+        final String courseId = courseEntity.getCanvasId().toString();
         final String enrollmentsResponse = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/v1/courses/{course_id}/enrollments")
