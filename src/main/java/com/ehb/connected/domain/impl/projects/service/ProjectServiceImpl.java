@@ -8,7 +8,6 @@ import com.ehb.connected.domain.impl.assignments.repositories.AssignmentReposito
 import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
-import com.ehb.connected.domain.impl.notifications.entities.Notification;
 import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
 import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
@@ -98,12 +97,51 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     /**
-     * Create a project
-     * @param principal the principal of the user creating the project
-     * @param assignmentId the id of the assignment for which to create the project
-     * @param projectDto the CreateDto containing the project data
-     * @return ProjectDetailsDto
+     * Creates a new project for a specified assignment.
+     * <p>
+     * This method carries out the following steps:
+     * <ol>
+     *     <li>Retrieves the current user from the provided {@code Principal}.</li>
+     *     <li>Checks if the user is already a member of any project associated with the specified assignment.
+     *         If so, a {@link BaseRuntimeException} with a conflict status is thrown.</li>
+     *     <li>Fetches the assignment using the provided assignment ID. If the assignment is not found, an
+     *         {@link EntityNotFoundException} is thrown.</li>
+     *     <li>For users with the role {@code STUDENT}, attempts to fetch the project creation deadline.
+     *         If a deadline exists and has passed (relative to the current UTC time), a
+     *         {@link DeadlineExpiredException} is thrown.
+     *         If no deadline exists, the check is skipped.</li>
+     *     <li>Maps the provided project data (from {@code ProjectCreateDto}) to a new project entity.</li>
+     *     <li>Depending on the role of the user:
+     *         <ul>
+     *             <li>If the user is a student:
+     *                 <ul>
+     *                     <li>Sets the project status to {@link ProjectStatusEnum#PENDING}.</li>
+     *                     <li>Assigns the user as a member and as the creator (product owner) of the project.</li>
+     *                 </ul>
+     *             </li>
+     *             <li>If the user is a teacher:
+     *                 <ul>
+     *                     <li>Sets the project status to {@link ProjectStatusEnum#APPROVED}.</li>
+     *                     <li>Leaves the members list empty, as teachers cannot be product owners.</li>
+     *                 </ul>
+     *             </li>
+     *         </ul>
+     *     </li>
+     *     <li>Associates the project with the retrieved assignment and saves it to the repository.</li>
+     *     <li>If the project is created by a student, notifies all teachers about the new project via the notification service.</li>
+     * </ol>
+     * </p>
+     *
+     * @param principal    the {@link Principal} representing the user creating the project.
+     * @param assignmentId the unique identifier of the assignment for which the project is being created.
+     * @param projectDto   the data transfer object containing the project details.
+     * @return a {@link ProjectDetailsDto} representing the newly created project.
+     * @throws BaseRuntimeException    if the user is already a member of a project for the specified assignment.
+     * @throws EntityNotFoundException if the assignment with the given ID is not found.
+     * @throws DeadlineExpiredException if the project creation deadline has expired for a student user.
      */
+
+
     @Override
     public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto projectDto) {
 
@@ -122,36 +160,48 @@ public class ProjectServiceImpl implements ProjectService {
             final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
             // If a deadline exists and has passed, throw an error
             //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
-            if (deadlineDto != null && deadlineDto.getDueDate().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
+            if (user.getRole() == Role.STUDENT && deadlineDto != null && deadlineDto.getDueDate().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
                 throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
             }
         } catch (EntityNotFoundException e) {
-            // If no deadline exists, do nothing
+            logger.info("[{}] No project creation deadline found for assignment with ID: {}", ProjectService.class.getSimpleName(), assignmentId);
         }
 
         Project newProject = projectMapper.toEntity(projectDto);
-        newProject.setStatus(ProjectStatusEnum.PENDING);
-        newProject.setMembers(List.of(user));
-        newProject.setCreatedBy(userService.getUserByPrincipal(principal));
+
+        // If user is a student, make him product owner, else if he is teacher leave it null as teacher cannot be product owner
+        if(user.getRole() == Role.STUDENT) {
+            newProject.setStatus(ProjectStatusEnum.PENDING);
+            newProject.setMembers(List.of(user));
+            newProject.setCreatedBy(user);
+        } else if (user.getRole() == Role.TEACHER) {
+            newProject.setMembers(List.of());
+            newProject.setStatus(ProjectStatusEnum.APPROVED);
+        }
+
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
         logger.info("[{}] Project has been created", ProjectService.class.getName());
 
-        List<User> teachers = userService.getAllUsersByRole(Role.TEACHER);
-        String destinationUrl = urlHelper.UrlBuilder(
-                UrlHelper.Sluggify(newProject.getAssignment().getCourse().getName()),
-                UrlHelper.Sluggify(newProject.getAssignment().getName()),
-                "projects/" + newProject.getId());
+        // Only if the creator of the project is a student do you notify the teachers
+        if(user.getRole() == Role.STUDENT) {
+            List<User> teachers = userService.getAllUsersByRole(Role.TEACHER);
+            String destinationUrl = urlHelper.UrlBuilder(
+                    UrlHelper.Sluggify(newProject.getAssignment().getCourse().getName()),
+                    UrlHelper.Sluggify(newProject.getAssignment().getName()),
+                    "projects/" + newProject.getId());
 
-        for (User teacher : teachers) {
-            notificationService.createNotification(
-                    teacher,
-                    "A new project has been created: " +
-                            newProject.getTitle() + " by " +
-                            newProject.getCreatedBy().getFirstName() + " " +
-                            newProject.getCreatedBy().getLastName(),
-                    destinationUrl
-            );
+            for (User teacher : teachers) {
+                notificationService.createNotification(
+                        teacher,
+                        String.format("A new project has been created: %s by %s %s",
+                                newProject.getTitle(),
+                                newProject.getCreatedBy().getFirstName(),
+                                newProject.getCreatedBy().getLastName()),
+                        destinationUrl
+                );
+        }
+
         }
         return projectMapper.toDetailsDto(savedProject);
     }
