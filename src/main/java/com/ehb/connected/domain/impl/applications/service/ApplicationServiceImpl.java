@@ -228,19 +228,34 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BaseRuntimeException("Application has already been reviewed", HttpStatus.CONFLICT);
         }
 
+        Project project = application.getProject();
+
         // If approving, reject all other pending applications for the same applicant
         if (status == ApplicationStatusEnum.APPROVED) {
+
             rejectAllOtherApplications(application);
+            List<User> members = project.getMembers();
+            members.add(application.getApplicant());
+            project.setMembers(members);
+            projectService.updateProject(project);
         }
 
         // Set status (approved or rejected) and save
         application.setStatus(status);
-        Project project = application.getProject();
-        List<User> members = project.getMembers();
-        members.add(application.getApplicant());
-        project.setMembers(members);
-        projectService.updateProject(project);
         applicationRepository.save(application);
+
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(project.getAssignment().getName()),
+                "applications", application.getId().toString());
+
+        notificationService.createNotification(
+                application.getApplicant(),
+                "your application for project " + project.getTitle() + " has been " + status.toString().toLowerCase(),
+                destinationUrl
+        );
+
+
         return applicationMapper.toDto(application);
     }
 
