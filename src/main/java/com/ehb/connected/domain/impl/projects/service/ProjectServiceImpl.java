@@ -14,7 +14,6 @@ import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
-import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
@@ -41,7 +40,6 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectUserService projectUserService;
     private final ProjectMapper projectMapper;
-    private final TagMapper tagMapper;
 
     private final DeadlineService deadlineService;
     private final AssignmentRepository assignmentRepository;
@@ -148,8 +146,13 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectMapper.updateEntityFromDto(project, existingProject);
-
-        Project savedProject = projectRepository.save(existingProject);
+        Project savedProject;
+        try {
+            savedProject = projectRepository.save(existingProject);
+        } catch (Exception e) {
+            logger.error("an error occurred while updating project with id: {}", projectId , e);
+            throw new BaseRuntimeException("Project could not be updated", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
 
         return projectMapper.toDetailsDto(savedProject);

@@ -76,7 +76,8 @@ public class ProjectMapper {
             entity.setBackgroundImage(dto.getBackgroundImage());
         }
         if (dto.getTags() != null) {
-            entity.setTags(tagMapper.toEntityList(dto.getTags()));
+            entity.getTags().clear();
+            entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
         }
     }
 }
