@@ -88,8 +88,10 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public FeedbackDto updateFeedback(Principal principal, Long projectId, Long feedbackId, FeedbackCreateDto feedbackDto) {
-        final Feedback feedback = getFeedbackAndCheckPermissions(principal, projectId, feedbackId);
+    public FeedbackDto updateFeedback(Principal principal, Long feedbackId, FeedbackCreateDto feedbackDto) {
+        //Retrieve the feedback by id
+        final Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
 
         // Ensure that the current user is the owner of the feedback
         final User currentUser = userService.getUserByEmail(principal.getName());
@@ -103,8 +105,10 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public void deleteFeedback(Principal principal, Long projectId, Long feedbackId) {
-        final Feedback feedback = getFeedbackAndCheckPermissions(principal, projectId, feedbackId);
+    public void deleteFeedback(Principal principal,Long feedbackId) {
+        // Retrieve the feedback by id
+        final Feedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
 
         final User currentUser = userService.getUserByEmail(principal.getName());
         if(!feedback.getUser().getId().equals(currentUser.getId())) {

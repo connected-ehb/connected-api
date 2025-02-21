@@ -77,17 +77,6 @@ public class ProjectController {
         return ResponseEntity.ok(feedbackService.getAllFeedbackForProject(principal, projectId));
     }
 
-    @PutMapping("/{projectId}/feedback/{feedbackId}")
-    public ResponseEntity<FeedbackDto> updateFeedback(Principal principal, @PathVariable Long projectId, @PathVariable Long feedbackId, @RequestBody FeedbackCreateDto feedbackDto) {
-        return ResponseEntity.ok(feedbackService.updateFeedback(principal, projectId, feedbackId, feedbackDto));
-    }
-
-    @DeleteMapping("/{projectId}/feedback/{feedbackId}")
-    public ResponseEntity<Void> deleteFeedback(Principal principal, @PathVariable Long projectId, @PathVariable Long feedbackId) {
-        feedbackService.deleteFeedback(principal, projectId, feedbackId);
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping("/{projectId}/apply")
     public ResponseEntity<ApplicationDetailsDto> applyForProject(Principal principal, @PathVariable Long projectId, @RequestBody ApplicationCreateDto application) {
         return ResponseEntity.ok(applicationService.createApplication(principal, projectId, application));
