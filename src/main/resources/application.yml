@@ -8,7 +8,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -20,9 +20,6 @@ spring:
           canvas:
             client-id: 10000000000001
             client-secret: 8cwXkT7h3TvLaHEcfZ88twkEUYATyCZBFnVWPmnVXtf4XDTAC33TvL8W8Zn9F2at
-            #scoped developer key
-            #client-id: 10000000000004
-            #client-secret: 3z2ELWc3MPV6zAHYEBHxXuEJuHRnJn3UavFhJHCAR2hNB2fHHe3LHuNZP6mzDYYx
             client-authentication-method: client_secret_post
             redirect-uri: '{baseUrl}/login/oauth2/code/canvas'
             authorization-grant-type: authorization_code
@@ -34,9 +31,9 @@ spring:
             authorization-uri: https://canvas.mertenshome.com/login/oauth2/auth
             token-uri: https://canvas.mertenshome.com/login/oauth2/token
             user-info-uri: https://canvas.mertenshome.com/api/v1/users/self?include[]=email
-#logging:
-#  level:
-#    org.springframework.web: TRACE
+logging:
+  level:
+    org.springframework.web: TRACE
 #    org.springframework.security: TRACE
 #    org.springframework.security.oauth2: TRACE
 #    org.springframework.security.oauth2.client: TRACE
