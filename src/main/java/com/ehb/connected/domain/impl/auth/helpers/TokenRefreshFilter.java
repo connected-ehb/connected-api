@@ -64,6 +64,7 @@ public class TokenRefreshFilter extends OncePerRequestFilter {
 
                     if (secondsToExpiry < 300) { // less than 5 minutes to expiry
                         logger.info("[TokenFilter] Access token is within 5 minutes of expiry for principal: {}. Token refreshed (if necessary).", principalName);
+
                     } else {
                         logger.debug("[TokenFilter] Access token for principal: {} is still valid.", principalName);
                     }
