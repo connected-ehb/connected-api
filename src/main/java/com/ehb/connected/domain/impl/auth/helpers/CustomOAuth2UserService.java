@@ -1,6 +1,5 @@
 package com.ehb.connected.domain.impl.auth.helpers;
 
-import java.util.List;
 import java.util.Map;
 
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -71,11 +70,12 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                             .block();
                     if (userDetail != null && userDetail.get("email") != null) {
                         attributes.put("email", userDetail.get("email"));
-                        logger.info("Patched email from fallback request: {}", userDetail.get("email"));
+                        logger.debug("Patched email from fallback request: {}", userDetail.get("email"));
                     }
                 }
             } catch (Exception e) {
-                logger.error("Error fetching fallback email using admin token", e);
+                logger.error("[{}] Error fetching fallback email using admin token", CustomOAuth2UserService.class.getSimpleName());
+                throw new OAuth2AuthenticationException("Error fetching fallback email using admin token");
             }
         }
 
