@@ -176,7 +176,7 @@ public class ProjectServiceImpl implements ProjectService {
             newProject.setCreatedBy(user);
         } else if (user.getRole() == Role.TEACHER) {
             newProject.setMembers(List.of());
-            newProject.setStatus(ProjectStatusEnum.APPROVED);
+            newProject.setStatus(ProjectStatusEnum.PUBLISHED);
         }
 
         newProject.setAssignment(assignment);

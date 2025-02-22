@@ -134,6 +134,23 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
+        //if the product owner is null, set the current user as the product owner
+        //AND set all other application status for other projects to rejected
+        if(project.getCreatedBy() == null){
+            project.setCreatedBy(currentUser);
+            currentUser.getApplications().stream()
+                    .filter(app -> app.getProject().getAssignment().getId().equals(project.getAssignment().getId()))
+                    .forEach(app -> {
+                        if(app.getStatus() == ApplicationStatusEnum.PENDING){
+                            app.setStatus(ApplicationStatusEnum.REJECTED);
+                            applicationRepository.save(app);
+                        }
+                    });
+            projectService.updateProject(project);
+            //return null because dont need to create an application
+            return null;
+        }
+
         // Check if user has already applied to the project
         if (project.getApplications().stream().anyMatch(app -> app.getApplicant().equals(currentUser))) {
             throw new BaseRuntimeException("User has already applied to this project", HttpStatus.CONFLICT);
