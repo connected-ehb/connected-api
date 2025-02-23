@@ -147,7 +147,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         }
                     });
             projectService.updateProject(project);
-            //return null because dont need to create an application
+            //return null because don't need to create an application
             return null;
         }
 
@@ -241,21 +241,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Prevent reviewing an already reviewed application
         if (application.getStatus() != ApplicationStatusEnum.PENDING) {
-            logger.error("Application has already been reviewed");
             throw new BaseRuntimeException("Application has already been reviewed", HttpStatus.CONFLICT);
         }
 
         Project project = application.getProject();
-
-        // If approving, reject all other pending applications for the same applicant
-        if (status == ApplicationStatusEnum.APPROVED) {
-
-            rejectAllOtherApplications(application);
-            List<User> members = project.getMembers();
-            members.add(application.getApplicant());
-            project.setMembers(members);
-            projectService.updateProject(project);
-        }
 
         // Set status (approved or rejected) and save
         application.setStatus(status);
@@ -273,6 +262,36 @@ public class ApplicationServiceImpl implements ApplicationService {
         );
 
 
+        return applicationMapper.toDto(application);
+    }
+
+    @Override
+    @Transactional
+    public ApplicationDetailsDto joinProject(Principal principal, Long applicationId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new EntityNotFoundException(Application.class, applicationId));
+
+        if (application.getStatus() != ApplicationStatusEnum.APPROVED) {
+            throw new BaseRuntimeException("Application has not been approved", HttpStatus.CONFLICT);
+        }
+        User user = userService.getUserByPrincipal(principal);
+        if (!user.equals(application.getApplicant())) {
+            throw new UserUnauthorizedException(user.getId());
+        }
+
+        // Check if user is already member of another project
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, application.getProject().getAssignment().getId())) {
+            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
+        }
+
+        Project project = application.getProject();
+        List<User> members = project.getMembers();
+        rejectAllOtherApplications(application);
+        members.add(user);
+        project.setMembers(members);
+        projectService.updateProject(project);
+
+        logger.info("User [{}] has joined project [{}] based on approved application [{}]", user.getId(), project.getId(), applicationId);
         return applicationMapper.toDto(application);
     }
 
