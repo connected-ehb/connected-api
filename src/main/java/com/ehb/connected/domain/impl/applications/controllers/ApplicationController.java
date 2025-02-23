@@ -24,6 +24,11 @@ public class ApplicationController {
         return ResponseEntity.ok(applicationService.reviewApplication(principal, applicationId, status));
     }
 
+    @PostMapping("/{applicationId}/join")
+    public ResponseEntity<ApplicationDetailsDto> joinProjectByApplication(Principal principal, @PathVariable Long applicationId) {
+        return ResponseEntity.ok(applicationService.joinProject(principal, applicationId));
+    }
+
     @GetMapping("/{applicationId}")
     public ResponseEntity<ApplicationDetailsDto> getApplicationById(Principal principal, @PathVariable Long applicationId) {
         return ResponseEntity.ok(applicationService.getApplicationById(principal, applicationId));
