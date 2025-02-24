@@ -1,14 +1,14 @@
 package com.ehb.connected.domain.impl.auth.helpers;
 
+import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import com.ehb.connected.exceptions.EntityNotFoundException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -20,26 +20,20 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class TokenRefreshFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenRefreshFilter.class);
     private final OAuth2AuthorizedClientManager authorizedClientManager;
-    private final WebClient webClient;
+
+    private final CanvasAuthService canvasAuthService;
 
     private final UserRepository userRepository;
-
-    public TokenRefreshFilter(OAuth2AuthorizedClientManager authorizedClientManager, WebClient webClient, UserRepository userRepository) {
-        this.authorizedClientManager = authorizedClientManager;
-        this.webClient = webClient;
-        this.userRepository = userRepository;
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -79,29 +73,7 @@ public class TokenRefreshFilter extends OncePerRequestFilter {
 
                     if (isExpired) {
                         logger.info("[TokenFilter] Access token is expired for principal: {}. Token refreshed (if necessary).", principalName);
-                        String refreshToken = authorizedClient.getRefreshToken().getTokenValue();
-                        String clientId = authorizedClient.getClientRegistration().getClientId();
-                        String clientSecret = authorizedClient.getClientRegistration().getClientSecret();
-                        String redirectUri = authorizedClient.getClientRegistration().getRedirectUri();
-
-                        Map<String, String> formData = Map.of(
-                                "grant_type", "refresh_token",
-                                "client_id", clientId,
-                                "client_secret", clientSecret,
-                                "refresh_token", refreshToken,
-                                "redirect_uri", redirectUri
-                        );
-
-                        String responseBody = webClient.post()
-                                .uri("/login/oauth2/token")
-                                .bodyValue(formData)
-                                .retrieve()
-                                .bodyToMono(String.class)
-                                .block();
-
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        JsonNode jsonNode = objectMapper.readTree(responseBody);
-                        String newAccessToken = jsonNode.get("access_token").asText();
+                       String newAccessToken = canvasAuthService.refreshAccessToken(authorizedClient);
 
                         // Update the principal with the new access token
                         new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, newAccessToken, Instant.now(), expiresAt);

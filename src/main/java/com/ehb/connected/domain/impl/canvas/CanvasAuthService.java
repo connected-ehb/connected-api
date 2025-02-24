@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.canvas;
 
 import com.ehb.connected.domain.impl.users.entities.Role;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 
 import java.util.Map;
@@ -15,7 +16,7 @@ public interface CanvasAuthService {
 
     Object getNonAdminUserEmail(Map<String, Object> attributes);
 
-    String refreshAccessToken();
+    String refreshAccessToken(OAuth2AuthorizedClient authorizedClient);
 
     String getUserInfoUri(OAuth2UserRequest userRequest);
 
