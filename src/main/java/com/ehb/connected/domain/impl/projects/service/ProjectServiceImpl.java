@@ -315,7 +315,11 @@ public class ProjectServiceImpl implements ProjectService {
             final boolean removed = project.getMembers().removeIf(member -> member.getId().equals(memberId));
             if (removed) {
                 if (projectUserService.isUserOwnerOfProject(memberId, projectId)) {
-                    project.setCreatedBy(null);
+                    if (!project.getMembers().isEmpty()) {
+                        project.setCreatedBy(project.getMembers().get(0));
+                    } else {
+                        project.setCreatedBy(null);
+                    }
                 }
                 project.getApplications().stream()
                         .filter(application -> application.getApplicant().getId().equals(memberId))
