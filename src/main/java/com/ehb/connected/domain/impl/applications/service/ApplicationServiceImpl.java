@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationMapper applicationMapper;
     private final NotificationServiceImpl notificationService;
     private final UrlHelper urlHelper;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private final ProjectUserService projectUserService;
 
@@ -132,6 +134,23 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
+        //if the product owner is null, set the current user as the product owner
+        //AND set all other application status for other projects to rejected
+        if(project.getCreatedBy() == null){
+            project.setCreatedBy(currentUser);
+            currentUser.getApplications().stream()
+                    .filter(app -> app.getProject().getAssignment().getId().equals(project.getAssignment().getId()))
+                    .forEach(app -> {
+                        if(app.getStatus() == ApplicationStatusEnum.PENDING){
+                            app.setStatus(ApplicationStatusEnum.REJECTED);
+                            applicationRepository.save(app);
+                        }
+                    });
+            projectService.updateProject(project);
+            //return null because don't need to create an application
+            return null;
+        }
+
         // Check if user has already applied to the project
         if (project.getApplications().stream().anyMatch(app -> app.getApplicant().equals(currentUser))) {
             throw new BaseRuntimeException("User has already applied to this project", HttpStatus.CONFLICT);
@@ -145,16 +164,18 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationRepository.save(newApplication);
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
 
+        //build url for notification to send to project owner
         String destinationUrl = urlHelper.UrlBuilder(
                 UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                 UrlHelper.Sluggify(project.getAssignment().getName()),
                 "projects", project.getId().toString(),
                 "applications");
+
         notificationService.createNotification(
-                        project.getCreatedBy(),
-                " "+ currentUser.getFirstName() + " " +
-                        currentUser.getLastName() + " applied for your project.",
-                        destinationUrl );
+                project.getCreatedBy(),
+                currentUser.getFirstName() + " " + currentUser.getLastName() + " applied for your project.",
+                destinationUrl
+        );
         return applicationMapper.toDto(newApplication);
     }
 
@@ -220,23 +241,57 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Prevent reviewing an already reviewed application
         if (application.getStatus() != ApplicationStatusEnum.PENDING) {
-            logger.error("Application has already been reviewed");
             throw new BaseRuntimeException("Application has already been reviewed", HttpStatus.CONFLICT);
         }
 
-        // If approving, reject all other pending applications for the same applicant
-        if (status == ApplicationStatusEnum.APPROVED) {
-            rejectAllOtherApplications(application);
-        }
+        Project project = application.getProject();
 
         // Set status (approved or rejected) and save
         application.setStatus(status);
+        applicationRepository.save(application);
+
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(project.getAssignment().getName()),
+                "applications", application.getId().toString());
+
+        notificationService.createNotification(
+                application.getApplicant(),
+                "your application for project " + project.getTitle() + " has been " + status.toString().toLowerCase(),
+                destinationUrl
+        );
+
+
+        return applicationMapper.toDto(application);
+    }
+
+    @Override
+    @Transactional
+    public ApplicationDetailsDto joinProject(Principal principal, Long applicationId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new EntityNotFoundException(Application.class, applicationId));
+
+        if (application.getStatus() != ApplicationStatusEnum.APPROVED) {
+            throw new BaseRuntimeException("Application has not been approved", HttpStatus.CONFLICT);
+        }
+        User user = userService.getUserByPrincipal(principal);
+        if (!user.equals(application.getApplicant())) {
+            throw new UserUnauthorizedException(user.getId());
+        }
+
+        // Check if user is already member of another project
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, application.getProject().getAssignment().getId())) {
+            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
+        }
+
         Project project = application.getProject();
         List<User> members = project.getMembers();
-        members.add(application.getApplicant());
+        rejectAllOtherApplications(application);
+        members.add(user);
         project.setMembers(members);
         projectService.updateProject(project);
-        applicationRepository.save(application);
+
+        logger.info("User [{}] has joined project [{}] based on approved application [{}]", user.getId(), project.getId(), applicationId);
         return applicationMapper.toDto(application);
     }
 

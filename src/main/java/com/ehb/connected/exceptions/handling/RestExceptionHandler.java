@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -32,12 +33,19 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleBaseRuntimeException(BaseRuntimeException exception, HttpServletRequest request) {
         return logAndReturnError(exception, exception.getStatus(), request);
     }
+
     @ExceptionHandler(Exception.class)
     public final ResponseEntity<ExceptionResponse> handleAllExceptions(Exception ex, WebRequest request) {
         ExceptionResponse exceptionResponse = new ExceptionResponse(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         return new ResponseEntity<>(exceptionResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public final ResponseEntity<ExceptionResponse> handleAccessDeniedException(AccessDeniedException ex, HttpServletRequest request) {
+        ExceptionResponse exceptionResponse = new ExceptionResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
+        logger.error(String.format("[ERROR] %s %s %s", request.getMethod(), request.getServletPath(), ex.getMessage()));
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.FORBIDDEN);
+    }
     @Override
     protected @NotNull ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,

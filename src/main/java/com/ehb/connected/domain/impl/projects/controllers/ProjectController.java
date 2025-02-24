@@ -14,6 +14,7 @@ import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -28,6 +29,7 @@ public class ProjectController {
     private final FeedbackService feedbackService;
     private final ApplicationService applicationService;
 
+    @PreAuthorize("hasAnyAuthority('project:read')")
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectDetailsDto> getProjectById(Principal principal, @PathVariable Long projectId){
         return ResponseEntity.ok(projectService.getProjectById(principal, projectId));
@@ -70,23 +72,7 @@ public class ProjectController {
        return ResponseEntity.ok(feedbackService.giveFeedback(principal, projectId, feedbackDto));
     }
 
-    @PutMapping("/{projectId}/feedback/{feedbackId}")
-    public ResponseEntity<FeedbackDto> updateFeedback(
-            Principal principal,
-            @PathVariable Long projectId,
-            @PathVariable Long feedbackId,
-            @RequestBody FeedbackCreateDto feedbackDto) {
-        return ResponseEntity.ok(feedbackService.updateFeedback(principal, projectId, feedbackId, feedbackDto));
-    }
 
-    @DeleteMapping("/{projectId}/feedback/{feedbackId}")
-    public ResponseEntity<Void> deleteFeedback(
-            Principal principal,
-            @PathVariable Long projectId,
-            @PathVariable Long feedbackId) {
-        feedbackService.deleteFeedback(principal, projectId, feedbackId);
-        return ResponseEntity.noContent().build();
-    }
 
     @GetMapping("/{projectId}/feedback")
     public ResponseEntity<List<FeedbackDto>> getFeedbacks(Principal principal, @PathVariable Long projectId) {
