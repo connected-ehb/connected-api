@@ -168,7 +168,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project newProject = projectMapper.toEntity(projectDto);
 
         // Set the default team size from the assignment if not provided
-        if (projectDto.getTeamSize() == 0) {
+        if (projectDto.getTeamSize() == null) {
             newProject.setTeamSize(assignment.getDefaultTeamSize());
         }
 
