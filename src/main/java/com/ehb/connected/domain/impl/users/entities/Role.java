@@ -2,14 +2,15 @@ package com.ehb.connected.domain.impl.users.entities;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 @Getter
 @RequiredArgsConstructor
-public enum Role {
+public enum Role implements GrantedAuthority {
 
     STUDENT(
             Set.of(
@@ -85,13 +86,21 @@ public enum Role {
 
     private final Set<Permission> permissions;
 
-    public List<SimpleGrantedAuthority> getAuthorities() {
-        var authorities = getPermissions()
-                .stream()
-                .map(permission -> new SimpleGrantedAuthority(permission.name()))
-                .toList();
+    public Set<GrantedAuthority> getAuthorities() {
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        for (Permission permission : permissions) {
+            authorities.add(new SimpleGrantedAuthority(permission.getPermission()));
+        }
+
         authorities.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
+
         return authorities;
+    }
+
+    @Override
+    public String getAuthority() {
+        return name();
     }
 }
 

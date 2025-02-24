@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.io.Serializable;
 import java.util.*;
 
 @Entity
@@ -19,7 +20,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User implements UserDetails {
+public class User implements OAuth2User, Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +39,7 @@ public class User implements UserDetails {
     private String aboutMe;
 
     private String accessToken;
+    private String refreshToken;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -55,9 +57,20 @@ public class User implements UserDetails {
     private Map<String, Object> attributes;
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return role.getAuthorities();
+    public <A> A getAttribute(String name) {
+        return OAuth2User.super.getAttribute(name);
     }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == null) {
+            return new HashSet<>();
+        }
+
+        Set<GrantedAuthority> authorities = new HashSet<>(role.getAuthorities());
+        return authorities;
+    }
+
 
     @ManyToMany
     @JoinTable(
@@ -66,18 +79,9 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<Tag> tags = new ArrayList<>();
 
-    @Override
-    public String getPassword() {
-        return null;
-    }
 
     @Override
-    public String getUsername() {
+    public String getName() {
         return email;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
     }
 }
