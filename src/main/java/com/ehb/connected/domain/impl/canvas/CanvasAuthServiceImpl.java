@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,14 +25,20 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     private final WebClient webClient;
 
+    Logger logger = LoggerFactory.getLogger(CanvasAuthServiceImpl.class);
+
     @Override
     public void deleteAccessToken(String accessToken) {
-        webClient.delete()
-                .uri("https://canvas.mertenshome.com/login/oauth2/token")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .block();
+        try {
+            webClient.delete()
+                    .uri("https://canvas.mertenshome.com/login/oauth2/token")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+        } catch (Exception e) {
+            logger.error("[{}] Failed to delete access token from Canvas", CanvasAuthService.class.getSimpleName());
+        }
     }
 
     @Override
