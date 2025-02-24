@@ -11,7 +11,7 @@ import java.util.List;
 public interface FeedbackService {
 
     FeedbackDto giveFeedback(Principal principal, Long id, FeedbackCreateDto feedbackDto);
-    FeedbackDto updateFeedback(Principal principal, Long id, Long feedbackId, FeedbackCreateDto feedbackDto);
-    void deleteFeedback(Principal principal, Long id, Long feedbackId);
+    FeedbackDto updateFeedback(Principal principal, Long feedbackId, FeedbackCreateDto feedbackDto);
+    void deleteFeedback(Principal principal, Long feedbackId);
     List<FeedbackDto> getAllFeedbackForProject(Principal principal, Long id);
 }
