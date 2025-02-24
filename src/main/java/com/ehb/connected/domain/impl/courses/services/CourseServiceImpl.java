@@ -11,7 +11,6 @@ import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import com.ehb.connected.exceptions.AccessTokenExpiredException;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
-import com.ehb.connected.exceptions.UserUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -62,8 +61,7 @@ public class CourseServiceImpl implements CourseService {
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
                     .block();
         } catch (Exception e) {
-            if (e instanceof WebClientResponseException) {
-                WebClientResponseException ex = (WebClientResponseException) e;
+            if (e instanceof WebClientResponseException ex) {
                 if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                     throw new AccessTokenExpiredException();
                 } else {
