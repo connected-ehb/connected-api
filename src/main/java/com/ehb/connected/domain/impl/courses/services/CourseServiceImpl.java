@@ -8,8 +8,10 @@ import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.enrollments.services.EnrollmentService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
+import com.ehb.connected.exceptions.AccessTokenExpiredException;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.ehb.connected.exceptions.UserUnauthorizedException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -19,6 +21,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.List;
@@ -44,17 +48,31 @@ public class CourseServiceImpl implements CourseService {
     public List<CourseDetailsDto> getNewCoursesFromCanvas(Principal principal) {
         final User user = userService.getUserByEmail(principal.getName());
         final String token = user.getAccessToken();
+        List<Map<String, Object>> canvasCourses;
 
         // Retrieve Canvas courses using WebClient.
-        final List<Map<String, Object>> canvasCourses = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/api/v1/courses")
-                        .queryParam("EnrollmentType", "teacher") // adjust as needed or pass as parameter
-                        .build())
-                .header("Authorization", "Bearer " + token)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
-                .block();
+        try {
+            canvasCourses = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/courses")
+                            .queryParam("EnrollmentType", "teacher") // adjust as needed or pass as parameter
+                            .build())
+                    .header("Authorization", "Bearer " + token)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .block();
+        } catch (Exception e) {
+            if (e instanceof WebClientResponseException) {
+                WebClientResponseException ex = (WebClientResponseException) e;
+                if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                    throw new AccessTokenExpiredException();
+                } else {
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching courses from Canvas API", e);
+                }
+            } else {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred while fetching Canvas courses", e);
+            }
+        }
 
         // Retrieve courses already imported by the user.
         final List<CourseDetailsDto> importedCourses = getCoursesByOwner(principal);
