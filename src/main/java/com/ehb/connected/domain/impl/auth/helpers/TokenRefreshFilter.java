@@ -65,7 +65,6 @@ public class TokenRefreshFilter extends OncePerRequestFilter {
                     .principal(oauth2Token)
                     .build();
 
-            // This call refreshes the token if it's near expiry.
             OAuth2AuthorizedClient authorizedClient = authorizedClientManager.authorize(authorizeRequest);
 
             if (authorizedClient == null) {

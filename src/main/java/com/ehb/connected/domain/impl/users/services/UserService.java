@@ -19,4 +19,6 @@ public interface UserService {
     User getUserByEmail(String email);
 
     List<User> getAllUsersByRole(Role role);
+
+    void logout(Principal principal);
 }

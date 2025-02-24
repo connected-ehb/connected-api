@@ -2,13 +2,12 @@ package com.ehb.connected.domain.impl.auth.helpers;
 
 import java.util.Map;
 
+import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -16,7 +15,6 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
@@ -24,67 +22,45 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private final Logger logger = LoggerFactory.getLogger(CustomOAuth2UserService.class);
     private final UserRepository userRepository;
     private final OAuth2AuthorizedClientService authorizedClientService;
-    private final WebClient webClient = WebClient.builder().build();
+
+    private final CanvasAuthService canvasAuthService;
 
     public CustomOAuth2UserService(UserRepository userRepository,
-                                   OAuth2AuthorizedClientService authorizedClientService) {
+                                   OAuth2AuthorizedClientService authorizedClientService,
+                                      CanvasAuthService canvasAuthService
+                                   ) {
         this.userRepository = userRepository;
         this.authorizedClientService = authorizedClientService;
+        this.canvasAuthService = canvasAuthService;
     }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         // 1. Retrieve user info endpoint URI and access token.
-        String userInfoUri = userRequest.getClientRegistration()
-                .getProviderDetails()
-                .getUserInfoEndpoint()
-                .getUri();
-        String accessToken = userRequest.getAccessToken().getTokenValue();
+        String userInfoUri = canvasAuthService.getUserInfoUri(userRequest);
+        String accessToken = canvasAuthService.getAccessToken(userRequest);
 
         // 2. Fetch user attributes.
-        Map<String, Object> attributes = webClient.get()
-                .uri(userInfoUri)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+        Map<String, Object> attributes = canvasAuthService.getUserInfo(userInfoUri, accessToken);
 
         logger.info("Received user attributes: {}", attributes);
 
         // 3. Fallback logic if email is missing.
         if (attributes.get("email") == null) {
-            try {
-                // Admin token (permanent access token)
-                String adminToken = "c29UXcGKkyxWuLDruYMe4u73Y788NKy3UyGEaEWH3x26kfvkJRNf3UETc7u8nzEk";
-                // Retrieve the current user's id from the original response
-                Object currentUserIdObj = attributes.get("id");
-                if (currentUserIdObj != null) {
-                    String currentUserId = currentUserIdObj.toString();
-                    // Endpoint to fetch a specific user's details
-                    String fallbackUri = "https://canvas.mertenshome.com/api/v1/users/" + currentUserId;
-                    Map<String, Object> userDetail = webClient.get()
-                            .uri(fallbackUri)
-                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
-                            .retrieve()
-                            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                            .block();
-                    if (userDetail != null && userDetail.get("email") != null) {
-                        attributes.put("email", userDetail.get("email"));
-                        logger.debug("Patched email from fallback request: {}", userDetail.get("email"));
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("[{}] Error fetching fallback email using admin token", CustomOAuth2UserService.class.getSimpleName());
-                throw new OAuth2AuthenticationException("Error fetching fallback email using admin token");
-            }
+            attributes.put("email", canvasAuthService.getNonAdminUserEmail(attributes));
         }
 
         // 4. Extract email and determine role.
         String email = attributes.get("email").toString();
-        Role role = email.endsWith("@ehb.be") ? Role.TEACHER : Role.STUDENT;
+        Role role = canvasAuthService.determineRoleByEmail(email);
 
         // 5. Load or create the local user entity.
         User user = userRepository.findByEmail(email).orElse(new User());
+
+        if(user.getAccessToken() != null) {
+            canvasAuthService.deleteAccessToken(user.getAccessToken());
+        }
+
         user.setEmail(email);
         user.setRole(role);
         user.setAccessToken(accessToken);

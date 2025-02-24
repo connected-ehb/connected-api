@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.users.services;
 
 
+import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
@@ -26,6 +27,7 @@ public class UserServiceImpl implements UserService{
     private final UserDetailsMapper userDetailsMapper;
     private final TagMapper tagMapper;
     private final EnrollmentRepository enrollmentRepository;
+    private final CanvasAuthService canvasAuthService;
 
     @Override
     public List<UserDetailsDto> getAllStudentsByCourseId(Long courseId) {
@@ -83,5 +85,16 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<User> getAllUsersByRole(Role role) {
         return userRepository.findAllByRole(role);
+    }
+
+    @Override
+    public void logout(Principal principal) {
+        User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if (user.getAccessToken() != null) {
+            canvasAuthService.deleteAccessToken(user.getAccessToken());
+        }
+        user.setAccessToken(null);
+        user.setRefreshToken(null);
+        userRepository.save(user);
     }
 }
