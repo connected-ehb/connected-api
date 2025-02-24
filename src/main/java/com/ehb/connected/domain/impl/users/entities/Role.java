@@ -6,7 +6,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -91,7 +90,7 @@ public enum Role implements GrantedAuthority {
         Set<GrantedAuthority> authorities = new HashSet<>();
 
         for (Permission permission : permissions) {
-            authorities.add(new SimpleGrantedAuthority(permission.name()));
+            authorities.add(new SimpleGrantedAuthority(permission.getPermission()));
         }
 
         authorities.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
