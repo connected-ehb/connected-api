@@ -53,8 +53,9 @@ public class ProjectMapper {
         project.setBoardUrl(dto.getBoardUrl());
         project.setTeamSize(dto.getTeamSize());
         project.setBackgroundImage(dto.getBackgroundImage());
-        project.setTags(tagMapper.toEntityList(dto.getTags()));
-
+        if (dto.getTags() != null) {
+            project.setTags(tagMapper.toEntityList(dto.getTags()));
+        }
         return project;
     }
 
