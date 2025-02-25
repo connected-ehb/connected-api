@@ -16,6 +16,7 @@ public enum Permission {
     READ_PUBLISHED_OR_OWNED_PROJECTS("project:read_published_or_owned"),
     CHANGE_PROJECT_STATUS("project:change_status"),
     PROJECT_APPLY("project:apply"),
+    PROJECT_CLAIM("project:claim"),
 
     CREATE_APPLICATION("application:create"),
     READ_APPLICATION("application:read"),

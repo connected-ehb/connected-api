@@ -343,6 +343,27 @@ public class ProjectServiceImpl implements ProjectService {
         }
     }
 
+    @Override
+    public ProjectDetailsDto claimProject(Principal principal, Long projectId) {
+        final User user = userService.getUserByPrincipal(principal);
+        final Project project = getProjectById(projectId);
+
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, project.getAssignment().getId())) {
+            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
+        }
+
+        // reject all other applications of the user
+        user.getApplications().stream()
+                .filter(application -> application.getProject().getAssignment().getId().equals(project.getAssignment().getId()))
+                .forEach(application -> application.setStatus(ApplicationStatusEnum.REJECTED));
+
+        project.getMembers().add(user);
+        project.setProductOwner(user);
+        projectRepository.save(project);
+        logger.info("[{}] Project ID: {} has been claimed by User ID: {}", ProjectService.class.getSimpleName(), projectId, user.getId());
+        return projectMapper.toDetailsDto(project);
+    }
+
 
     /**
      * Get all projects for a specific assignment with a specific status

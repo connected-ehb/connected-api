@@ -34,7 +34,8 @@ public enum Role implements GrantedAuthority {
                     Permission.READ_NOTIFICATION,
                     Permission.UPDATE_NOTIFICATION,
                     Permission.DELETE_NOTIFICATION,
-                    Permission.READ_ALL_APPLICATIONS
+                    Permission.READ_ALL_APPLICATIONS,
+                    Permission.PROJECT_CLAIM
             )
     ),
     TEACHER(

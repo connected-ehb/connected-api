@@ -92,6 +92,12 @@ public class ProjectController {
         return ResponseEntity.ok(applicationService.createApplication(principal, projectId, application));
     }
 
+    @PreAuthorize("hasAnyAuthority('project:claim')")
+    @PostMapping("/{projectId}/claim")
+    public ResponseEntity<ProjectDetailsDto> claimProject(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.claimProject(principal, projectId));
+    }
+
     @PreAuthorize("hasAnyAuthority('project:remove_member')")
     @DeleteMapping("/{projectId}/members/{memberId}")
     public ResponseEntity<Void> removeMember(Principal principal, @PathVariable Long projectId, @PathVariable Long memberId) {

@@ -12,6 +12,5 @@ public interface ApplicationService {
     ApplicationDetailsDto createApplication(Principal principal, Long projectId, ApplicationCreateDto application);
     ApplicationDetailsDto reviewApplication(Principal principal, Long applicationId, ApplicationStatusEnum status);
     List<ApplicationDetailsDto> getAllApplications(Principal principal, Long id);
-
     ApplicationDetailsDto joinProject(Principal principal, Long applicationId);
 }
