@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.users.services;
 
 
+import com.ehb.connected.domain.impl.auth.entities.RegistrationRequestDto;
 import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
@@ -10,8 +11,10 @@ import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
+import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -22,7 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserDetailsMapper userDetailsMapper;
     private final TagMapper tagMapper;
@@ -85,16 +88,5 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<User> getAllUsersByRole(Role role) {
         return userRepository.findAllByRole(role);
-    }
-
-    @Override
-    public void logout(Principal principal) {
-        User user = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new EntityNotFoundException("User not found"));
-        if (user.getAccessToken() != null) {
-            canvasAuthService.deleteAccessToken(user.getAccessToken());
-        }
-        user.setAccessToken(null);
-        user.setRefreshToken(null);
-        userRepository.save(user);
     }
 }

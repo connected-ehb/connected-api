@@ -35,6 +35,8 @@ public enum Permission {
     READ_ASSIGNMENT("assignment:read"),
     UPDATE_ASSIGNMENT("assignment:update"),
     DELETE_ASSIGNMENT("assignment:delete"),
+
+    CREATE_INVITATION("invitation:create"),
     ;
 
     private final String permission;

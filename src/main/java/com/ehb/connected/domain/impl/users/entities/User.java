@@ -20,7 +20,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User implements OAuth2User, Serializable {
+public class User implements OAuth2User, UserDetails, Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,9 +29,9 @@ public class User implements OAuth2User, Serializable {
 
     private String firstName;
     private String lastName;
-
     @Column(unique = true, nullable = false)
     private String email;
+    private String password;
 
     private String fieldOfStudy;
     private String profileImageUrl;
@@ -53,8 +53,21 @@ public class User implements OAuth2User, Serializable {
     @ManyToMany(mappedBy = "members")
     private List<Project> projects = new ArrayList<>();
 
-    @Transient // OAuth2 attributes are not stored in the database
+    @ManyToMany
+    @JoinTable(
+            name = "user_tags",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private List<Tag> tags = new ArrayList<>();
+
+    @Transient
     private Map<String, Object> attributes;
+
+    // OAuth2User methods
+    @Override
+    public String getName() {
+        return email;
+    }
 
     @Override
     public <A> A getAttribute(String name) {
@@ -71,17 +84,14 @@ public class User implements OAuth2User, Serializable {
         return authorities;
     }
 
-
-    @ManyToMany
-    @JoinTable(
-            name = "user_tags",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    private List<Tag> tags = new ArrayList<>();
-
+    // UserDetails methods
+    @Override
+    public String getPassword() {
+        return password;
+    }
 
     @Override
-    public String getName() {
+    public String getUsername() {
         return email;
     }
 }

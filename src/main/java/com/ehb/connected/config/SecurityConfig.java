@@ -1,5 +1,6 @@
 package com.ehb.connected.config;
 
+import com.ehb.connected.domain.impl.auth.helpers.CustomAuthenticationSuccessHandler;
 import com.ehb.connected.domain.impl.auth.helpers.CustomOAuth2UserService;
 import com.ehb.connected.domain.impl.auth.helpers.TokenRefreshFilter;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -24,6 +27,7 @@ public class SecurityConfig {
     private final TokenRefreshFilter tokenRefreshFilter;
     private final CorsConfig corsConfig;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -31,7 +35,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login/**", "/login/oauth2/authorization/canvas", "/api/logout", "/oauth2/authorization/canvas", "/error","/ws/**", "/actuator/**").permitAll()
+                        .requestMatchers("/auth/login", "/auth/register", "/login/**", "/login/oauth2/authorization/canvas", "/auth/logout", "/oauth2/authorization/canvas", "/error","/ws/**", "/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -40,6 +44,13 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
                         .defaultSuccessUrl("http://localhost:4200", true)
+                )
+                .formLogin(form -> form
+                        .loginPage("http://localhost:4200/login")
+                        .loginProcessingUrl("/auth/login")
+                        .defaultSuccessUrl("http://localhost:4200", true)
+                        .successHandler(customAuthenticationSuccessHandler)
+                        .permitAll()
                 )
                 .exceptionHandling(exception -> exception
                         // Ensure API requests return 401 instead of redirecting

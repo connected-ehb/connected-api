@@ -52,7 +52,28 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_ASSIGNMENT,
                     Permission.READ_ASSIGNMENT,
                     Permission.UPDATE_ASSIGNMENT,
-                    Permission.DELETE_ASSIGNMENT
+                    Permission.DELETE_ASSIGNMENT,
+                    Permission.CREATE_INVITATION
+            )
+    ),
+    RESEARCHER(
+            Set.of(
+                    Permission.CREATE_PROJECT,
+                    Permission.READ_PROJECT,
+                    Permission.UPDATE_PROJECT,
+                    Permission.DELETE_PROJECT,
+                    Permission.CREATE_APPLICATION,
+                    Permission.READ_APPLICATION,
+                    Permission.UPDATE_APPLICATION,
+                    Permission.DELETE_APPLICATION,
+                    Permission.CREATE_DISCUSSION,
+                    Permission.READ_DISCUSSION,
+                    Permission.UPDATE_DISCUSSION,
+                    Permission.DELETE_DISCUSSION,
+                    Permission.CREATE_FEEDBACK,
+                    Permission.READ_FEEDBACK,
+                    Permission.UPDATE_FEEDBACK,
+                    Permission.DELETE_FEEDBACK
             )
     ),
     ADMIN(
