@@ -167,6 +167,12 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project newProject = projectMapper.toEntity(projectDto);
 
+        // Set the default team size from the assignment if not provided
+        if (projectDto.getTeamSize() == null) {
+            newProject.setTeamSize(assignment.getDefaultTeamSize());
+        }
+
+
         // If user is a student, make him product owner, else if he is teacher leave it null as teacher cannot be product owner
         if(user.getRole() == Role.STUDENT) {
             newProject.setStatus(ProjectStatusEnum.PENDING);
