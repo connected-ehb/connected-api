@@ -27,4 +27,6 @@ public interface ProjectService {
     List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId);
 
     void removeMember(Principal principal, Long id, Long memberId);
+
+    ProjectDetailsDto claimProject(Principal principal, Long projectId);
 }
