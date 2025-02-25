@@ -29,5 +29,6 @@ public class ProjectDetailsDto {
     private Long assignmentId;
     private List<TagDto> tags;
     private UserDetailsDto createdBy;
+    private UserDetailsDto productOwner;
     private List<UserDetailsDto> members;
 }
