@@ -265,17 +265,18 @@ public class ProjectServiceImpl implements ProjectService {
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
 
-        String destinationUrl = urlHelper.UrlBuilder(
-                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
-                UrlHelper.Sluggify(project.getAssignment().getName()),
-                "projects/" + project.getId());
+        if (project.getProductOwner() != null) {
+            String destinationUrl = urlHelper.UrlBuilder(
+                    UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                    UrlHelper.Sluggify(project.getAssignment().getName()),
+                    "projects/" + project.getId());
 
-        notificationService.createNotification(
-                project.getProductOwner(),
-                "Status for your project has been changed to: " + project.getStatus(),
-                destinationUrl
-        );
-
+            notificationService.createNotification(
+                    project.getProductOwner(),
+                    "Status for your project has been changed to: " + project.getStatus(),
+                    destinationUrl
+            );
+        }
         return projectMapper.toDetailsDto(project);
     }
 
@@ -318,6 +319,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         final User user = userService.getUserByPrincipal(principal);
 
+        final User kickedMember = userService.getUserById(memberId);
+
         if (user.getRole().equals(Role.TEACHER)) {
             final boolean removed = project.getMembers().removeIf(member -> member.getId().equals(memberId));
             if (removed) {
@@ -335,6 +338,17 @@ public class ProjectServiceImpl implements ProjectService {
                 logger.info("[{}] Member ID: {} was successfully removed from project ID: {} by User ID: {}",
                         ProjectService.class.getSimpleName(), memberId, projectId, user.getId());
                 projectRepository.save(project);
+
+                String destinationUrl = urlHelper.UrlBuilder(
+                        UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                        UrlHelper.Sluggify(project.getAssignment().getName()),
+                        "projects/" + project.getId());
+
+                notificationService.createNotification(
+                        kickedMember,
+                        "You have been removed from project: " + project.getTitle(),
+                        destinationUrl
+                );
             } else {
                 throw new EntityNotFoundException(User.class, memberId);
             }

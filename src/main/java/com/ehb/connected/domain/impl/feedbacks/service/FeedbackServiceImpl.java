@@ -72,17 +72,22 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         feedbackRepository.save(feedback);
 
-        String destinationUrl = urlHelper.UrlBuilder(
-                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
-                UrlHelper.Sluggify(project.getAssignment().getName()),
-                "projects/" + project.getId(),
-                "feedback");
+        // Check if receiver exists and send notification
+        if (project.getProductOwner() != null) {
+            String destinationUrl = urlHelper.UrlBuilder(
+                    UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                    UrlHelper.Sluggify(project.getAssignment().getName()),
+                    "projects/" + project.getId(),
+                    "feedback");
 
-        notificationService.createNotification(
-                project.getCreatedBy(),
-                "feedback has been written for  " + project.getTitle(),
-                destinationUrl
-        );
+            notificationService.createNotification(
+                    project.getProductOwner(),
+                    "feedback has been written for  " + project.getTitle(),
+                    destinationUrl
+            );
+        }
+
+
 
         return feedbackMapper.toDto(feedback);
     }
