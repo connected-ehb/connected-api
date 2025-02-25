@@ -15,7 +15,6 @@ import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewCreateDto;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewDetailsDto;
 import com.ehb.connected.domain.impl.reviews.service.ReviewService;
-import com.ehb.connected.domain.impl.users.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -118,13 +117,13 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyAuthority('review:read_all')")
     @GetMapping("{projectId}/reviews")
-    public ResponseEntity<List<ReviewDetailsDto>> getAllReviews(User principal, Long projectId) {
+    public ResponseEntity<List<ReviewDetailsDto>> getAllReviews(Principal principal, @PathVariable Long projectId) {
         return ResponseEntity.ok(reviewService.getAllReviewsByProjectId(principal, projectId));
     }
 
     @PreAuthorize("hasAnyAuthority('review:create')")
     @PostMapping("{projectId}/reviews")
-    public ResponseEntity<ReviewDetailsDto> createReview(User principal,Long projectId, ReviewCreateDto reviewCreateDto) {
-        return ResponseEntity.ok(reviewService.createReviewForProject(principal, projectId, reviewCreateDto));
+    public ResponseEntity<ReviewDetailsDto> createOrUpdateReviewForProject(Principal principal, @PathVariable Long projectId, @RequestBody ReviewCreateDto reviewCreateDto) {
+        return ResponseEntity.ok(reviewService.createOrUpdateReviewForProject(principal, projectId, reviewCreateDto));
     }
 }
