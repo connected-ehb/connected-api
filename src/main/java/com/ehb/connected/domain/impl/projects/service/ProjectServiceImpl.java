@@ -215,10 +215,7 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
         final Project existingProject = getProjectById(projectId);
 
-        // only pending projects can be updated
-        if (existingProject.getStatus() != ProjectStatusEnum.PENDING) {
-            throw new BaseRuntimeException("Project cannot be updated because it is no longer in the pending state.", HttpStatus.CONFLICT);
-        }
+
 
         // Check if user is the owner of the project
         if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
