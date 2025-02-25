@@ -295,7 +295,7 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     public List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
-        if (projectUserService.isUserOwnerOfProject(principal, projectId) || userService.getUserByPrincipal(principal).getRole().equals(Role.TEACHER)) {
+        if (userService.getUserByPrincipal(principal).getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
             final Project project = projectRepository.findById(projectId)
                     .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
