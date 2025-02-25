@@ -51,7 +51,9 @@ public class UserDetailsMapper {
         dto.setLinkedinUrl(user.getLinkedinUrl());
         dto.setFieldOfStudy(user.getFieldOfStudy());
         dto.setAboutMe(user.getAboutMe());
-        dto.setTags(tagMapper.toDtoList(user.getTags()));
+        if (user.getTags() != null) {
+            dto.setTags(tagMapper.toDtoList(user.getTags()));
+        }
         return dto;
     }
 
