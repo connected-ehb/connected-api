@@ -27,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +47,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationMapper applicationMapper;
     private final NotificationServiceImpl notificationService;
     private final UrlHelper urlHelper;
-    private final SimpMessagingTemplate messagingTemplate;
 
     private final ProjectUserService projectUserService;
 
@@ -136,8 +134,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         //if the product owner is null, set the current user as the product owner
         //AND set all other application status for other projects to rejected
-        if(project.getCreatedBy() == null){
-            project.setCreatedBy(currentUser);
+        if(project.getProductOwner() == null){
+            project.setProductOwner(currentUser);
             currentUser.getApplications().stream()
                     .filter(app -> app.getProject().getAssignment().getId().equals(project.getAssignment().getId()))
                     .forEach(app -> {
@@ -196,7 +194,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public List<ApplicationDetailsDto> getAllApplications(Principal principal, Long assignmentId) {
         User user = userService.getUserByPrincipal(principal);
         if(user.getRole() == Role.STUDENT){
-            return applicationMapper.toDtoList(applicationRepository.findAllApplicationsByUserIdOrProjectCreatedByAndAssignment(user.getId(), assignmentId));
+            return applicationMapper.toDtoList(applicationRepository.findAllApplicationsByUserIdOrProjectProductOwnerAndAssignment(user.getId(), assignmentId));
         } else if(user.getRole() == Role.TEACHER){
             return applicationMapper.toDtoList(applicationRepository.findAllApplicationsByAssignmentId(assignmentId));
         } else {

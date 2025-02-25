@@ -1,6 +1,5 @@
 package com.ehb.connected.domain.impl.users.dto;
 
-
 import com.ehb.connected.domain.impl.tags.dto.TagDto;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,8 +19,4 @@ public class UserDetailsDto {
     private String fieldOfStudy;
     private String aboutMe;
     private List<TagDto> tags;
-
-
-    //TODO: add createdProjects/ projects list ?
-
 }

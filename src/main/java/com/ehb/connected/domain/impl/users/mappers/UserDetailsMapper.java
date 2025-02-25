@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class UserDetailsMapper {
 
     private final TagMapper tagMapper;
+
     //map a user to a auth user details dto without a principal
     public authUserDetailsDto toDto(User user) {
         authUserDetailsDto userDetailsDto = new authUserDetailsDto();

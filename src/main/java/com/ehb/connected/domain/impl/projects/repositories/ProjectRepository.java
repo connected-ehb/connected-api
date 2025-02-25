@@ -15,7 +15,7 @@ import java.util.List;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findAllByAssignmentId(Long assignmentId);
 
-    @Query("SELECT p FROM Project p WHERE p.assignment.id = :assignmentId AND (p.status = :status OR p.createdBy = :user)")
+    @Query("SELECT p FROM Project p WHERE p.assignment.id = :assignmentId AND (p.status = :status OR p.productOwner = :user)")
     List<Project> findAllByAssignmentIdAndStatusOrOwnedBy(@Param("assignmentId") Long assignmentId,
                                                           @Param("status") ProjectStatusEnum status,
                                                           @Param("user") User user);

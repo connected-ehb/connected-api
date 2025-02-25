@@ -1,14 +1,11 @@
 package com.ehb.connected.domain.impl.users.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
-import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.io.Serializable;
@@ -49,6 +46,9 @@ public class User implements OAuth2User, Serializable {
 
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<Project> createdProjects = new ArrayList<>();
+
+    @OneToMany(mappedBy = "productOwner", cascade = CascadeType.ALL)
+    private List<Project> productOwnedProjects = new ArrayList<>();
 
     @ManyToMany(mappedBy = "members")
     private List<Project> projects = new ArrayList<>();

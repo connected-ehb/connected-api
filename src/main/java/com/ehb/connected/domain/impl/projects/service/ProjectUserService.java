@@ -26,7 +26,7 @@ public class ProjectUserService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        return project.getCreatedBy().getId().equals(currentUser.getId());
+        return project.getProductOwner().getId().equals(currentUser.getId());
     }
 
     public boolean isUserOwnerOfProject(long userId, Long projectId) {
@@ -36,7 +36,7 @@ public class ProjectUserService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        return project.getCreatedBy().getId().equals(currentUser.getId());
+        return project.getProductOwner().getId().equals(currentUser.getId());
     }
 
     public boolean isUserMemberOfAnyProjectInAssignment(Principal principal, Long assignmentId) {

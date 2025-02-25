@@ -177,12 +177,13 @@ public class ProjectServiceImpl implements ProjectService {
         if(user.getRole() == Role.STUDENT) {
             newProject.setStatus(ProjectStatusEnum.PENDING);
             newProject.setMembers(List.of(user));
-            newProject.setCreatedBy(user);
+            newProject.setProductOwner(user);
         } else if (user.getRole() == Role.TEACHER) {
             newProject.setMembers(List.of());
             newProject.setStatus(ProjectStatusEnum.PUBLISHED);
         }
 
+        newProject.setCreatedBy(user);
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
         logger.info("[{}] Project has been created", ProjectService.class.getName());
@@ -322,9 +323,9 @@ public class ProjectServiceImpl implements ProjectService {
             if (removed) {
                 if (projectUserService.isUserOwnerOfProject(memberId, projectId)) {
                     if (!project.getMembers().isEmpty()) {
-                        project.setCreatedBy(project.getMembers().get(0));
+                        project.setProductOwner(project.getMembers().get(0));
                     } else {
-                        project.setCreatedBy(null);
+                        project.setProductOwner(null);
                     }
                 }
                 project.getApplications().stream()
