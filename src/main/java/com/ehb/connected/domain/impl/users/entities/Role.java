@@ -81,7 +81,11 @@ public enum Role implements GrantedAuthority {
                     Permission.DELETE_DEADLINE,
                     Permission.READ_NOTIFICATION,
                     Permission.UPDATE_NOTIFICATION,
-                    Permission.DELETE_NOTIFICATION
+                    Permission.DELETE_NOTIFICATION,
+                    Permission.CREATE_REVIEW,
+                    Permission.READ_ALL_REVIEW,
+                    Permission.UPDATE_REVIEW,
+                    Permission.DELETE_REVIEW
             )
     ),
     ADMIN(
@@ -127,7 +131,11 @@ public enum Role implements GrantedAuthority {
                     Permission.DELETE_DEADLINE,
                     Permission.READ_NOTIFICATION,
                     Permission.UPDATE_NOTIFICATION,
-                    Permission.DELETE_NOTIFICATION
+                    Permission.DELETE_NOTIFICATION,
+                    Permission.CREATE_REVIEW,
+                    Permission.READ_ALL_REVIEW,
+                    Permission.UPDATE_REVIEW,
+                    Permission.DELETE_REVIEW
             )
     );
 

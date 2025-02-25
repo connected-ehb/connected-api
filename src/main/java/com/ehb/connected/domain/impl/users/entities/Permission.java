@@ -59,6 +59,12 @@ public enum Permission {
     UPDATE_ASSIGNMENT("assignment:update"),
     DELETE_ASSIGNMENT("assignment:delete"),
 
+    CREATE_REVIEW("review:create"),
+    READ_ALL_REVIEW("review:read_all"),
+    UPDATE_REVIEW("review:update"),
+    DELETE_REVIEW("review:delete"),
+
+
     SYNC_CANVAS("canvas:sync"),
     ;
 
