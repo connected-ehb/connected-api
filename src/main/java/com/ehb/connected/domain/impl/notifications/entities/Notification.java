@@ -8,11 +8,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
 
@@ -31,7 +29,7 @@ public class Notification {
 
     private String message;
 
-    private boolean isRead = false;
+    private Boolean isRead;
 
     @CreationTimestamp
     private LocalDateTime timestamp;

@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,10 +33,10 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getAllNotificationsByUserId(userId));
     }
 
-    @PreAuthorize("hasAuthority('notification:update')")
-    @PutMapping("/{id}")
-    public ResponseEntity<NotificationDto> updateNotification(@PathVariable Long id, @RequestBody NotificationDto notificationDto) {
-        return ResponseEntity.ok(notificationService.updateNotification(id, notificationDto));
+    @PreAuthorize("hasAuthority('notification:read')")
+    @PutMapping("/{notificationId}/read")
+    public ResponseEntity<NotificationDto> markNotificationAsRead(@PathVariable Long notificationId) {
+        return ResponseEntity.ok(notificationService.markNotificationAsRead(notificationId));
     }
 
     @PreAuthorize("hasAuthority('notification:delete')")

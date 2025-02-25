@@ -271,7 +271,7 @@ public class ProjectServiceImpl implements ProjectService {
                 "projects/" + project.getId());
 
         notificationService.createNotification(
-                project.getCreatedBy(),
+                project.getProductOwner(),
                 "Status for your project has been changed to: " + project.getStatus(),
                 destinationUrl
         );
