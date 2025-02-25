@@ -162,18 +162,23 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationRepository.save(newApplication);
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
 
-        //build url for notification to send to project owner
-        String destinationUrl = urlHelper.UrlBuilder(
-                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
-                UrlHelper.Sluggify(project.getAssignment().getName()),
-                "projects", project.getId().toString(),
-                "applications");
 
-        notificationService.createNotification(
-                project.getProductOwner(),
-                currentUser.getFirstName() + " " + currentUser.getLastName() + " applied for your project.",
-                destinationUrl
-        );
+
+        // Check if receiver exits and send notification
+        if (project.getProductOwner() != null) {
+            String destinationUrl = urlHelper.UrlBuilder(
+                    UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                    UrlHelper.Sluggify(project.getAssignment().getName()),
+                    "projects", project.getId().toString(),
+                    "applications");
+
+            notificationService.createNotification(
+                    project.getProductOwner(),
+                    currentUser.getFirstName() + " " + currentUser.getLastName() + " applied for your project.",
+                    destinationUrl
+            );
+        }
+
         return applicationMapper.toDto(newApplication);
     }
 
@@ -248,18 +253,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setStatus(status);
         applicationRepository.save(application);
 
-        String destinationUrl = urlHelper.UrlBuilder(
-                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
-                UrlHelper.Sluggify(project.getAssignment().getName()),
-                "applications", application.getId().toString());
+        // Check if receiver exits and send notification
+        if (application.getApplicant() != null) {
+            String destinationUrl = urlHelper.UrlBuilder(
+                    UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                    UrlHelper.Sluggify(project.getAssignment().getName()),
+                    "applications", application.getId().toString());
 
-        notificationService.createNotification(
-                application.getApplicant(),
-                "your application for project " + project.getTitle() + " has been " + status.toString().toLowerCase(),
-                destinationUrl
-        );
-
-
+            notificationService.createNotification(
+                    application.getApplicant(),
+                    "your application for project " + project.getTitle() + " has been " + status.toString().toLowerCase(),
+                    destinationUrl
+            );
+        }
         return applicationMapper.toDto(application);
     }
 
