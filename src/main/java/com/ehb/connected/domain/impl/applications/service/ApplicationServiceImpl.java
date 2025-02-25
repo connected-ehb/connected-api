@@ -277,6 +277,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new UserUnauthorizedException(user.getId());
         }
 
+
+
         // Check if user is already member of another project
         if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, application.getProject().getAssignment().getId())) {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
@@ -284,6 +286,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Project project = application.getProject();
         List<User> members = project.getMembers();
+
+        if(members.size() >= project.getTeamSize()){
+            throw new BaseRuntimeException("Project is full", HttpStatus.CONFLICT);
+        }
+
+        //reject all other applications for the same applicant
         rejectAllOtherApplications(application);
         members.add(user);
         project.setMembers(members);
