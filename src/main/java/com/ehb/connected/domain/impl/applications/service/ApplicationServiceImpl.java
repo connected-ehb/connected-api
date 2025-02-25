@@ -75,7 +75,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException(Application.class, applicationId));
         User user = userService.getUserByEmail(principal.getName());
         // Checks if the user has access to the application
-        if (user.equals(application.getProject().getCreatedBy()) ||
+        if (user.equals(application.getProject().getProductOwner()) ||
                 user.equals(application.getApplicant()) ||
                 user.getRole() == Role.TEACHER) {
             return applicationMapper.toDto(application);
@@ -170,7 +170,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 "applications");
 
         notificationService.createNotification(
-                project.getCreatedBy(),
+                project.getProductOwner(),
                 currentUser.getFirstName() + " " + currentUser.getLastName() + " applied for your project.",
                 destinationUrl
         );
@@ -290,6 +290,18 @@ public class ApplicationServiceImpl implements ApplicationService {
         projectService.updateProject(project);
 
         logger.info("User [{}] has joined project [{}] based on approved application [{}]", user.getId(), project.getId(), applicationId);
+
+        String destinationUrl = urlHelper.UrlBuilder(
+                UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.Sluggify(project.getAssignment().getName()),
+                "projects", project.getId().toString());
+
+        notificationService.createNotification(
+                user,
+                "You have been added to project " + project.getTitle(),
+                destinationUrl
+        );
+
         return applicationMapper.toDto(application);
     }
 
