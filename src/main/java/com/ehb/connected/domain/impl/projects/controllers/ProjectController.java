@@ -12,6 +12,9 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
+import com.ehb.connected.domain.impl.reviews.dto.ReviewCreateDto;
+import com.ehb.connected.domain.impl.reviews.dto.ReviewDetailsDto;
+import com.ehb.connected.domain.impl.reviews.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +31,7 @@ public class ProjectController {
     private final ProjectService projectService;
     private final FeedbackService feedbackService;
     private final ApplicationService applicationService;
+    private final ReviewService reviewService;
 
     @PreAuthorize("hasAnyAuthority('project:read')")
     @GetMapping("/{projectId}")
@@ -109,5 +113,17 @@ public class ProjectController {
     @PostMapping("/{assignmentId}/publish")
     public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, @PathVariable Long assignmentId) {
         return ResponseEntity.ok(projectService.publishAllProjects(principal, assignmentId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('review:read_all')")
+    @GetMapping("{projectId}/reviews")
+    public ResponseEntity<List<ReviewDetailsDto>> getAllReviews(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(reviewService.getAllReviewsByProjectId(principal, projectId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('review:create')")
+    @PostMapping("{projectId}/reviews")
+    public ResponseEntity<ReviewDetailsDto> createOrUpdateReviewForProject(Principal principal, @PathVariable Long projectId, @RequestBody ReviewCreateDto reviewCreateDto) {
+        return ResponseEntity.ok(reviewService.createOrUpdateReviewForProject(principal, projectId, reviewCreateDto));
     }
 }
