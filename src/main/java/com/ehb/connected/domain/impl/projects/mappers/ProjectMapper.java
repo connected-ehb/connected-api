@@ -76,6 +76,9 @@ public class ProjectMapper {
         if (dto.getBackgroundImage() != null) {
             entity.setBackgroundImage(dto.getBackgroundImage());
         }
+        if (dto.getTeamSize() != 0) {
+            entity.setTeamSize(dto.getTeamSize());
+        }
         if (dto.getTags() != null) {
             entity.getTags().clear();
             entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
