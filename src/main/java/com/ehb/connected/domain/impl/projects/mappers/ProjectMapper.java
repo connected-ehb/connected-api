@@ -4,6 +4,7 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
@@ -58,15 +59,23 @@ public class ProjectMapper {
     }
 
     public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
-        if (dto.getTitle() != null) {
-            entity.setTitle(dto.getTitle());
+
+        if(entity.getStatus() == ProjectStatusEnum.PENDING){
+            if (dto.getTitle() != null) {
+                entity.setTitle(dto.getTitle());
+            }
+            if (dto.getDescription() != null) {
+                entity.setDescription(dto.getDescription());
+            }
+            if (dto.getShortDescription() != null) {
+                entity.setShortDescription(dto.getShortDescription());
+            }
+
+            if (dto.getTeamSize() != 0) {
+                entity.setTeamSize(dto.getTeamSize());
+            }
         }
-        if (dto.getDescription() != null) {
-            entity.setDescription(dto.getDescription());
-        }
-        if (dto.getShortDescription() != null) {
-            entity.setShortDescription(dto.getShortDescription());
-        }
+
         if (dto.getRepositoryUrl() != null) {
             entity.setRepositoryUrl(dto.getRepositoryUrl());
         }
@@ -76,9 +85,7 @@ public class ProjectMapper {
         if (dto.getBackgroundImage() != null) {
             entity.setBackgroundImage(dto.getBackgroundImage());
         }
-        if (dto.getTeamSize() != 0) {
-            entity.setTeamSize(dto.getTeamSize());
-        }
+
         if (dto.getTags() != null) {
             entity.getTags().clear();
             entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
