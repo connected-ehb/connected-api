@@ -286,7 +286,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Project project = application.getProject();
         List<User> members = project.getMembers();
-
+        //check if project is full
         if(members.size() >= project.getTeamSize()){
             throw new BaseRuntimeException("Project is full", HttpStatus.CONFLICT);
         }
