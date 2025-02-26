@@ -105,7 +105,8 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_FEEDBACK,
                     Permission.READ_FEEDBACK,
                     Permission.UPDATE_FEEDBACK,
-                    Permission.DELETE_FEEDBACK
+                    Permission.DELETE_FEEDBACK,
+                    Permission.CREATE_GLOBAL_PROJECT
             )
     ),
     ADMIN(

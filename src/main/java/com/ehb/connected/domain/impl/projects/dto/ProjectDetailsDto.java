@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -16,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ProjectDetailsDto {
     private Long id;
-    private Long gid;
+    private UUID gid;
     private String title;
     private String description;
     private String shortDescription;

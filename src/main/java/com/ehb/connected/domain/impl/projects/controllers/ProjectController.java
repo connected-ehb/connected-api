@@ -15,6 +15,7 @@ import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewCreateDto;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewDetailsDto;
 import com.ehb.connected.domain.impl.reviews.service.ReviewService;
+import com.ehb.connected.domain.impl.users.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -56,6 +57,18 @@ public class ProjectController {
     @PostMapping("/{assignmentId}")
     public ResponseEntity<ProjectDetailsDto> createProject(Principal principal, @PathVariable Long assignmentId, @RequestBody ProjectCreateDto project){
         return ResponseEntity.ok(projectService.createProject(principal, assignmentId, project));
+    }
+
+    @PreAuthorize("hasAnyAuthority('project:create_global')")
+    @PostMapping("/global")
+    public ResponseEntity<ProjectDetailsDto> createGlobalProject(Principal principal, @RequestBody ProjectCreateDto project){
+        return ResponseEntity.ok(projectService.createGlobalProject(principal, project));
+    }
+
+    @PreAuthorize("hasAnyAuthority('project:create_global')")
+    @GetMapping("/global")
+    public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(@AuthenticationPrincipal User principal){
+        return ResponseEntity.ok(projectService.getAllGlobalProjects(principal));
     }
 
     @PreAuthorize("hasAnyAuthority('project:update')")
@@ -116,9 +129,9 @@ public class ProjectController {
     }
 
     @PreAuthorize("hasAnyAuthority('project:import')")
-    @PostMapping("/{assignmentId}/import/{gid}")
-    public ResponseEntity<ProjectDetailsDto> importProject(@AuthenticationPrincipal Principal principal, @PathVariable Long assignmentId, @PathVariable Long gid) {
-        return ResponseEntity.ok(projectService.importProject(principal, assignmentId, gid));
+    @PostMapping("/{projectId}/import/{assignmentId}")
+    public ResponseEntity<ProjectDetailsDto> importProject(@AuthenticationPrincipal Principal principal, @PathVariable Long assignmentId, @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.importProject(principal, assignmentId, projectId));
     }
 
     @PreAuthorize("hasAnyAuthority('review:read_all')")

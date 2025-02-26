@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum Permission {
     CREATE_PROJECT("project:create"),
+    CREATE_GLOBAL_PROJECT("project:create_global"),
     READ_PROJECT("project:read"),
     UPDATE_PROJECT("project:update"),
     DELETE_PROJECT("project:delete"),
