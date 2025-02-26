@@ -66,7 +66,7 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.createGlobalProject(principal, project));
     }
 
-    @PreAuthorize("hasAnyAuthority('project:create_global')")
+    @PreAuthorize("hasAnyAuthority('project:read')")
     @GetMapping("/global")
     public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(@AuthenticationPrincipal User principal){
         return ResponseEntity.ok(projectService.getAllGlobalProjects(principal));
@@ -131,7 +131,7 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyAuthority('project:import')")
     @PostMapping("/{projectId}/import/{assignmentId}")
-    public ResponseEntity<ProjectDetailsDto> importProject(@AuthenticationPrincipal Principal principal, @PathVariable Long assignmentId, @PathVariable Long projectId) {
+    public ResponseEntity<ProjectDetailsDto> importProject(Principal principal, @PathVariable Long assignmentId, @PathVariable Long projectId) {
         return ResponseEntity.ok(projectService.importProject(principal, assignmentId, projectId));
     }
 

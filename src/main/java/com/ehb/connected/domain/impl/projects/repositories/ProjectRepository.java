@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.projects.repositories;
 
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,4 +26,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     boolean existsByAssignmentIdAndGid(Long assignmentId, UUID gid);
 
     List<Project> findAllByCreatedBy(User principal);
+
+    List<Project> findAllByCreatedByRoleAndAssignmentIsNull(Role role);
 }

@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import java.security.Principal;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,7 +61,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = getProjectById(projectId);
 
         // Check if user is the owner of the project or a teacher and the project is not published
-        if (project.getStatus() == ProjectStatusEnum.PUBLISHED) {
+        if (project.getStatus() == ProjectStatusEnum.PUBLISHED || project.getCreatedBy().getRole() == Role.RESEARCHER) {
             return projectMapper.toDetailsDto(project);
         } else if (user.getRole().equals(Role.TEACHER) || user.getRole().equals(Role.RESEARCHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
             return projectMapper.toDetailsDto(project);
@@ -193,26 +194,6 @@ public class ProjectServiceImpl implements ProjectService {
         Project savedProject = projectRepository.save(newProject);
         logger.info("[{}] Project has been created", ProjectService.class.getName());
 
-        // Only if the creator of the project is a student do you notify the teachers
-        if(user.getRole() == Role.STUDENT) {
-            List<User> teachers = userService.getAllUsersByRole(Role.TEACHER);
-            String destinationUrl = urlHelper.UrlBuilder(
-                    UrlHelper.Sluggify(newProject.getAssignment().getCourse().getName()),
-                    UrlHelper.Sluggify(newProject.getAssignment().getName()),
-                    "projects/" + newProject.getId());
-
-            for (User teacher : teachers) {
-                notificationService.createNotification(
-                        teacher,
-                        String.format("A new project has been created: %s by %s %s",
-                                newProject.getTitle(),
-                                newProject.getCreatedBy().getFirstName(),
-                                newProject.getCreatedBy().getLastName()),
-                        destinationUrl
-                );
-        }
-
-        }
         return projectMapper.toDetailsDto(savedProject);
     }
 
@@ -266,6 +247,8 @@ public class ProjectServiceImpl implements ProjectService {
         projectRepository.save(project);
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
+
+
 
         if (project.getProductOwner() != null) {
             String destinationUrl = urlHelper.UrlBuilder(
@@ -385,6 +368,8 @@ public class ProjectServiceImpl implements ProjectService {
         final User user = userService.getUserByPrincipal(principal);
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+        final Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
 
         final UUID gid = project.getGid();
         if (gid == null) {
@@ -402,34 +387,20 @@ public class ProjectServiceImpl implements ProjectService {
         Project importedProject = new Project();
         importedProject.setGid(gid);
         importedProject.setTitle(project.getTitle());
+        importedProject.setStatus(ProjectStatusEnum.PENDING);
+        importedProject.setAssignment(assignment);
+        importedProject.setMembers(List.of(user));
+        importedProject.setCreatedBy(project.getCreatedBy());
         importedProject.setProductOwner(user);
         importedProject.setDescription(project.getDescription());
         importedProject.setShortDescription(project.getShortDescription());
         importedProject.setTeamSize(project.getTeamSize());
         importedProject.setBackgroundImage(project.getBackgroundImage());
-        importedProject.setTags(project.getTags());
+        importedProject.setTags(new ArrayList<>(project.getTags()));
         projectRepository.save(importedProject);
 
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
-
-        // Only if the creator of the project is a student do you notify the teachers
-        if(user.getRole() == Role.STUDENT) {
-            List<User> teachers = userService.getAllUsersByRole(Role.TEACHER);
-            String destinationUrl = urlHelper.UrlBuilder(
-                    UrlHelper.Sluggify(importedProject.getAssignment().getCourse().getName()),
-                    UrlHelper.Sluggify(importedProject.getAssignment().getName()),
-                    "projects/" + importedProject.getId());
-
-            for (User teacher : teachers) {
-                notificationService.createNotification(
-                        teacher,
-                        String.format("A new project has been imported: by %s %s", importedProject.getProductOwner().getFirstName(), importedProject.getProductOwner().getLastName()),
-                        destinationUrl
-                );
-            }
-
-        }
 
         return projectMapper.toDetailsDto(importedProject);
     }
@@ -443,6 +414,7 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setMembers(List.of());
         newProject.setCreatedBy(user);
         newProject.setGid(UUID.randomUUID());
+        newProject.setAssignment(null);
         Project savedProject = projectRepository.save(newProject);
         logger.info("[{}] Global project has been created", ProjectService.class.getName());
         return projectMapper.toDetailsDto(savedProject);
@@ -450,7 +422,14 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<ProjectDetailsDto> getAllGlobalProjects(User principal) {
-        return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(principal));
+        if (principal.getRole() == Role.RESEARCHER) {
+            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(principal));
+        } else {
+            // Return all projects where createdBy user has role RESEARCHER and has no assignment
+            List<ProjectDetailsDto> projectDetailsDto = projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByRoleAndAssignmentIsNull(Role.RESEARCHER));
+            return projectDetailsDto;
+        }
+
     }
 
 
