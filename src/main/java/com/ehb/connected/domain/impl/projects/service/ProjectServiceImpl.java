@@ -375,6 +375,42 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toDetailsDto(project);
     }
 
+    @Override
+    public ProjectDetailsDto importProject(Principal principal, Long assignmentId, Long gid) {
+        User user = userService.getUserByPrincipal(principal);
+        final Project project = projectRepository.findByGid(gid)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, gid));
+        // Check if there is already an imported project in this assignment with that gid
+        if (projectRepository.existsByAssignmentIdAndGid(assignmentId, gid)) {
+            throw new BaseRuntimeException("Project with GID: " + gid + " already exists in this assignment", HttpStatus.CONFLICT);
+        }
+
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, assignmentId)) {
+            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
+        }
+
+        final Project importedProject = new Project();
+        importedProject.setGid(gid);
+        importedProject.setTitle(project.getTitle());
+        importedProject.setProductOwner(user);
+        importedProject.setDescription(project.getDescription());
+        importedProject.setShortDescription(project.getShortDescription());
+        importedProject.setTeamSize(project.getTeamSize());
+        importedProject.setBackgroundImage(project.getBackgroundImage());
+        importedProject.setTags(project.getTags());
+        projectRepository.save(importedProject);
+
+        logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
+                ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
+
+        List<User> teachers = userService.getAllUsersByAssignmentAndRole(assignmentId, Role.TEACHER);
+        String destinationUrl = UrlHelper.BuildProjectDetailsUrl(importedProject);
+        String message = String.format("A new project has been imported: by %s %s", importedProject.getProductOwner().getFirstName(), importedProject.getProductOwner().getLastName());
+        notificationHelper.notifiyUsers(message, destinationUrl, teachers);
+
+        return projectMapper.toDetailsDto(importedProject);
+    }
+
 
     /**
      * Get all projects for a specific assignment with a specific status

@@ -115,6 +115,12 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.publishAllProjects(principal, assignmentId));
     }
 
+    @PreAuthorize("hasAnyAuthority('project:import')")
+    @PostMapping("/{assignmentId}/import/{gid}")
+    public ResponseEntity<ProjectDetailsDto> importProject(@AuthenticationPrincipal Principal principal, @PathVariable Long assignmentId, @PathVariable Long gid) {
+        return ResponseEntity.ok(projectService.importProject(principal, assignmentId, gid));
+    }
+
     @PreAuthorize("hasAnyAuthority('review:read_all')")
     @GetMapping("{projectId}/reviews")
     public ResponseEntity<List<ReviewDetailsDto>> getAllReviews(Principal principal, @PathVariable Long projectId) {

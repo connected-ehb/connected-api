@@ -29,4 +29,6 @@ public interface ProjectService {
     void removeMember(Principal principal, Long id, Long memberId);
 
     ProjectDetailsDto claimProject(Principal principal, Long projectId);
+
+    ProjectDetailsDto importProject(Principal principal, Long assignmentId, Long gid);
 }

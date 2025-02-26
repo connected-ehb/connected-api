@@ -16,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ProjectDetailsDto {
     private Long id;
+    private Long gid;
     private String title;
     private String description;
     private String shortDescription;

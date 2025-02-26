@@ -28,6 +28,7 @@ public class ProjectMapper {
     public ProjectDetailsDto toDetailsDto(Project project) {
         return new ProjectDetailsDto(
                 project.getId(),
+                project.getGid(),
                 project.getTitle(),
                 project.getDescription(),
                 project.getShortDescription(),
