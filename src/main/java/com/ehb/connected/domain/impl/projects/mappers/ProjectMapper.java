@@ -45,6 +45,19 @@ public class ProjectMapper {
         );
     }
 
+    public ProjectCreateDto toCreateDto(Project project) {
+        return new ProjectCreateDto(
+                project.getTitle(),
+                project.getDescription(),
+                project.getShortDescription(),
+                project.getRepositoryUrl(),
+                project.getBoardUrl(),
+                project.getBackgroundImage(),
+                project.getTeamSize(),
+                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList()
+        );
+    }
+
     public Project toEntity(ProjectCreateDto dto) {
         Project project = new Project();
         project.setTitle(dto.getTitle());

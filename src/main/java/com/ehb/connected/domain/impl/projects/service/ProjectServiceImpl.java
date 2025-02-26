@@ -35,6 +35,7 @@ import java.security.Principal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +62,7 @@ public class ProjectServiceImpl implements ProjectService {
         // Check if user is the owner of the project or a teacher and the project is not published
         if (project.getStatus() == ProjectStatusEnum.PUBLISHED) {
             return projectMapper.toDetailsDto(project);
-        } else if (user.getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
+        } else if (user.getRole().equals(Role.TEACHER) || user.getRole().equals(Role.RESEARCHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
             return projectMapper.toDetailsDto(project);
         } else {
             throw new UserUnauthorizedException(user.getId());
@@ -145,10 +146,10 @@ public class ProjectServiceImpl implements ProjectService {
 
         final User user = userService.getUserByPrincipal(principal);
 
-        // Check if user has already created a project for this assignment
         if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, assignmentId)) {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
+
 
         final Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
@@ -180,7 +181,11 @@ public class ProjectServiceImpl implements ProjectService {
             newProject.setProductOwner(user);
         } else if (user.getRole() == Role.TEACHER) {
             newProject.setMembers(List.of());
-            newProject.setStatus(ProjectStatusEnum.PUBLISHED);
+            newProject.setStatus(ProjectStatusEnum.APPROVED);
+        } else if (user.getRole() == Role.RESEARCHER) {
+            newProject.setMembers(List.of());
+            newProject.setStatus(ProjectStatusEnum.APPROVED);
+            newProject.setGid(UUID.randomUUID());
         }
 
         newProject.setCreatedBy(user);
@@ -376,10 +381,15 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto importProject(Principal principal, Long assignmentId, Long gid) {
-        User user = userService.getUserByPrincipal(principal);
-        final Project project = projectRepository.findByGid(gid)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, gid));
+    public ProjectDetailsDto importProject(Principal principal, Long assignmentId, Long projectId) {
+        final User user = userService.getUserByPrincipal(principal);
+        final Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+
+        final UUID gid = project.getGid();
+        if (gid == null) {
+            throw new BaseRuntimeException("Cannot import project as it is not global", HttpStatus.CONFLICT);
+        }
         // Check if there is already an imported project in this assignment with that gid
         if (projectRepository.existsByAssignmentIdAndGid(assignmentId, gid)) {
             throw new BaseRuntimeException("Project with GID: " + gid + " already exists in this assignment", HttpStatus.CONFLICT);
@@ -389,7 +399,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
-        final Project importedProject = new Project();
+        Project importedProject = new Project();
         importedProject.setGid(gid);
         importedProject.setTitle(project.getTitle());
         importedProject.setProductOwner(user);
@@ -403,12 +413,44 @@ public class ProjectServiceImpl implements ProjectService {
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
 
-        List<User> teachers = userService.getAllUsersByAssignmentAndRole(assignmentId, Role.TEACHER);
-        String destinationUrl = UrlHelper.BuildProjectDetailsUrl(importedProject);
-        String message = String.format("A new project has been imported: by %s %s", importedProject.getProductOwner().getFirstName(), importedProject.getProductOwner().getLastName());
-        notificationHelper.notifiyUsers(message, destinationUrl, teachers);
+        // Only if the creator of the project is a student do you notify the teachers
+        if(user.getRole() == Role.STUDENT) {
+            List<User> teachers = userService.getAllUsersByRole(Role.TEACHER);
+            String destinationUrl = urlHelper.UrlBuilder(
+                    UrlHelper.Sluggify(importedProject.getAssignment().getCourse().getName()),
+                    UrlHelper.Sluggify(importedProject.getAssignment().getName()),
+                    "projects/" + importedProject.getId());
+
+            for (User teacher : teachers) {
+                notificationService.createNotification(
+                        teacher,
+                        String.format("A new project has been imported: by %s %s", importedProject.getProductOwner().getFirstName(), importedProject.getProductOwner().getLastName()),
+                        destinationUrl
+                );
+            }
+
+        }
 
         return projectMapper.toDetailsDto(importedProject);
+    }
+
+    @Override
+    public ProjectDetailsDto createGlobalProject(Principal principal, ProjectCreateDto project) {
+        final User user = userService.getUserByPrincipal(principal);
+
+        Project newProject = projectMapper.toEntity(project);
+        newProject.setStatus(ProjectStatusEnum.APPROVED);
+        newProject.setMembers(List.of());
+        newProject.setCreatedBy(user);
+        newProject.setGid(UUID.randomUUID());
+        Project savedProject = projectRepository.save(newProject);
+        logger.info("[{}] Global project has been created", ProjectService.class.getName());
+        return projectMapper.toDetailsDto(savedProject);
+    }
+
+    @Override
+    public List<ProjectDetailsDto> getAllGlobalProjects(User principal) {
+        return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(principal));
     }
 
 

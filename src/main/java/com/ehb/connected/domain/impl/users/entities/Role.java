@@ -35,7 +35,8 @@ public enum Role implements GrantedAuthority {
                     Permission.UPDATE_NOTIFICATION,
                     Permission.DELETE_NOTIFICATION,
                     Permission.READ_ALL_APPLICATIONS,
-                    Permission.PROJECT_CLAIM
+                    Permission.PROJECT_CLAIM,
+                    Permission.PROJECT_IMPORT
             )
     ),
     TEACHER(
@@ -105,7 +106,8 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_FEEDBACK,
                     Permission.READ_FEEDBACK,
                     Permission.UPDATE_FEEDBACK,
-                    Permission.DELETE_FEEDBACK
+                    Permission.DELETE_FEEDBACK,
+                    Permission.CREATE_GLOBAL_PROJECT
             )
     ),
     ADMIN(

@@ -14,6 +14,7 @@ import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Setter
@@ -24,7 +25,7 @@ public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long gid;
+    private UUID gid;
 
     private String title;
     @Column(columnDefinition = "TEXT")
