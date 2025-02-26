@@ -5,19 +5,19 @@ import com.ehb.connected.domain.impl.notifications.entities.Notification;
 import com.ehb.connected.domain.impl.notifications.mappers.NotificationMapper;
 import com.ehb.connected.domain.impl.notifications.repositories.NotificationRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.exceptions.EntityNotFoundException;
 import com.ehb.connected.websockets.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class NotificationServiceImpl implements NotificationService{
     private final NotificationMapper notificationMapper;
     private final NotificationRepository notificationRepository;
-    private WebSocketService webSocketService;
+    private final WebSocketService webSocketService;
 
     @Autowired
     public NotificationServiceImpl(NotificationMapper notificationMapper, NotificationRepository notificationRepository, WebSocketService webSocketService) {
@@ -31,6 +31,7 @@ public class NotificationServiceImpl implements NotificationService{
         Notification notification = new Notification();
         notification.setUser(recipient);
         notification.setMessage(message);
+        notification.setIsRead(false);
         notification.setDestinationUrl(destinationUrl);
         notificationRepository.save(notification);
         //create notificationDto and send it to the recipient via the destinationUrl
@@ -47,17 +48,16 @@ public class NotificationServiceImpl implements NotificationService{
 
     @Override
     public List<NotificationDto> getAllNotificationsByUserId(Long userId) {
-        return notificationRepository.findByUserId(userId).stream()
+        return notificationRepository.findByUserIdOrderByTimestampDesc(userId).stream()
                 .map(notificationMapper::NotificationToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public NotificationDto updateNotification(Long id, NotificationDto notificationDto) {
-        Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
-        notification.setMessage(notificationDto.getMessage());
-        notification.setRead(notificationDto.isRead());
+    public NotificationDto markNotificationAsRead(Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new EntityNotFoundException(NotificationServiceImpl.class, notificationId));
+        notification.setIsRead(true);
         notificationRepository.save(notification);
         return notificationMapper.NotificationToDto(notification);
     }

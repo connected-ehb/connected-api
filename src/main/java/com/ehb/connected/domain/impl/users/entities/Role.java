@@ -24,7 +24,18 @@ public enum Role implements GrantedAuthority {
                     Permission.DELETE_APPLICATION,
                     Permission.READ_FEEDBACK,
                     Permission.READ_COURSE,
-                    Permission.READ_ASSIGNMENT
+                    Permission.READ_ASSIGNMENT,
+                    Permission.READ_PUBLISHED_OR_OWNED_PROJECTS,
+                    Permission.PROJECT_APPLY,
+                    Permission.JOIN_APPLICATION,
+                    Permission.REVIEW_APPLICATION,
+                    Permission.READ_ENROLLED_COURSES,
+                    Permission.READ_DEADLINE,
+                    Permission.READ_NOTIFICATION,
+                    Permission.UPDATE_NOTIFICATION,
+                    Permission.DELETE_NOTIFICATION,
+                    Permission.READ_ALL_APPLICATIONS,
+                    Permission.PROJECT_CLAIM
             )
     ),
     TEACHER(
@@ -53,7 +64,28 @@ public enum Role implements GrantedAuthority {
                     Permission.READ_ASSIGNMENT,
                     Permission.UPDATE_ASSIGNMENT,
                     Permission.DELETE_ASSIGNMENT,
-                    Permission.CREATE_INVITATION
+                    Permission.REMOVE_MEMBER,
+                    Permission.PUBLISH_PROJECT,
+                    Permission.READ_ALL_PROJECTS,
+                    Permission.READ_PUBLISHED_OR_OWNED_PROJECTS,
+                    Permission.CHANGE_PROJECT_STATUS,
+                    Permission.READ_ALL_APPLICATIONS,
+                    Permission.SYNC_CANVAS,
+                    Permission.VIEW_STUDENT_COURSE,
+                    Permission.READ_ALL_COURSES,
+                    Permission.READ_ALL_ASSIGNMENTS,
+                    Permission.READ_ENROLLED_COURSES,
+                    Permission.CREATE_DEADLINE,
+                    Permission.READ_DEADLINE,
+                    Permission.UPDATE_DEADLINE,
+                    Permission.DELETE_DEADLINE,
+                    Permission.READ_NOTIFICATION,
+                    Permission.UPDATE_NOTIFICATION,
+                    Permission.DELETE_NOTIFICATION,
+                    Permission.CREATE_REVIEW,
+                    Permission.READ_ALL_REVIEW,
+                    Permission.UPDATE_REVIEW,
+                    Permission.DELETE_REVIEW
             )
     ),
     RESEARCHER(
@@ -101,7 +133,29 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_ASSIGNMENT,
                     Permission.READ_ASSIGNMENT,
                     Permission.UPDATE_ASSIGNMENT,
-                    Permission.DELETE_ASSIGNMENT
+                    Permission.DELETE_ASSIGNMENT,
+                    Permission.REMOVE_MEMBER,
+                    Permission.PUBLISH_PROJECT,
+                    Permission.READ_ALL_PROJECTS,
+                    Permission.READ_PUBLISHED_OR_OWNED_PROJECTS,
+                    Permission.CHANGE_PROJECT_STATUS,
+                    Permission.READ_ALL_APPLICATIONS,
+                    Permission.SYNC_CANVAS,
+                    Permission.VIEW_STUDENT_COURSE,
+                    Permission.READ_ALL_COURSES,
+                    Permission.READ_ALL_ASSIGNMENTS,
+                    Permission.READ_ENROLLED_COURSES,
+                    Permission.CREATE_DEADLINE,
+                    Permission.READ_DEADLINE,
+                    Permission.UPDATE_DEADLINE,
+                    Permission.DELETE_DEADLINE,
+                    Permission.READ_NOTIFICATION,
+                    Permission.UPDATE_NOTIFICATION,
+                    Permission.DELETE_NOTIFICATION,
+                    Permission.CREATE_REVIEW,
+                    Permission.READ_ALL_REVIEW,
+                    Permission.UPDATE_REVIEW,
+                    Permission.DELETE_REVIEW
             )
     );
 

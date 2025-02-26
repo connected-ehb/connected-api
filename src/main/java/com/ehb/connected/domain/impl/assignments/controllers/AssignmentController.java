@@ -7,6 +7,7 @@ import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
 import com.ehb.connected.domain.impl.assignments.service.AssignmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,17 +25,20 @@ public class AssignmentController {
     private final AssignmentService assignmentService;
     private final ApplicationService applicationService;
 
+    @PreAuthorize("hasAnyAuthority('canvas:sync')")
     @PostMapping("/canvas/{courseId}")
     public ResponseEntity<List<AssignmentDetailsDto>> getAssignmentsFromCanvas(Principal principal, @PathVariable Long courseId) {
         List<AssignmentDetailsDto> filteredAssignmentsJson = assignmentService.getNewAssignmentsFromCanvas(principal, courseId);
         return ResponseEntity.ok(filteredAssignmentsJson);
     }
 
+    @PreAuthorize("hasAnyAuthority('assignment:create')")
     @PostMapping("/")
     public ResponseEntity<AssignmentDetailsDto> createAssignment(@RequestBody AssignmentCreateDto assignmentDto) {
         return ResponseEntity.ok(assignmentService.createAssignment(assignmentDto));
     }
 
+    @PreAuthorize("hasAnyAuthority('application:read_all')")
     @GetMapping("/{assignmentId}/applications")
     public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Principal principal, @PathVariable Long assignmentId){
         return ResponseEntity.ok(applicationService.getAllApplications(principal, assignmentId));

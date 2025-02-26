@@ -4,6 +4,7 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class ProjectMapper {
                 project.getAssignment() != null ? project.getAssignment().getId() : null,
                 project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList(),
                 project.getCreatedBy() != null ? userMapper.toUserDetailsDto(project.getCreatedBy()) : null,
+                project.getProductOwner() != null ? userMapper.toUserDetailsDto(project.getProductOwner()) : null,
                 project.getMembers() != null ? project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()) : Collections.emptyList()
         );
     }
@@ -51,21 +53,30 @@ public class ProjectMapper {
         project.setBoardUrl(dto.getBoardUrl());
         project.setTeamSize(dto.getTeamSize());
         project.setBackgroundImage(dto.getBackgroundImage());
-        project.setTags(tagMapper.toEntityList(dto.getTags()));
-
+        if (dto.getTags() != null) {
+            project.setTags(tagMapper.toEntityList(dto.getTags()));
+        }
         return project;
     }
 
     public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
-        if (dto.getTitle() != null) {
-            entity.setTitle(dto.getTitle());
+
+        if(entity.getStatus() == ProjectStatusEnum.PENDING){
+            if (dto.getTitle() != null) {
+                entity.setTitle(dto.getTitle());
+            }
+            if (dto.getDescription() != null) {
+                entity.setDescription(dto.getDescription());
+            }
+            if (dto.getShortDescription() != null) {
+                entity.setShortDescription(dto.getShortDescription());
+            }
+
+            if (dto.getTeamSize() != 0) {
+                entity.setTeamSize(dto.getTeamSize());
+            }
         }
-        if (dto.getDescription() != null) {
-            entity.setDescription(dto.getDescription());
-        }
-        if (dto.getShortDescription() != null) {
-            entity.setShortDescription(dto.getShortDescription());
-        }
+
         if (dto.getRepositoryUrl() != null) {
             entity.setRepositoryUrl(dto.getRepositoryUrl());
         }
@@ -75,6 +86,7 @@ public class ProjectMapper {
         if (dto.getBackgroundImage() != null) {
             entity.setBackgroundImage(dto.getBackgroundImage());
         }
+
         if (dto.getTags() != null) {
             entity.getTags().clear();
             entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));

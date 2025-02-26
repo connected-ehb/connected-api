@@ -9,6 +9,7 @@ import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,36 +30,41 @@ public class CourseController {
     private final AssignmentService assignmentService;
     private final UserService userService;
 
+    @PreAuthorize("hasAnyAuthority('canvas:sync')")
     @PostMapping("/canvas")
     public ResponseEntity<List<CourseDetailsDto>> getNewCoursesFromCanvas(Principal principal) {
         List<CourseDetailsDto> newCourses = courseService.getNewCoursesFromCanvas(principal);
         return ResponseEntity.ok(newCourses);
     }
 
+    @PreAuthorize("hasAnyAuthority('course:create')")
     @PostMapping("/")
     public ResponseEntity<CourseDetailsDto> createCourse(Principal principal, @RequestBody CourseCreateDto course) {
         CourseDetailsDto courseDetails = courseService.createCourseWithEnrollments(principal, course);
         return ResponseEntity.ok(courseDetails);
     }
 
+    @PreAuthorize("hasAnyAuthority('course:read_all')")
     @GetMapping("/")
     public ResponseEntity<List<CourseDetailsDto>> getCourses(Principal principal) {
         return ResponseEntity.ok(courseService.getCoursesByOwner(principal));
     }
 
+    @PreAuthorize("hasAnyAuthority('course:read_enrolled')")
     @GetMapping("/enrolled")
     public ResponseEntity<List<CourseDetailsDto>> getEnrolledCourses(Principal principal) {
         return ResponseEntity.ok(courseService.getCoursesByEnrollment(principal));
     }
 
+    @PreAuthorize("hasAnyAuthority('assignment:read_all')")
     @GetMapping("/{courseId}/assignments")
     public ResponseEntity<List<AssignmentDetailsDto>> getAllAssignmentsByCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(assignmentService.getAllAssignmentsByCourse(courseId));
     }
 
+    @PreAuthorize("hasAnyAuthority('course:view_students')")
     @GetMapping("/{courseId}/students")
     public List<UserDetailsDto> getAllEnrolledStudentsByCourse(@PathVariable Long courseId){
         return userService.getAllStudentsByCourseId(courseId);
     }
-
 }

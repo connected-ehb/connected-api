@@ -15,5 +15,6 @@ public class ProjectUpdateDto {
     private String repositoryUrl;
     private String boardUrl;
     private String backgroundImage;
+    private int teamSize;
     private List<TagDto> tags;
 }

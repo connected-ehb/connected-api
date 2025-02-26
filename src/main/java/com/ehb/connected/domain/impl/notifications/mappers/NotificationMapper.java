@@ -5,8 +5,6 @@ import com.ehb.connected.domain.impl.notifications.entities.Notification;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 @Component
 public class NotificationMapper {
 
@@ -22,7 +20,7 @@ public class NotificationMapper {
         dto.setNotificationId(notification.getId());
         userDetailsMapper.toUserDetailsDto(notification.getUser());
         dto.setMessage(notification.getMessage());
-        dto.setRead(notification.isRead());
+        dto.setIsRead(notification.getIsRead());
         dto.setDestinationUrl(notification.getDestinationUrl());
         dto.setTimestamp(notification.getTimestamp());
         return dto;
@@ -33,7 +31,7 @@ public class NotificationMapper {
         notification.setId(dto.getNotificationId());
         notification.setUser(dto.getUser());
         notification.setMessage(dto.getMessage());
-        notification.setRead(dto.isRead());
+        notification.setIsRead(dto.getIsRead());
         notification.setDestinationUrl(dto.getDestinationUrl());
         notification.setTimestamp(dto.getTimestamp());
         return notification;

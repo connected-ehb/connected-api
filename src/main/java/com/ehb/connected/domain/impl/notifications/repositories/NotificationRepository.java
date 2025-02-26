@@ -12,7 +12,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     Optional<Notification> findById(Long id);
 
-   List<Notification> findByUserId(Long userId);
+    List<Notification> findByUserIdOrderByTimestampDesc(Long userId);
 
     void deleteById(Long id);
 }

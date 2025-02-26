@@ -9,6 +9,6 @@ public interface NotificationService {
     void createNotification(User recipient, String message, String destinationUrl);
     NotificationDto getNotificationById(Long id);
     List<NotificationDto> getAllNotificationsByUserId(Long userId);
-    NotificationDto updateNotification(Long id, NotificationDto notificationDto);
+    NotificationDto markNotificationAsRead(Long notificationId);
     void deleteNotification(Long id);
 }
