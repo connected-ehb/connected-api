@@ -34,7 +34,7 @@ public class UserDetailsMapper {
         userDetailsDto.setEmail(user.getEmail());
         userDetailsDto.setFirstName(user.getFirstName());
         userDetailsDto.setLastName(user.getLastName());
-        userDetailsDto.setAvatarUrl(principal.getAttribute("picture"));
+        userDetailsDto.setAvatarUrl(null);
         userDetailsDto.setRole(user.getRole());
         return userDetailsDto;
     }
