@@ -28,6 +28,7 @@ public class ProjectMapper {
     public ProjectDetailsDto toDetailsDto(Project project) {
         return new ProjectDetailsDto(
                 project.getId(),
+                project.getGid(),
                 project.getTitle(),
                 project.getDescription(),
                 project.getShortDescription(),
@@ -41,6 +42,19 @@ public class ProjectMapper {
                 project.getCreatedBy() != null ? userMapper.toUserDetailsDto(project.getCreatedBy()) : null,
                 project.getProductOwner() != null ? userMapper.toUserDetailsDto(project.getProductOwner()) : null,
                 project.getMembers() != null ? project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()) : Collections.emptyList()
+        );
+    }
+
+    public ProjectCreateDto toCreateDto(Project project) {
+        return new ProjectCreateDto(
+                project.getTitle(),
+                project.getDescription(),
+                project.getShortDescription(),
+                project.getRepositoryUrl(),
+                project.getBoardUrl(),
+                project.getBackgroundImage(),
+                project.getTeamSize(),
+                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList()
         );
     }
 
