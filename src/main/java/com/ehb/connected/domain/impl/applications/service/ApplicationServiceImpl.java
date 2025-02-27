@@ -46,7 +46,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final DeadlineService deadlineService;
     private final ApplicationMapper applicationMapper;
     private final NotificationServiceImpl notificationService;
-    private final UrlHelper urlHelper;
 
     private final ProjectUserService projectUserService;
 
@@ -166,7 +165,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Check if receiver exits and send notification
         if (project.getProductOwner() != null) {
-            String destinationUrl = urlHelper.UrlBuilder(
+            String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
                     UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                     UrlHelper.Sluggify(project.getAssignment().getName()),
                     "projects", project.getId().toString(),
@@ -255,7 +254,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Check if receiver exits and send notification
         if (application.getApplicant() != null) {
-            String destinationUrl = urlHelper.UrlBuilder(
+            String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
                     UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                     UrlHelper.Sluggify(project.getAssignment().getName()),
                     "applications", application.getId().toString());
@@ -305,7 +304,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         logger.info("User [{}] has joined project [{}] based on approved application [{}]", user.getId(), project.getId(), applicationId);
 
-        String destinationUrl = urlHelper.UrlBuilder(
+        String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
                 UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                 UrlHelper.Sluggify(project.getAssignment().getName()),
                 "projects", project.getId().toString());

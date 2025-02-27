@@ -15,8 +15,6 @@ import com.ehb.connected.domain.impl.users.services.UserService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import com.ehb.connected.exceptions.UserUnauthorizedException;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -29,32 +27,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final ProjectRepository projectRepository;
     private final FeedbackRepository feedbackRepository;
     private final UserService userService;
-    private final UrlHelper urlHelper;
     private final NotificationServiceImpl notificationService;
-
-    private static final Logger logger = LoggerFactory.getLogger(FeedbackServiceImpl.class);
     private final FeedbackMapper feedbackMapper;
-
-    private Feedback getFeedbackAndCheckPermissions(Principal principal, Long projectId, Long feedbackId) {
-        final Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
-
-        logger.info("Project found: {}", project.getId());
-
-        // find the feedback by id.
-        Feedback feedback = feedbackRepository.findById(feedbackId)
-                .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
-
-        logger.info("Feedback found: {}", feedback.getId());
-
-        // Ensure that the user can modify this feedback
-        final User currentUser = userService.getUserByEmail(principal.getName());
-        if (!feedback.getUser().getId().equals(currentUser.getId())) {
-            throw new UserUnauthorizedException(currentUser.getId());
-        }
-
-        return feedback;
-    }
 
     @Override
     public FeedbackDto giveFeedback(Principal principal, Long projectId, FeedbackCreateDto feedbackDto) {
@@ -74,7 +48,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         // Check if receiver exists and send notification
         if (project.getProductOwner() != null) {
-            String destinationUrl = urlHelper.UrlBuilder(
+            String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
                     UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                     UrlHelper.Sluggify(project.getAssignment().getName()),
                     "projects/" + project.getId(),
