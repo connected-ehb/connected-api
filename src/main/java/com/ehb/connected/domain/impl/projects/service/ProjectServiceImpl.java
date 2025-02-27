@@ -241,6 +241,11 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         final Project project = getProjectById(projectId);
+
+        if (project.getAssignment() == null) {
+            throw new BaseRuntimeException("Cannot change status of global project", HttpStatus.CONFLICT);
+        }
+
         ProjectStatusEnum previousStatus = project.getStatus();
         project.setStatus(status);
         projectRepository.save(project);
