@@ -50,7 +50,6 @@ public class ProjectServiceImpl implements ProjectService {
     private final AssignmentRepository assignmentRepository;
     private final ApplicationMapper applicationMapper;
     private final UserService userService;
-    private final UrlHelper urlHelper;
     private final NotificationServiceImpl notificationService;
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
@@ -251,14 +250,14 @@ public class ProjectServiceImpl implements ProjectService {
 
 
         if (project.getProductOwner() != null) {
-            String destinationUrl = urlHelper.UrlBuilder(
+            String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
                     UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                     UrlHelper.Sluggify(project.getAssignment().getName()),
                     "projects/" + project.getId());
 
             notificationService.createNotification(
                     project.getProductOwner(),
-                    "Status for your project has been changed to: " + project.getStatus(),
+                    "Your project status has been set to: " + project.getStatus().toString().toLowerCase(),
                     destinationUrl
             );
         }
@@ -324,7 +323,7 @@ public class ProjectServiceImpl implements ProjectService {
                         ProjectService.class.getSimpleName(), memberId, projectId, user.getId());
                 projectRepository.save(project);
 
-                String destinationUrl = urlHelper.UrlBuilder(
+                String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
                         UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
                         UrlHelper.Sluggify(project.getAssignment().getName()),
                         "projects/" + project.getId());
@@ -426,8 +425,7 @@ public class ProjectServiceImpl implements ProjectService {
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(principal));
         } else {
             // Return all projects where createdBy user has role RESEARCHER and has no assignment
-            List<ProjectDetailsDto> projectDetailsDto = projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByRoleAndAssignmentIsNull(Role.RESEARCHER));
-            return projectDetailsDto;
+            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByRoleAndAssignmentIsNull(Role.RESEARCHER));
         }
 
     }

@@ -16,6 +16,17 @@ public  class UrlHelper {
         return slug;
     }
 
+    public static String BuildCourseAssignmentUrl(String courseName, String assignmentName, String... parts){
+        return UrlBuilder(concatenateArrays(new String[]{"course", courseName, "assignment", assignmentName}, parts));
+    }
+
+    private static String[] concatenateArrays(String[] first, String[] second) {
+        String[] result = new String[first.length + second.length];
+        System.arraycopy(first, 0, result, 0, first.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
+    }
+
     public static String UrlBuilder(String... parts){
         StringBuilder url = new StringBuilder();
         for (String part : parts) {
