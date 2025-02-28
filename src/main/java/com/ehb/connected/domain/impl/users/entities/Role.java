@@ -36,7 +36,8 @@ public enum Role implements GrantedAuthority {
                     Permission.DELETE_NOTIFICATION,
                     Permission.READ_ALL_APPLICATIONS,
                     Permission.PROJECT_CLAIM,
-                    Permission.PROJECT_IMPORT
+                    Permission.PROJECT_IMPORT,
+                    Permission.READ_ALL_ANNOUNCEMENT
             )
     ),
     TEACHER(
@@ -86,7 +87,9 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_REVIEW,
                     Permission.READ_ALL_REVIEW,
                     Permission.UPDATE_REVIEW,
-                    Permission.DELETE_REVIEW
+                    Permission.DELETE_REVIEW,
+                    Permission.CREATE_ANNOUNCEMENT,
+                    Permission.READ_ALL_ANNOUNCEMENT
             )
     ),
     RESEARCHER(

@@ -1,5 +1,8 @@
 package com.ehb.connected.domain.impl.assignments.controllers;
 
+import com.ehb.connected.domain.impl.announcements.dto.AnnouncementCreateDto;
+import com.ehb.connected.domain.impl.announcements.dto.AnnouncementDetailsDto;
+import com.ehb.connected.domain.impl.announcements.service.AnnouncementService;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentCreateDto;
@@ -24,6 +27,7 @@ import java.util.List;
 public class AssignmentController {
     private final AssignmentService assignmentService;
     private final ApplicationService applicationService;
+    private final AnnouncementService announcementService;
 
     @PreAuthorize("hasAnyAuthority('canvas:sync')")
     @PostMapping("/canvas/{courseId}")
@@ -42,5 +46,17 @@ public class AssignmentController {
     @GetMapping("/{assignmentId}/applications")
     public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Principal principal, @PathVariable Long assignmentId){
         return ResponseEntity.ok(applicationService.getAllApplications(principal, assignmentId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('announcement:create')")
+    @PostMapping("/{assignmentId}/announcements")
+    public ResponseEntity<AnnouncementDetailsDto> createAnnouncement(Principal principal, @PathVariable Long assignmentId, @RequestBody AnnouncementCreateDto announcement) {
+        return ResponseEntity.ok(announcementService.createAnnouncementByAssignment(principal, assignmentId, announcement));
+    }
+
+    @PreAuthorize("hasAnyAuthority('announcement:read_all')")
+    @GetMapping("/{assignmentId}/announcements")
+    public ResponseEntity<List<AnnouncementDetailsDto>> getAnnouncements(Principal principal, @PathVariable Long assignmentId) {
+        return ResponseEntity.ok(announcementService.getAnnouncementsByAssignment(principal, assignmentId));
     }
 }
