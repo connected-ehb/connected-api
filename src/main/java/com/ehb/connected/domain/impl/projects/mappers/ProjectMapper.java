@@ -108,10 +108,14 @@ public class ProjectMapper {
         }
     }
 
-    public ProjectDetailsDto toResearcherDetailsDto(Project project) {
-        ResearcherProjectDetailsDto dto = new ResearcherProjectDetailsDto();
-        dto.setCourseName(project.getAssignment().getCourse().getName());
-        dto.setAssignmentName(project.getAssignment().getName());
+    public ResearcherProjectDetailsDto toResearcherDetailsDto(Project project) {
+        ProjectDetailsDto detailsDto = toDetailsDto(project);
+        ResearcherProjectDetailsDto dto = new ResearcherProjectDetailsDto(detailsDto);
+
+        if(project.getAssignment() != null){
+            dto.setCourseName(project.getAssignment().getCourse().getName());
+            dto.setAssignmentName(project.getAssignment().getName());
+        }
         return dto;
     }
 }
