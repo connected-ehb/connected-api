@@ -42,6 +42,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     @Override
     public List<AnnouncementDetailsDto> getAnnouncementsByAssignment(Principal principal, Long assignmentId) {
-        return announcementMapper.toDtoList(announcementRepository.findAllByAssignmentId(assignmentId));
+        return announcementMapper.toDtoList(announcementRepository.findAllByAssignmentIdOrderByCreatedAtDesc(assignmentId));
     }
 }

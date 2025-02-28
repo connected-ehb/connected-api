@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface AnnouncementRepository extends JpaRepository<Announcement, Long> {
-    List<Announcement> findAllByAssignmentId(Long assignmentId);
+    List<Announcement> findAllByAssignmentIdOrderByCreatedAtDesc(Long assignmentId);
 }

@@ -1,7 +1,6 @@
 package com.ehb.connected.domain.impl.announcements.dto;
 
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
-import com.ehb.connected.domain.impl.users.entities.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,6 +17,12 @@ public class AnnouncementDetailsDto {
     private UserDetailsDto createdBy;
     private LocalDateTime createdAt;
 
-    public AnnouncementDetailsDto(Long id, Long assignmentId, String title, String message, LocalDateTime createdAt, User createdBy) {
+    public AnnouncementDetailsDto(Long id, Long assignmentId, String title, String message, LocalDateTime createdAt, UserDetailsDto createdBy) {
+        this.id = id;
+        this.assignmentId = assignmentId;
+        this.title = title;
+        this.message = message;
+        this.createdAt = createdAt;
+        this.createdBy = createdBy;
     }
 }
