@@ -1,0 +1,17 @@
+package com.ehb.connected.domain.impl.projects.dto;
+
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+
+public class ResearcherProjectDetailsDto extends ProjectDetailsDto {
+    private String courseName;
+    private String assignmentName;
+}
