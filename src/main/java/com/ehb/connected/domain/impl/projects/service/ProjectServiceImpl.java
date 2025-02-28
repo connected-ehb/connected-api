@@ -60,10 +60,11 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = getProjectById(projectId);
 
         // Check if user is the owner of the project or a teacher and the project is not published
-        if (project.getStatus() == ProjectStatusEnum.PUBLISHED || project.getCreatedBy().getRole() == Role.RESEARCHER) {
+        if (user.getRole().equals(Role.RESEARCHER)) {
+            return projectMapper.toResearcherDetailsDto(project);
+        }else if ( project.getCreatedBy().getRole().equals(Role.RESEARCHER) || project.getStatus() == ProjectStatusEnum.PUBLISHED || (user.getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId))) {
             return projectMapper.toDetailsDto(project);
-        } else if (user.getRole().equals(Role.TEACHER) || user.getRole().equals(Role.RESEARCHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
-            return projectMapper.toDetailsDto(project);
+
         } else {
             throw new UserUnauthorizedException(user.getId());
         }

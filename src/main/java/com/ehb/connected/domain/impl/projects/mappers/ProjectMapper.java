@@ -3,6 +3,7 @@ package com.ehb.connected.domain.impl.projects.mappers;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
@@ -105,5 +106,16 @@ public class ProjectMapper {
             entity.getTags().clear();
             entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
         }
+    }
+
+    public ResearcherProjectDetailsDto toResearcherDetailsDto(Project project) {
+        ProjectDetailsDto detailsDto = toDetailsDto(project);
+        ResearcherProjectDetailsDto dto = new ResearcherProjectDetailsDto(detailsDto);
+
+        if(project.getAssignment() != null){
+            dto.setCourseName(project.getAssignment().getCourse().getName());
+            dto.setAssignmentName(project.getAssignment().getName());
+        }
+        return dto;
     }
 }
