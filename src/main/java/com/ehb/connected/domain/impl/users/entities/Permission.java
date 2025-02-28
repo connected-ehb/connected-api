@@ -68,6 +68,9 @@ public enum Permission {
     UPDATE_REVIEW("review:update"),
     DELETE_REVIEW("review:delete"),
 
+    CREATE_ANNOUNCEMENT("announcement:create"),
+    READ_ALL_ANNOUNCEMENT("announcement:read_all"),
+
 
     SYNC_CANVAS("canvas:sync"),
     ;
