@@ -38,7 +38,4 @@ public class Deadline {
     @ManyToOne
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
-
-
-
 }
