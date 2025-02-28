@@ -58,7 +58,7 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     @Override
     public Object getNonAdminUserEmail(Map<String, Object> attributes) {
-        String adminToken = "c29UXcGKkyxWuLDruYMe4u73Y788NKy3UyGEaEWH3x26kfvkJRNf3UETc7u8nzEk";
+        String adminToken = "3FtzAAN9J9VmHFFFFLUt2cNFyQ7F2zZ69BRwnEZCazaGRB9hk3h3Z2f6aATVGH8w";
         String fallbackUri = "https://canvas.mertenshome.com/api/v1/users/" + attributes.get("id").toString();
         Map<String, Object> userDetail;
         try {
