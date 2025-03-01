@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
-
 @RestController
 @RequestMapping("/api/invitations")
 @RequiredArgsConstructor
@@ -20,6 +18,7 @@ public class InvitationController {
 
     private final InvitationService invitationService;
 
+    @PreAuthorize("hasAnyAuthority('invitation:create')")
     @PostMapping("/generate")
     public ResponseEntity<InvitationDetailsDto> generateInvitation(@AuthenticationPrincipal User principal) {
         InvitationDetailsDto code = invitationService.generateInvitation(principal);
