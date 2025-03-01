@@ -253,6 +253,16 @@ public class ProjectServiceImpl implements ProjectService {
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
 
+        if(project.getCreatedBy().getRole().equals(Role.RESEARCHER)) {
+            String destinationUrl = UrlHelper.UrlBuilder("/projects", project.getId().toString());
+
+            notificationService.createNotification(
+                    project.getCreatedBy(),
+                    "The project in assignment: " + project.getAssignment().getName() + "status has been set to: " + project.getStatus().toString().toLowerCase(),
+                    destinationUrl
+            );
+        }
+
 
 
         if (project.getProductOwner() != null) {
@@ -406,6 +416,14 @@ public class ProjectServiceImpl implements ProjectService {
 
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
+
+        String destinationUrl = UrlHelper.UrlBuilder("/projects", importedProject.getId().toString());
+
+        notificationService.createNotification(
+                project.getCreatedBy(),
+                "Your project has been imported to assignment: " + assignment.getName(),
+                destinationUrl
+        );
 
         return projectMapper.toDetailsDto(importedProject);
     }
