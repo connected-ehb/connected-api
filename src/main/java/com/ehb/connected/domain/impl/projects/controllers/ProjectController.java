@@ -48,6 +48,12 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getAllProjectsByAssignmentId(assignmentId));
     }
 
+    @PreAuthorize("hasAnyAuthority('project:read')")
+    @GetMapping("/member/assignment/{assignmentId}")
+    public ResponseEntity<ProjectDetailsDto> getProjectByUserAndAssignmentId(@AuthenticationPrincipal User user, @PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getProjectByUserAndAssignmentId(user, assignmentId));
+    }
+
     @PreAuthorize("hasAnyAuthority('project:read_published_or_owned')")
     @GetMapping("/{assignmentId}/published")
     public ResponseEntity<List<ProjectDetailsDto>> getAllPublishedProjects(Principal principal, @PathVariable Long assignmentId){
