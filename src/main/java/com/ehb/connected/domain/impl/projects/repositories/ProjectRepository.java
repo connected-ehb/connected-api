@@ -21,6 +21,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
                                                           @Param("status") ProjectStatusEnum status,
                                                           @Param("user") User user);
 
+    Project findByMembersAndAssignmentId(List<User> users, Long assignmentId);
+
     List<Project> findAllByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
     boolean existsByAssignmentIdAndMembersContainingAndStatusNotIn(Long assignmentId, User user, List<ProjectStatusEnum> status);
     boolean existsByAssignmentIdAndGid(Long assignmentId, UUID gid);

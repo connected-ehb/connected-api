@@ -81,6 +81,15 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toDetailsDtoList(projectRepository.findAllByAssignmentId(assignmentId));
     }
 
+    @Override
+    public ProjectDetailsDto getProjectByUserAndAssignmentId(User user, Long assignmentId) {
+        //project can be null if the user is not a member of any project in the assignment
+        if (projectRepository.findByMembersAndAssignmentId(List.of(user), assignmentId) == null) {
+            return null;
+        }
+        return projectMapper.toDetailsDto(projectRepository.findByMembersAndAssignmentId(List.of(user), assignmentId));
+    }
+
     /**
      * Get all published projects (For Students)
      * @param assignmentId the id of the assignment for which to get the published projects
