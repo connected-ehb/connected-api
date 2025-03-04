@@ -1,5 +1,7 @@
 package com.ehb.connected.config;
 
+import com.ehb.connected.domain.impl.assignments.entities.Assignment;
+import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
@@ -25,6 +27,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final AssignmentRepository assignmentRepository; // New dependency for assignments
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -32,6 +35,7 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         seedUsers();
         seedCourses();
+        seedAssignments(); // Seeding assignments
         seedEnrollments();
     }
 
@@ -55,17 +59,12 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
         try (InputStream is = getClass().getResourceAsStream("/courseData.json")) {
-            // Since your Course JSON contains an extra field "ownerCanvasUserId",
-            // we first read it as a list of maps.
             List<Map<String, Object>> courseMaps = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
             for (Map<String, Object> courseMap : courseMaps) {
                 Course course = new Course();
-                // Map the properties from JSON to the Course entity.
                 course.setCanvasId(Long.valueOf(courseMap.get("canvasId").toString()));
                 course.setName(courseMap.get("name").toString());
-                // Optionally, set other properties such as startAt, endAt, etc.
-
-                // For owner: use the provided "ownerCanvasUserId" to look up a User.
+                // For owner: look up using "ownerCanvasUserId" if available.
                 if (courseMap.containsKey("ownerCanvasUserId")) {
                     Long ownerCanvasId = Long.valueOf(courseMap.get("ownerCanvasUserId").toString());
                     Optional<User> ownerOpt = userRepository.findByCanvasUserId(ownerCanvasId);
@@ -79,6 +78,33 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
+    private void seedAssignments() {
+        if (assignmentRepository.count() > 0) {
+            System.out.println("Assignments already seeded, skipping.");
+            return;
+        }
+        try (InputStream is = getClass().getResourceAsStream("/assignmentData.json")) {
+            List<Map<String, Object>> assignmentsData = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> data : assignmentsData) {
+                Long courseCanvasId = Long.valueOf(data.get("CourseCanvasId").toString());
+                Optional<Course> courseOpt = courseRepository.findByCanvasId(courseCanvasId);
+                if (!courseOpt.isPresent()) {
+                    System.err.println("Course with canvasId " + courseCanvasId + " not found. Skipping assignment: " + data.get("name"));
+                    continue;
+                }
+                Assignment assignment = new Assignment();
+                assignment.setName(data.get("name").toString());
+                assignment.setDescription(data.get("description").toString());
+                assignment.setDefaultTeamSize(Integer.parseInt(data.get("defaultTeamSize").toString()));
+                assignment.setCourse(courseOpt.get());
+                assignmentRepository.save(assignment);
+            }
+            System.out.println("Assignments seeded successfully!");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to seed assignments", e);
+        }
+    }
+
     private void seedEnrollments() {
         if (enrollmentRepository.count() > 0) {
             System.out.println("Enrollments already seeded, skipping.");
@@ -89,7 +115,6 @@ public class DataSeeder implements CommandLineRunner {
             for (Map<String, Object> enrollmentData : enrollmentsData) {
                 Long canvasUserId = Long.valueOf(enrollmentData.get("canvasUserId").toString());
                 Long canvasCourseId = Long.valueOf(enrollmentData.get("canvasCourseId").toString());
-                // Find the course by canvasId
                 Optional<Course> courseOpt = courseRepository.findByCanvasId(canvasCourseId);
                 if (courseOpt.isPresent()) {
                     Enrollment enrollment = new Enrollment();
