@@ -1,5 +1,6 @@
 [
   {
+    "canvasId": 1,
     "name": "Short-Burst Project - Eindresultaat",
     "description": "<div class='description user_content enhanced' data-resource-type='assignment.body' data-resource-id='144618'><p>Gelieve jullie git-url, jullie code, eventuele documentatie en de videopresentatie als zip-bestand in te leveren.</p><p>De video is een presentatie van maximaal 10 minuten waarin je toont wat je hebt geleerd en gemaakt en of je deze technologie aan andere studenten zou aanraden. Dit mag, maar hoeft niet met slides. Voorzie wel sowieso een demo en toon/overloop eventueel interessante code.</p><p>Indien jullie graag nog dingen tonen/showcasen mag je altijd een tweede video toevoegen.</p></div>",
     "defaultTeamSize": 4,

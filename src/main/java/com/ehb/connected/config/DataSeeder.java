@@ -7,6 +7,7 @@ import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.tags.repositories.TagRepository;
@@ -20,6 +21,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,8 +45,8 @@ public class DataSeeder implements CommandLineRunner {
         seedUsers();
         seedCourses();
         seedAssignments(); // Seeding assignments
+        seedProjects();    // Seeding projects
         seedEnrollments();
-        seedProjects();
     }
 
     private void seedUsers() {
@@ -72,7 +74,7 @@ public class DataSeeder implements CommandLineRunner {
                 Course course = new Course();
                 course.setCanvasId(Long.valueOf(courseMap.get("canvasId").toString()));
                 course.setName(courseMap.get("name").toString());
-                // For owner: look up using "ownerCanvasUserId" if available.
+                // Look up owner using "ownerCanvasUserId" if available.
                 if (courseMap.containsKey("ownerCanvasUserId")) {
                     Long ownerCanvasId = Long.valueOf(courseMap.get("ownerCanvasUserId").toString());
                     Optional<User> ownerOpt = userRepository.findByCanvasUserId(ownerCanvasId);
@@ -102,14 +104,73 @@ public class DataSeeder implements CommandLineRunner {
                 }
                 Assignment assignment = new Assignment();
                 assignment.setName(data.get("name").toString());
+                assignment.setCanvasId(Long.valueOf(data.get("canvasId").toString()));
                 assignment.setDescription(data.get("description").toString());
                 assignment.setDefaultTeamSize(Integer.parseInt(data.get("defaultTeamSize").toString()));
                 assignment.setCourse(courseOpt.get());
+                // Optionally, set canvasId for the assignment if provided.
                 assignmentRepository.save(assignment);
             }
             System.out.println("Assignments seeded successfully!");
         } catch (Exception e) {
             throw new RuntimeException("Failed to seed assignments", e);
+        }
+    }
+
+    private void seedProjects() {
+        if (projectRepository.count() > 0) {
+            System.out.println("Projects already seeded, skipping.");
+            return;
+        }
+        try (InputStream is = getClass().getResourceAsStream("/projectData.json")) {
+            List<Map<String, Object>> projectsData = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> data : projectsData) {
+                Project project = new Project();
+                project.setGid(UUID.randomUUID());
+                project.setTitle(data.get("title").toString());
+                // Use an empty string if description is not provided.
+                project.setDescription(data.containsKey("description") ? data.get("description").toString() : "");
+                project.setShortDescription(data.get("shortDescription").toString());
+                project.setStatus(ProjectStatusEnum.valueOf(data.get("status").toString()));
+                project.setRepositoryUrl(data.get("repositoryUrl").toString());
+                project.setBoardUrl(data.get("boardUrl").toString());
+                project.setTeamSize(Integer.parseInt(data.get("teamSize").toString()));
+
+                // Lookup Assignment using assignmentCanvasId
+                Long assignmentCanvasId = Long.valueOf(data.get("assignmentCanvasId").toString());
+                Optional<Assignment> assignmentOpt = assignmentRepository.findByCanvasId(assignmentCanvasId);
+                if (assignmentOpt.isEmpty()) {
+                    System.err.println("Assignment with canvasId " + assignmentCanvasId + " not found. Skipping project: " + data.get("title"));
+                    continue;
+                }
+                project.setAssignment(assignmentOpt.get());
+
+                // Lookup createdBy user using createdByCanvasId
+                Long createdByCanvasId = Long.valueOf(data.get("createdByCanvasId").toString());
+                Optional<User> createdByOpt = userRepository.findByCanvasUserId(createdByCanvasId);
+                createdByOpt.ifPresent(project::setCreatedBy);
+
+                // Lookup productOwner user using productOwnerCanvasId
+                Long productOwnerCanvasId = Long.valueOf(data.get("productOwnerCanvasId").toString());
+                Optional<User> productOwnerOpt = userRepository.findByCanvasUserId(productOwnerCanvasId);
+                productOwnerOpt.ifPresent(project::setProductOwner);
+
+                // Set members from membersCanvasIds array
+                List<?> membersIds = (List<?>) data.get("membersCanvasIds");
+                List<User> members = new ArrayList<>();
+                for (Object memberIdObj : membersIds) {
+                    Long memberCanvasId = Long.valueOf(memberIdObj.toString());
+                    Optional<User> memberOpt = userRepository.findByCanvasUserId(memberCanvasId);
+                    memberOpt.ifPresent(members::add);
+                }
+                project.setMembers(members);
+
+                // Save the project
+                projectRepository.save(project);
+            }
+            System.out.println("Projects seeded successfully!");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to seed projects", e);
         }
     }
 
@@ -134,42 +195,6 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Enrollments seeded successfully!");
         } catch (Exception e) {
             throw new RuntimeException("Failed to seed enrollments", e);
-        }
-    }
-
-
-    private void seedProjects() {
-        if (projectRepository.count() > 0) {
-            System.out.println("Projects already seeded, skipping.");
-            return;
-        }
-        try (InputStream is = getClass().getResourceAsStream("/projectData.json")) {
-            List<Project> projects = objectMapper.readValue(is, new TypeReference<List<Project>>() {});
-            for (Project project : projects) {
-                // Set a new UUID if gid is null
-                if (project.getGid() == null) {
-                    project.setGid(UUID.randomUUID());
-                }
-
-                // Fetch and set the createdBy user if present
-                if (project.getCreatedBy() != null) {
-                    Optional<User> userOpt = userRepository.findById(project.getCreatedBy().getId());
-                    userOpt.ifPresent(project::setCreatedBy);
-                }
-
-                // Fetch and set tags if present
-                if (project.getTags() != null && !project.getTags().isEmpty()) {
-                    List<Tag> tags = tagRepository.findAllById(
-                            project.getTags().stream().map(Tag::getId).toList()
-                    );
-                    project.setTags(tags);
-                }
-
-                projectRepository.save(project);
-            }
-            System.out.println("Seeded " + projects.size() + " projects!");
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to seed projects", e);
         }
     }
 }
