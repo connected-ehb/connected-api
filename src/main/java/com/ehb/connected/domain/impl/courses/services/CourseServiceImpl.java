@@ -74,21 +74,18 @@ public class CourseServiceImpl implements CourseService {
             }
         }
 
-        // Retrieve courses already imported by the user.
-        final List<CourseDetailsDto> importedCourses = getCoursesByOwner(principal);
-        final Set<Long> importedCanvasIds = importedCourses.stream()
-                .map(CourseDetailsDto::getCanvasId)
-                .collect(Collectors.toSet());
-
-        // Filter out courses already imported and map the remaining ones to CourseDetailsDto.
         assert canvasCourses != null;
         return canvasCourses.stream()
                 .filter(courseMap -> {
-                    Long canvasId = Long.parseLong(courseMap.get("id").toString());
-                    return !importedCanvasIds.contains(canvasId);
+                    Long canvasCourseId = Long.parseLong(courseMap.get("id").toString());
+                    return !existsByCanvasId(canvasCourseId);
                 })
                 .map(courseMapper::fromCanvasMapToCourseDetailsDto)
                 .toList();
+    }
+
+    private Boolean existsByCanvasId(Long canvasId) {
+        return courseRepository.existsByCanvasId(canvasId);
     }
 
     @Override

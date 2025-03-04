@@ -1,0 +1,218 @@
+[
+  {
+    "canvasUserId": 17,
+    "firstName": "Robin",
+    "lastName": "Bervoets",
+    "email": "robin.bervoets@ehb.be"
+  },
+  {
+    "canvasUserId": 18,
+    "firstName": "ruben",
+    "lastName": "Dejonckheere",
+    "email": "ruben.dejonckheere@ehb.be",
+    "role": "TEACHER"
+
+  },
+  {
+    "canvasUserId": 11,
+    "firstName": "mister",
+    "lastName": "teacher",
+    "email": "mister.teacher@ehb.be"
+  },
+  {
+    "canvasUserId": 19,
+    "firstName": "Kevin",
+    "lastName": "Felix",
+    "email": "kevin.felix@ehb.be",
+    "role": "TEACHER"
+  },
+  {
+    "canvasUserId": 35,
+    "firstName": "jens",
+    "lastName": "albert",
+    "email": "jens.albert@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 36,
+    "firstName": "gregoire",
+    "lastName": "antheunissen",
+    "email": "gregoire.antheunissen@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 34,
+    "firstName": "vigo",
+    "lastName": "aquarius",
+    "email": "vigo.aquarius@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 29,
+    "firstName": "Stijn",
+    "lastName": "Bongiovanni",
+    "email": "stijn.bongiovanni@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 40,
+    "firstName": "Benoit",
+    "lastName": "Coene",
+    "email": "benoit.coene@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 42,
+    "firstName": "Pieter Van",
+    "lastName": "Damme",
+    "email": "pieter.vandamme@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 22,
+    "firstName": "Jos",
+    "lastName": "Debouwer",
+    "email": "jos.debouwer@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 37,
+    "firstName": "elise",
+    "lastName": "diriks",
+    "email": "elise.diriks@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 38,
+    "firstName": "Jean-Pierre",
+    "lastName": "Dubois",
+    "email": "jeanpierre.dubois@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 46,
+    "firstName": "Sandrine",
+    "lastName": "Dupuis",
+    "email": "sandrine.dupuis@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 32,
+    "firstName": "Michelle",
+    "lastName": "Jans",
+    "email": "michelle.jans@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 14,
+    "firstName": "Bryan",
+    "lastName": "Langhendries",
+    "email": "bryan.langhendries@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 39,
+    "firstName": "Marie-Claire",
+    "lastName": "Lemaire",
+    "email": "marieclaire.lemaire@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 33,
+    "firstName": "Matteo",
+    "lastName": "Livioni",
+    "email": "matteo.livioni@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+  "canvasUserId": 31,
+  "firstName": "kiryl",
+  "lastName": "maltsav",
+  "email": "kiryl.maltsav@student.ehb.be",
+  "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 43,
+    "firstName": "olivier",
+    "lastName": "martens",
+    "email": "olivier.martens@student.ehb.be",
+    "role": "STUDENT"
+  }, {
+  "canvasUserId": 27,
+  "firstName": "tom",
+  "lastName": "meers",
+  "email": "tom.meers@student.ehb.be",
+  "role": "STUDENT"
+},
+  {
+    "canvasUserId": 10 ,
+    "firstName": "gill",
+    "lastName": "mertens",
+    "email": "gill.mertens@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 41 ,
+    "firstName": "xavier",
+    "lastName": "moreau",
+    "email": "xavier.moreau@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 44,
+    "firstName": "dieter",
+    "lastName": "muller",
+    "email": "dieter.muller@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 30,
+    "firstName": "yannick",
+    "lastName": "randsthad",
+    "email": "yannick.randsthad@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 45,
+    "firstName": "clara",
+    "lastName": "rossi",
+    "email": "clara.rossi@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 28 ,
+    "firstName": "anouck",
+    "lastName": "vandevelde",
+    "email": "anouck.vandevelde@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 23 ,
+    "firstName": "lina",
+    "lastName": "vannerum",
+    "email": "lina.vannerum@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 25,
+    "firstName": "hamza",
+    "lastName": "vari",
+    "email": "hamza.vari@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 8 ,
+    "firstName": "lucas",
+    "lastName": "willaert",
+    "email": "lucas.willaert@student.ehb.be",
+    "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 24 ,
+    "firstName": "mohammed",
+    "lastName": "zachari",
+    "email": "mohammed.zachari@student.ehb.be",
+    "role": "STUDENT"
+  }
+]
+
