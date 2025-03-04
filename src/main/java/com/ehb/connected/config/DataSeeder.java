@@ -6,6 +6,10 @@ import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
+import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.tags.entities.Tag;
+import com.ehb.connected.domain.impl.tags.repositories.TagRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -19,6 +23,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -27,7 +32,9 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final AssignmentRepository assignmentRepository; // New dependency for assignments
+    private final AssignmentRepository assignmentRepository;
+    private final ProjectRepository projectRepository;
+    private final TagRepository tagRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -37,6 +44,7 @@ public class DataSeeder implements CommandLineRunner {
         seedCourses();
         seedAssignments(); // Seeding assignments
         seedEnrollments();
+        seedProjects();
     }
 
     private void seedUsers() {
@@ -126,6 +134,42 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Enrollments seeded successfully!");
         } catch (Exception e) {
             throw new RuntimeException("Failed to seed enrollments", e);
+        }
+    }
+
+
+    private void seedProjects() {
+        if (projectRepository.count() > 0) {
+            System.out.println("Projects already seeded, skipping.");
+            return;
+        }
+        try (InputStream is = getClass().getResourceAsStream("/projectData.json")) {
+            List<Project> projects = objectMapper.readValue(is, new TypeReference<List<Project>>() {});
+            for (Project project : projects) {
+                // Set a new UUID if gid is null
+                if (project.getGid() == null) {
+                    project.setGid(UUID.randomUUID());
+                }
+
+                // Fetch and set the createdBy user if present
+                if (project.getCreatedBy() != null) {
+                    Optional<User> userOpt = userRepository.findById(project.getCreatedBy().getId());
+                    userOpt.ifPresent(project::setCreatedBy);
+                }
+
+                // Fetch and set tags if present
+                if (project.getTags() != null && !project.getTags().isEmpty()) {
+                    List<Tag> tags = tagRepository.findAllById(
+                            project.getTags().stream().map(Tag::getId).toList()
+                    );
+                    project.setTags(tags);
+                }
+
+                projectRepository.save(project);
+            }
+            System.out.println("Seeded " + projects.size() + " projects!");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to seed projects", e);
         }
     }
 }

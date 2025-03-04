@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+"gid": null,
+"title": "Bibliotheekbeheersysteem",
+"description": "Dit project behelst de ontwikkeling van een softwaretoepassing voor het efficiënt beheren van bibliotheekbronnen, waaronder boeken, tijdschriften en digitale media. Functies omvatten het bijhouden van uitleningen, reserveringen, en inventarisbeheer.",
+"shortDescription": "Een softwaretoepassing voor het efficiënt beheren van bibliotheekbronnen en -diensten.",
+"status": "APPROVED",
+"repositoryUrl": null,
+"boardUrl": null,
+"backgroundImage": null,
+"teamSize": 3,
+"assignmentId": 1,
+"createdBy": {
+"id": 17,
+"email": "robin.bervoets@ehb.be",
+"profileImageUrl": null,
+"firstName": "Robin",
+"lastName": "Bervoets",
+"role": "TEACHER",
+"linkedinUrl": null,
+"fieldOfStudy": null,
+"aboutMe": null,
+"tags": []
+},
+"productOwner": null,
+"members": []
+}
+]
