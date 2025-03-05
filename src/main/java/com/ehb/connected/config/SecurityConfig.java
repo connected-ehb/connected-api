@@ -42,6 +42,7 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
                         .defaultSuccessUrl("http://localhost:4200", true)
+                        .failureUrl("http://localhost:4200/login")
                 )
                 .formLogin(form -> form
                         .loginPage("http://localhost:4200/login")
