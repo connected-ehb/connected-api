@@ -14,4 +14,5 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findByEnrollmentsCanvasUserId(Long canvasUserId);
 
     Optional<Course> findByCanvasId(Long canvasId);
+    boolean existsByCanvasId(Long canvasId);
 }

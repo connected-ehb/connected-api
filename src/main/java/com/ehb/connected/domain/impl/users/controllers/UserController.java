@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -39,6 +41,13 @@ public class UserController {
     @PatchMapping("/update")
     public ResponseEntity<UserDetailsDto> updateUser(Principal principal, @RequestBody UserDetailsDto userDetailsDto){
         return ResponseEntity.ok(userService.updateUser(principal, userDetailsDto));
+    }
 
+    @PostMapping("/request-delete")
+    public ResponseEntity<Map<String, String>> requestDeleteUser(Principal principal){
+        userService.requestDeleteUser(principal);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "User deletion requested and will be processed in 60 days");
+        return ResponseEntity.ok(response);
     }
 }

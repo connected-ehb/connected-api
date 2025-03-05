@@ -18,4 +18,5 @@ public interface UserService {
     User getUserByPrincipal(Principal principal);
     User getUserByEmail(String email);
     List<User> getAllUsersByRole(Role role);
+    void requestDeleteUser(Principal principal);
 }

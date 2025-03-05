@@ -12,11 +12,11 @@ import com.ehb.connected.exceptions.AccessTokenExpiredException;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -28,35 +28,30 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CourseServiceImpl implements CourseService {
+
     private final CourseRepository courseRepository;
-
     private final CourseMapper courseMapper;
-
     private final UserServiceImpl userService;
     private final EnrollmentService enrollmentService;
-
     private final WebClient webClient;
 
-    Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
 
     @Override
     public List<CourseDetailsDto> getNewCoursesFromCanvas(Principal principal) {
-        final User user = userService.getUserByEmail(principal.getName());
-        final String token = user.getAccessToken();
-        List<Map<String, Object>> canvasCourses;
+        User user = userService.getUserByEmail(principal.getName());
+        String token = user.getAccessToken();
 
-        // Retrieve Canvas courses using WebClient.
+        List<Map<String, Object>> canvasCourses;
         try {
             canvasCourses = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/api/v1/courses")
-                            .queryParam("EnrollmentType", "teacher") // adjust as needed or pass as parameter
+                            .queryParam("EnrollmentType", "teacher")
                             .build())
                     .header("Authorization", "Bearer " + token)
                     .retrieve()
@@ -67,43 +62,43 @@ public class CourseServiceImpl implements CourseService {
                 if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                     throw new AccessTokenExpiredException();
                 } else {
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error fetching courses from Canvas API", e);
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Error fetching courses from Canvas API", e);
                 }
             } else {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error occurred while fetching Canvas courses", e);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Unexpected error occurred while fetching Canvas courses", e);
             }
         }
 
-        // Retrieve courses already imported by the user.
-        final List<CourseDetailsDto> importedCourses = getCoursesByOwner(principal);
-        final Set<Long> importedCanvasIds = importedCourses.stream()
-                .map(CourseDetailsDto::getCanvasId)
-                .collect(Collectors.toSet());
+        if (canvasCourses == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "No courses returned from Canvas API");
+        }
 
-        // Filter out courses already imported and map the remaining ones to CourseDetailsDto.
-        assert canvasCourses != null;
         return canvasCourses.stream()
                 .filter(courseMap -> {
-                    Long canvasId = Long.parseLong(courseMap.get("id").toString());
-                    return !importedCanvasIds.contains(canvasId);
+                    Long canvasCourseId = Long.parseLong(courseMap.get("id").toString());
+                    return !existsByCanvasId(canvasCourseId);
                 })
                 .map(courseMapper::fromCanvasMapToCourseDetailsDto)
                 .toList();
     }
 
+    private boolean existsByCanvasId(Long canvasId) {
+        return courseRepository.existsByCanvasId(canvasId);
+    }
+
     @Override
     public CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto) {
-        final User user = userService.getUserByEmail(principal.getName());
-        final String token = user.getAccessToken();
+        User user = userService.getUserByEmail(principal.getName());
+        String token = user.getAccessToken();
 
-        // Create and persist the new course.
-        final Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
-        importCourse(courseEntity);  // Persist the course
+        Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
+        importCourse(courseEntity);
 
-        final String courseId = courseEntity.getCanvasId().toString();
+        String courseId = courseEntity.getCanvasId().toString();
         List<Map<String, Object>> allEnrollments = new ArrayList<>();
-
-        // Start with the first page; set per_page to a high number (max 100 is typical).
         String url = "/api/v1/courses/" + courseId + "/enrollments?per_page=100";
 
         while (url != null) {
@@ -121,23 +116,17 @@ public class CourseServiceImpl implements CourseService {
             String body = responseEntity.getBody();
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
-                List<Map<String, Object>> enrollments = objectMapper.readValue(body, new TypeReference<List<Map<String, Object>>>() {});
+                List<Map<String, Object>> enrollments = objectMapper.readValue(body,
+                        new TypeReference<List<Map<String, Object>>>() {});
                 allEnrollments.addAll(enrollments);
             } catch (Exception e) {
                 throw new BaseRuntimeException("Error parsing enrollments", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            // Look for a "next" link in the Link header
             List<String> linkHeaders = responseEntity.getHeaders().get("Link");
-            if (linkHeaders != null && !linkHeaders.isEmpty()) {
-                String linkHeader = linkHeaders.get(0);
-                url = extractNextUrl(linkHeader);
-            } else {
-                url = null;
-            }
+            url = (linkHeaders != null && !linkHeaders.isEmpty()) ? extractNextUrl(linkHeaders.get(0)) : null;
         }
 
-        // Process all retrieved enrollments.
         for (Map<String, Object> enrollment : allEnrollments) {
             Long canvasUserId = Long.parseLong(enrollment.get("user_id").toString());
             enrollmentService.enrollUser(courseEntity, canvasUserId);
@@ -148,9 +137,10 @@ public class CourseServiceImpl implements CourseService {
     }
 
     /**
-     * Helper method to extract the next URL from the Canvas Link header.
-     * Example Link header:
-     * <https://canvas.instructure.com/api/v1/courses/123/enrollments?page=2&per_page=100>; rel="next", <...>; rel="last"
+     * Extracts the next URL from the Canvas Link header.
+     *
+     * @param linkHeader the Link header containing pagination links.
+     * @return the next URL if available, otherwise null.
      */
     private String extractNextUrl(String linkHeader) {
         String[] parts = linkHeader.split(",");
@@ -166,16 +156,16 @@ public class CourseServiceImpl implements CourseService {
         return null;
     }
 
-
     @Override
     public List<CourseDetailsDto> getCoursesByOwner(Principal principal) {
-        return courseMapper.toCourseDetailsDtoList(courseRepository.findByOwner(userService.getUserByEmail(principal.getName())));
+        User owner = userService.getUserByEmail(principal.getName());
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByOwner(owner));
     }
 
     @Override
     public List<CourseDetailsDto> getCoursesByEnrollment(Principal principal) {
-        List<CourseDetailsDto> enrolledCourses = courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(userService.getUserByEmail(principal.getName()).getCanvasUserId()));
-        return enrolledCourses;
+        Long canvasUserId = userService.getUserByEmail(principal.getName()).getCanvasUserId();
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(canvasUserId));
     }
 
     private void importCourse(Course course) {
@@ -185,7 +175,8 @@ public class CourseServiceImpl implements CourseService {
         try {
             courseRepository.save(course);
         } catch (Exception e) {
-            throw new BaseRuntimeException("An unexpected error occurred while saving the course", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new BaseRuntimeException("An unexpected error occurred while saving the course",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
