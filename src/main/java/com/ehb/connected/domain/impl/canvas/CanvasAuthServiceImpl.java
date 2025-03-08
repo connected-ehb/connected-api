@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,13 +26,20 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     private final WebClient webClient;
 
+    @Value("${spring.security.oauth2.client.provider.canvas.token-uri}")
+    private String tokenUri;
+    @Value("${custom.admin-token}")
+    private String adminToken;
+    @Value("${custom.canvas-api-uri}")
+    private String canvasApiUri;
+
     Logger logger = LoggerFactory.getLogger(CanvasAuthServiceImpl.class);
 
     @Override
     public void deleteAccessToken(String accessToken) {
         try {
             webClient.delete()
-                    .uri("https://canvas.mertenshome.com/login/oauth2/token")
+                    .uri(tokenUri)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                     .retrieve()
                     .bodyToMono(Void.class)
@@ -58,8 +66,7 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     @Override
     public Object getNonAdminUserEmail(Map<String, Object> attributes) {
-        String adminToken = "3FtzAAN9J9VmHFFFFLUt2cNFyQ7F2zZ69BRwnEZCazaGRB9hk3h3Z2f6aATVGH8w";
-        String fallbackUri = "https://canvas.mertenshome.com/api/v1/users/" + attributes.get("id").toString();
+        String fallbackUri = canvasApiUri + "/api/v1/users/" + attributes.get("id").toString();
         Map<String, Object> userDetail;
         try {
             userDetail = getUserInfo(fallbackUri, adminToken);
@@ -75,7 +82,7 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
         Map<String, String> formData = getData(authorizedClient);
 
         String responseBody = webClient.post()
-                .uri("https://canvas.mertenshome.com/login/oauth2/token")
+                .uri(canvasApiUri + "/login/oauth2/token")
                 .bodyValue(formData)
                 .retrieve()
                 .bodyToMono(String.class)
