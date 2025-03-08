@@ -9,7 +9,6 @@ import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentReposito
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
-import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.tags.repositories.TagRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
@@ -54,7 +53,7 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Users already seeded, skipping.");
             return;
         }
-        try (InputStream is = getClass().getResourceAsStream("/userData.json")) {
+        try (InputStream is = getClass().getResourceAsStream("/mockData/userData.json")) {
             List<User> users = objectMapper.readValue(is, new TypeReference<List<User>>() {});
             userRepository.saveAll(users);
             System.out.println("Seeded " + users.size() + " users!");
@@ -68,7 +67,7 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Courses already seeded, skipping.");
             return;
         }
-        try (InputStream is = getClass().getResourceAsStream("/courseData.json")) {
+        try (InputStream is = getClass().getResourceAsStream("/mockData/courseData.json")) {
             List<Map<String, Object>> courseMaps = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
             for (Map<String, Object> courseMap : courseMaps) {
                 Course course = new Course();
@@ -93,7 +92,7 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Assignments already seeded, skipping.");
             return;
         }
-        try (InputStream is = getClass().getResourceAsStream("/assignmentData.json")) {
+        try (InputStream is = getClass().getResourceAsStream("/mockData/assignmentData.json")) {
             List<Map<String, Object>> assignmentsData = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
             for (Map<String, Object> data : assignmentsData) {
                 Long courseCanvasId = Long.valueOf(data.get("CourseCanvasId").toString());
@@ -122,7 +121,7 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Projects already seeded, skipping.");
             return;
         }
-        try (InputStream is = getClass().getResourceAsStream("/projectData.json")) {
+        try (InputStream is = getClass().getResourceAsStream("/mockData/projectData.json")) {
             List<Map<String, Object>> projectsData = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
             for (Map<String, Object> data : projectsData) {
                 Project project = new Project();
@@ -179,7 +178,7 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Enrollments already seeded, skipping.");
             return;
         }
-        try (InputStream is = getClass().getResourceAsStream("/enrollmentData.json")) {
+        try (InputStream is = getClass().getResourceAsStream("/mockData/enrollmentData.json")) {
             List<Map<String, Object>> enrollmentsData = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
             for (Map<String, Object> enrollmentData : enrollmentsData) {
                 Long canvasUserId = Long.valueOf(enrollmentData.get("canvasUserId").toString());
