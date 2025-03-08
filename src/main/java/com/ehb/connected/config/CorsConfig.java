@@ -1,5 +1,6 @@
 package com.ehb.connected.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -10,11 +11,16 @@ import java.util.List;
 
 @Configuration
 public class CorsConfig {
+    @Value("${custom.canvas-api-uri}")
+    private String canvasApiUri;
+    @Value("${custom.frontend-uri}")
+    private String frontendUri;
+
     @Bean
     public CorsConfigurationSource corsFilter() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://canvas.mertenshome.com"));
+        configuration.setAllowedOrigins(List.of(frontendUri, canvasApiUri));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"));
         configuration.setExposedHeaders(List.of("Authorization"));

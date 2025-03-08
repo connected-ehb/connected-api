@@ -4,6 +4,7 @@ import com.ehb.connected.domain.impl.auth.helpers.CustomAuthenticationSuccessHan
 import com.ehb.connected.domain.impl.auth.helpers.CustomOAuth2UserService;
 import com.ehb.connected.domain.impl.auth.helpers.TokenRefreshFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,10 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
+
+    @Value("${custom.frontend-uri}")
+    private String frontendUri;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
@@ -41,13 +46,13 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
-                        .defaultSuccessUrl("http://localhost:4200", true)
-                        .failureUrl("http://localhost:4200/login")
+                        .defaultSuccessUrl(frontendUri, true)
+                        .failureUrl(frontendUri + "/login")
                 )
                 .formLogin(form -> form
-                        .loginPage("http://localhost:4200/login")
+                        .loginPage(frontendUri + "/login")
                         .loginProcessingUrl("/auth/login")
-                        .defaultSuccessUrl("http://localhost:4200", true)
+                        .defaultSuccessUrl(frontendUri, true)
                         .successHandler(customAuthenticationSuccessHandler)
                         .permitAll()
                 )
