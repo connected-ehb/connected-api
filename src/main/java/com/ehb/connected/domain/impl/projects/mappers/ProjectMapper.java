@@ -7,13 +7,13 @@ import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -39,10 +39,10 @@ public class ProjectMapper {
                 project.getBackgroundImage(),
                 project.getTeamSize(),
                 project.getAssignment() != null ? project.getAssignment().getId() : null,
-                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList(),
+                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).toList() : Collections.emptyList(),
                 project.getCreatedBy() != null ? userMapper.toUserDetailsDto(project.getCreatedBy()) : null,
                 project.getProductOwner() != null ? userMapper.toUserDetailsDto(project.getProductOwner()) : null,
-                project.getMembers() != null ? project.getMembers().stream().map(userMapper::toUserDetailsDto).collect(Collectors.toList()) : Collections.emptyList()
+                project.getMembers() != null ? project.getMembers().stream().map(userMapper::toUserDetailsDto).toList() : Collections.emptyList()
         );
     }
 
@@ -55,7 +55,7 @@ public class ProjectMapper {
                 project.getBoardUrl(),
                 project.getBackgroundImage(),
                 project.getTeamSize(),
-                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).collect(Collectors.toList()) : Collections.emptyList()
+                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).toList() : Collections.emptyList()
         );
     }
 
@@ -76,7 +76,7 @@ public class ProjectMapper {
 
     public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
 
-        if(entity.getStatus() == ProjectStatusEnum.PENDING){
+        if(entity.getStatus() == ProjectStatusEnum.PENDING || entity.getCreatedBy().getRole().equals(Role.TEACHER)){
             if (dto.getTitle() != null) {
                 entity.setTitle(dto.getTitle());
             }

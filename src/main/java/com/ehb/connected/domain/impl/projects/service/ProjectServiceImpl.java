@@ -210,8 +210,6 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
         final Project existingProject = getProjectById(projectId);
 
-
-
         // Check if user is the owner of the project
         if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
             throw new UserNotOwnerOfProjectException();

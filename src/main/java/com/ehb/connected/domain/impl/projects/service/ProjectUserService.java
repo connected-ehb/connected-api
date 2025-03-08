@@ -3,6 +3,7 @@ package com.ehb.connected.domain.impl.projects.service;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import com.ehb.connected.exceptions.EntityNotFoundException;
@@ -26,7 +27,7 @@ public class ProjectUserService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        return project.getProductOwner().getId().equals(currentUser.getId());
+        return (currentUser.getRole().equals(Role.TEACHER) && project.getCreatedBy().equals(currentUser)) || project.getProductOwner().equals(currentUser);
     }
 
     public boolean isUserOwnerOfProject(long userId, Long projectId) {
@@ -36,7 +37,7 @@ public class ProjectUserService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        return project.getProductOwner().getId().equals(currentUser.getId());
+        return project.getProductOwner().equals(currentUser);
     }
 
     public boolean isUserMemberOfAnyProjectInAssignment(Principal principal, Long assignmentId) {
