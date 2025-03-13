@@ -11,7 +11,6 @@ import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentReposito
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
-import com.ehb.connected.domain.impl.tags.repositories.TagRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
