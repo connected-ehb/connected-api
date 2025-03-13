@@ -6,6 +6,7 @@ import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.tags.repositories.TagRepository;
 import com.ehb.connected.exceptions.EntityAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class TagServiceImpl implements TagService {
     public TagDto createTag(TagDto tag) {
         // check if name already exists
         if (tagRepository.existsByNameIgnoreCase(tag.getName().trim())) {
-            throw new EntityAlreadyExistsException(Tag.class, tag.getId(), tag.getName());
+            throw new EntityAlreadyExistsException("Tag with name: '" + tag.getName() + "' already exists");
         }
         return tagMapper.toDto(tagRepository.save(tagMapper.toEntity(tag)));
     }

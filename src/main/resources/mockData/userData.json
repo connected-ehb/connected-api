@@ -213,6 +213,14 @@
     "lastName": "zachari",
     "email": "mohammed.zachari@student.ehb.be",
     "role": "STUDENT"
+  },
+  {
+    "canvasUserId": 999,
+    "firstName": "julie",
+    "lastName": "zhang",
+    "email": "researcher@ehb.be",
+    "password": "$2y$08$ToDU/Xy8sJgB.QL6so.LVu1HERyJySqGpcbhI/cm1QYQomA9oxYFW",
+    "role": "RESEARCHER"
   }
 ]
 

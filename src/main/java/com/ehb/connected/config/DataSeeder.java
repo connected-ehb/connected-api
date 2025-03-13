@@ -1,5 +1,7 @@
 package com.ehb.connected.config;
 
+import com.ehb.connected.domain.impl.announcements.entities.Announcement;
+import com.ehb.connected.domain.impl.announcements.repositories.AnnouncementRepository;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
 import com.ehb.connected.domain.impl.courses.entities.Course;
@@ -35,7 +37,7 @@ public class DataSeeder implements CommandLineRunner {
     private final EnrollmentRepository enrollmentRepository;
     private final AssignmentRepository assignmentRepository;
     private final ProjectRepository projectRepository;
-    private final TagRepository tagRepository;
+    private final AnnouncementRepository announcementRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -46,6 +48,7 @@ public class DataSeeder implements CommandLineRunner {
         seedAssignments(); // Seeding assignments
         seedProjects();    // Seeding projects
         seedEnrollments();
+        seedAnnouncements();
     }
 
     private void seedUsers() {
@@ -126,43 +129,86 @@ public class DataSeeder implements CommandLineRunner {
             for (Map<String, Object> data : projectsData) {
                 Project project = new Project();
                 project.setGid(UUID.randomUUID());
-                project.setTitle(data.get("title").toString());
-                // Use an empty string if description is not provided.
+
+                // Title
+                if (data.containsKey("title")) {
+                    project.setTitle(data.get("title").toString());
+                } else {
+                    project.setTitle("");
+                }
+
+                // Description (use empty string if not provided)
                 project.setDescription(data.containsKey("description") ? data.get("description").toString() : "");
-                project.setShortDescription(data.get("shortDescription").toString());
-                project.setStatus(ProjectStatusEnum.valueOf(data.get("status").toString()));
-                project.setRepositoryUrl(data.get("repositoryUrl").toString());
-                project.setBoardUrl(data.get("boardUrl").toString());
-                project.setTeamSize(Integer.parseInt(data.get("teamSize").toString()));
+
+                // Short Description
+                if (data.containsKey("shortDescription")) {
+                    project.setShortDescription(data.get("shortDescription").toString());
+                } else {
+                    project.setShortDescription("");
+                }
+
+                // Status
+                if (data.containsKey("status")) {
+                    project.setStatus(ProjectStatusEnum.valueOf(data.get("status").toString()));
+                }
+
+                // Repository URL
+                if (data.containsKey("repositoryUrl")) {
+                    project.setRepositoryUrl(data.get("repositoryUrl").toString());
+                } else {
+                    project.setRepositoryUrl("");
+                }
+
+                // Board URL
+                if (data.containsKey("boardUrl")) {
+                    project.setBoardUrl(data.get("boardUrl").toString());
+                } else {
+                    project.setBoardUrl("");
+                }
+
+                // Team Size
+                if (data.containsKey("teamSize")) {
+                    project.setTeamSize(Integer.parseInt(data.get("teamSize").toString()));
+                } else {
+                    project.setTeamSize(0);
+                }
 
                 // Lookup Assignment using assignmentCanvasId
-                Long assignmentCanvasId = Long.valueOf(data.get("assignmentCanvasId").toString());
-                Optional<Assignment> assignmentOpt = assignmentRepository.findByCanvasId(assignmentCanvasId);
-                if (assignmentOpt.isEmpty()) {
-                    System.err.println("Assignment with canvasId " + assignmentCanvasId + " not found. Skipping project: " + data.get("title"));
-                    continue;
+                if (data.containsKey("assignmentCanvasId")) {
+                    Long assignmentCanvasId = Long.valueOf(data.get("assignmentCanvasId").toString());
+                    Optional<Assignment> assignmentOpt = assignmentRepository.findByCanvasId(assignmentCanvasId);
+                    if (assignmentOpt.isEmpty()) {
+                        System.err.println("Assignment with canvasId " + assignmentCanvasId + " not found. Skipping project: " + data.get("title"));
+                        continue;
+                    }
+                    project.setAssignment(assignmentOpt.get());
                 }
-                project.setAssignment(assignmentOpt.get());
 
                 // Lookup createdBy user using createdByCanvasId
-                Long createdByCanvasId = Long.valueOf(data.get("createdByCanvasId").toString());
-                Optional<User> createdByOpt = userRepository.findByCanvasUserId(createdByCanvasId);
-                createdByOpt.ifPresent(project::setCreatedBy);
+                if (data.containsKey("createdByCanvasId")) {
+                    Long createdByCanvasId = Long.valueOf(data.get("createdByCanvasId").toString());
+                    Optional<User> createdByOpt = userRepository.findByCanvasUserId(createdByCanvasId);
+                    createdByOpt.ifPresent(project::setCreatedBy);
+                }
 
                 // Lookup productOwner user using productOwnerCanvasId
-                Long productOwnerCanvasId = Long.valueOf(data.get("productOwnerCanvasId").toString());
-                Optional<User> productOwnerOpt = userRepository.findByCanvasUserId(productOwnerCanvasId);
-                productOwnerOpt.ifPresent(project::setProductOwner);
+                if (data.containsKey("productOwnerCanvasId")) {
+                    Long productOwnerCanvasId = Long.valueOf(data.get("productOwnerCanvasId").toString());
+                    Optional<User> productOwnerOpt = userRepository.findByCanvasUserId(productOwnerCanvasId);
+                    productOwnerOpt.ifPresent(project::setProductOwner);
+                }
 
                 // Set members from membersCanvasIds array
-                List<?> membersIds = (List<?>) data.get("membersCanvasIds");
-                List<User> members = new ArrayList<>();
-                for (Object memberIdObj : membersIds) {
-                    Long memberCanvasId = Long.valueOf(memberIdObj.toString());
-                    Optional<User> memberOpt = userRepository.findByCanvasUserId(memberCanvasId);
-                    memberOpt.ifPresent(members::add);
+                if (data.containsKey("membersCanvasIds")) {
+                    List<?> membersIds = (List<?>) data.get("membersCanvasIds");
+                    List<User> members = new ArrayList<>();
+                    for (Object memberIdObj : membersIds) {
+                        Long memberCanvasId = Long.valueOf(memberIdObj.toString());
+                        Optional<User> memberOpt = userRepository.findByCanvasUserId(memberCanvasId);
+                        memberOpt.ifPresent(members::add);
+                    }
+                    project.setMembers(members);
                 }
-                project.setMembers(members);
 
                 // Save the project
                 projectRepository.save(project);
@@ -172,6 +218,7 @@ public class DataSeeder implements CommandLineRunner {
             throw new RuntimeException("Failed to seed projects", e);
         }
     }
+
 
     private void seedEnrollments() {
         if (enrollmentRepository.count() > 0) {
@@ -194,6 +241,50 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("Enrollments seeded successfully!");
         } catch (Exception e) {
             throw new RuntimeException("Failed to seed enrollments", e);
+        }
+    }
+
+    private void seedAnnouncements() {
+        if (announcementRepository.count() > 0) {
+            System.out.println("Announcements already seeded, skipping.");
+            return;
+        }
+        try (InputStream is = getClass().getResourceAsStream("/mockData/announcementData.json")) {
+            List<Map<String, Object>> announcementsData = objectMapper.readValue(is, new TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> data : announcementsData) {
+                Announcement announcement = new Announcement();
+                announcement.setTitle(data.get("title").toString());
+                announcement.setMessage(data.get("message").toString());
+
+                // Lookup Assignment using assignmentCanvasId
+                if (data.containsKey("assignmentCanvasId")) {
+                    Long assignmentCanvasId = Long.valueOf(data.get("assignmentCanvasId").toString());
+                    Optional<Assignment> assignmentOpt = assignmentRepository.findByCanvasId(assignmentCanvasId);
+                    if (assignmentOpt.isPresent()) {
+                        announcement.setAssignment(assignmentOpt.get());
+                    } else {
+                        System.err.println("Assignment with canvasId " + assignmentCanvasId + " not found. Skipping announcement: " + data.get("title"));
+                        continue;
+                    }
+                }
+
+                // Lookup User using canvasUserId for createdBy
+                if (data.containsKey("canvasUserId")) {
+                    Long canvasUserId = Long.valueOf(data.get("canvasUserId").toString());
+                    Optional<User> userOpt = userRepository.findByCanvasUserId(canvasUserId);
+                    if (userOpt.isPresent()) {
+                        announcement.setCreatedBy(userOpt.get());
+                    } else {
+                        System.err.println("User with canvasUserId " + canvasUserId + " not found. Skipping announcement: " + data.get("title"));
+                        continue;
+                    }
+                }
+
+                announcementRepository.save(announcement);
+            }
+            System.out.println("Announcements seeded successfully!");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to seed announcements", e);
         }
     }
 }
