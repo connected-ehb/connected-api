@@ -47,7 +47,7 @@ public class DataSeeder implements CommandLineRunner {
         seedAssignments(); // Seeding assignments
         seedProjects();    // Seeding projects
         seedEnrollments();
-        seedAnnouncements();
+        //seedAnnouncements();
     }
 
     private void seedUsers() {
