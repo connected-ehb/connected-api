@@ -1,16 +1,23 @@
 package com.ehb.connected.domain.impl.auth.helpers;
 
+import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
+import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.repositories.UserRepository;
+import com.ehb.connected.exceptions.EntityNotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -18,14 +25,15 @@ import java.io.IOException;
 import java.time.Instant;
 
 @Component
+@RequiredArgsConstructor
 public class TokenRefreshFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenRefreshFilter.class);
     private final OAuth2AuthorizedClientManager authorizedClientManager;
 
-    public TokenRefreshFilter(OAuth2AuthorizedClientManager authorizedClientManager) {
-        this.authorizedClientManager = authorizedClientManager;
-    }
+    private final CanvasAuthService canvasAuthService;
+
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -51,7 +59,6 @@ public class TokenRefreshFilter extends OncePerRequestFilter {
                     .principal(oauth2Token)
                     .build();
 
-            // This call refreshes the token if it's near expiry.
             OAuth2AuthorizedClient authorizedClient = authorizedClientManager.authorize(authorizeRequest);
 
             if (authorizedClient == null) {
@@ -59,11 +66,24 @@ public class TokenRefreshFilter extends OncePerRequestFilter {
             } else {
                 Instant expiresAt = authorizedClient.getAccessToken().getExpiresAt();
                 if (expiresAt != null) {
-                    long secondsToExpiry = expiresAt.getEpochSecond() - Instant.now().getEpochSecond();
+                    Instant now = Instant.now();
+                    long secondsToExpiry = expiresAt.getEpochSecond() - now.getEpochSecond();
+                    boolean isExpired = secondsToExpiry < 300;
                     logger.info("[TokenFilter] Access token for principal: {} expires in {} seconds.", principalName, secondsToExpiry);
 
-                    if (secondsToExpiry < 300) { // less than 5 minutes to expiry
-                        logger.info("[TokenFilter] Access token is within 5 minutes of expiry for principal: {}. Token refreshed (if necessary).", principalName);
+                    if (isExpired) {
+                        logger.info("[TokenFilter] Access token is expired for principal: {}. Token refreshed (if necessary).", principalName);
+                       String newAccessToken = canvasAuthService.refreshAccessToken(authorizedClient);
+
+                        // Update the principal with the new access token
+                        new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, newAccessToken, Instant.now(), expiresAt);
+                        OAuth2AuthenticationToken newAuth = new OAuth2AuthenticationToken(oauth2Token.getPrincipal(), oauth2Token.getAuthorities(), oauth2Token.getAuthorizedClientRegistrationId());
+                        SecurityContextHolder.getContext().setAuthentication(newAuth);
+
+                        User user = userRepository.findByEmail(principalName).orElseThrow(() -> new EntityNotFoundException("User not found"));
+                        user.setAccessToken(newAccessToken);
+                        userRepository.save(user);
+
                     } else {
                         logger.debug("[TokenFilter] Access token for principal: {} is still valid.", principalName);
                     }

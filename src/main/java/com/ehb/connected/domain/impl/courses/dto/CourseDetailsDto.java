@@ -10,12 +10,12 @@ import java.util.List;
 @Getter
 @Setter
 public class CourseDetailsDto {
-    Long id;
-    String uuid;
-    String name;
-    LocalDateTime startAt;
-    LocalDateTime endAt;
-    Long ownerId;
-    Long canvasCourseId;
-    List<AssignmentDetailsDto> assignments;
+    private Long id;
+    private Long canvasId;
+    private String uuid;
+    private String name;
+    private LocalDateTime startAt;
+    private LocalDateTime endAt;
+    private Long ownerId;
+    private List<AssignmentDetailsDto> assignments;
 }

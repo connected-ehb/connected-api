@@ -9,8 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -26,7 +28,7 @@ public class CourseMapper {
         course.setEndAt(courseCreateDto.getEndAt());
         course.setAssignments(new ArrayList<>());
         course.setOwner(userService.getUserByEmail(principal.getName()));
-        course.setCanvasCourseId(courseCreateDto.getCanvasCourseId());
+        course.setCanvasId(courseCreateDto.getCanvasId());
         return course;
     }
 
@@ -38,7 +40,7 @@ public class CourseMapper {
         courseDto.setStartAt(course.getStartAt());
         courseDto.setEndAt(course.getEndAt());
         courseDto.setOwnerId(course.getOwner().getId());
-        courseDto.setCanvasCourseId(course.getCanvasCourseId());
+        courseDto.setCanvasId(course.getCanvasId());
         if (course.getAssignments() != null) {
             courseDto.setAssignments(assignmentMapper.toAssignmentDetailsDtoList(course.getAssignments()));
         }
@@ -51,5 +53,18 @@ public class CourseMapper {
             courseDtos.add(toCourseDetailsDto(course));
         }
         return courseDtos;
+    }
+
+    public CourseDetailsDto fromCanvasMapToCourseDetailsDto(Map<String, Object> canvasCourseMap) {
+        CourseDetailsDto courseDto = new CourseDetailsDto();
+        courseDto.setCanvasId(Long.parseLong(canvasCourseMap.get("id").toString()));
+        courseDto.setName(canvasCourseMap.get("name").toString());
+        if (canvasCourseMap.containsKey("start_at") && canvasCourseMap.get("start_at") != null) {
+            courseDto.setStartAt(LocalDateTime.parse(canvasCourseMap.get("start_at").toString()));
+        }
+        if (canvasCourseMap.containsKey("end_at") && canvasCourseMap.get("end_at") != null) {
+            courseDto.setEndAt(LocalDateTime.parse(canvasCourseMap.get("end_at").toString()));
+        }
+        return courseDto;
     }
 }

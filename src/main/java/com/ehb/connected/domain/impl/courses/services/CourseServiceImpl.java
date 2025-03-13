@@ -1,52 +1,188 @@
 package com.ehb.connected.domain.impl.courses.services;
 
+import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
+import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
+import com.ehb.connected.domain.impl.courses.mappers.CourseMapper;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
+import com.ehb.connected.domain.impl.enrollments.services.EnrollmentService;
+import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
-import jakarta.persistence.EntityNotFoundException;
+import com.ehb.connected.exceptions.AccessTokenExpiredException;
+import com.ehb.connected.exceptions.BaseRuntimeException;
+import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class CourseServiceImpl implements CourseService {
+
     private final CourseRepository courseRepository;
+    private final CourseMapper courseMapper;
     private final UserServiceImpl userService;
+    private final EnrollmentService enrollmentService;
+    private final WebClient webClient;
+
+    private static final Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
 
     @Override
-    public List<Course> getCoursesByOwner(Principal principal) {
-        return courseRepository.findByOwner(userService.getUserByEmail(principal.getName()));
+    public List<CourseDetailsDto> getNewCoursesFromCanvas(Principal principal) {
+        User user = userService.getUserByEmail(principal.getName());
+        String token = user.getAccessToken();
+
+        List<Map<String, Object>> canvasCourses;
+        try {
+            canvasCourses = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/courses")
+                            .queryParam("EnrollmentType", "teacher")
+                            .build())
+                    .header("Authorization", "Bearer " + token)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                    .block();
+        } catch (Exception e) {
+            if (e instanceof WebClientResponseException ex) {
+                if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                    throw new AccessTokenExpiredException();
+                } else {
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Error fetching courses from Canvas API", e);
+                }
+            } else {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Unexpected error occurred while fetching Canvas courses", e);
+            }
+        }
+
+        if (canvasCourses == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "No courses returned from Canvas API");
+        }
+
+        return canvasCourses.stream()
+                .filter(courseMap -> {
+                    Long canvasCourseId = Long.parseLong(courseMap.get("id").toString());
+                    return !existsByCanvasId(canvasCourseId);
+                })
+                .map(courseMapper::fromCanvasMapToCourseDetailsDto)
+                .toList();
+    }
+
+    private boolean existsByCanvasId(Long canvasId) {
+        return courseRepository.existsByCanvasId(canvasId);
     }
 
     @Override
-    public List<Course> getCoursesByEnrollment(Principal principal) {
-        return courseRepository.findByEnrollmentsCanvasUserId(userService.getUserByEmail(principal.getName()).getCanvasUserId());
+    public CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto) {
+        User user = userService.getUserByEmail(principal.getName());
+        String token = user.getAccessToken();
+
+        Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
+        importCourse(courseEntity);
+
+        String courseId = courseEntity.getCanvasId().toString();
+        List<Map<String, Object>> allEnrollments = new ArrayList<>();
+        String url = "/api/v1/courses/" + courseId + "/enrollments?per_page=100";
+
+        while (url != null) {
+            ResponseEntity<String> responseEntity = webClient.get()
+                    .uri(url)
+                    .header("Authorization", "Bearer " + token)
+                    .retrieve()
+                    .toEntity(String.class)
+                    .block();
+
+            if (responseEntity == null) {
+                break;
+            }
+
+            String body = responseEntity.getBody();
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<Map<String, Object>> enrollments = objectMapper.readValue(body,
+                        new TypeReference<List<Map<String, Object>>>() {});
+                allEnrollments.addAll(enrollments);
+            } catch (Exception e) {
+                throw new BaseRuntimeException("Error parsing enrollments", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<String> linkHeaders = responseEntity.getHeaders().get("Link");
+            url = (linkHeaders != null && !linkHeaders.isEmpty()) ? extractNextUrl(linkHeaders.get(0)) : null;
+        }
+
+        for (Map<String, Object> enrollment : allEnrollments) {
+            Long canvasUserId = Long.parseLong(enrollment.get("user_id").toString());
+            enrollmentService.enrollUser(courseEntity, canvasUserId);
+        }
+
+        logger.info("[{}] Course created with enrollments: {}", CourseService.class.getSimpleName(), courseEntity);
+        return courseMapper.toCourseDetailsDto(courseEntity);
     }
 
-
+    /**
+     * Extracts the next URL from the Canvas Link header.
+     *
+     * @param linkHeader the Link header containing pagination links.
+     * @return the next URL if available, otherwise null.
+     */
+    private String extractNextUrl(String linkHeader) {
+        String[] parts = linkHeader.split(",");
+        for (String part : parts) {
+            if (part.contains("rel=\"next\"")) {
+                int start = part.indexOf("<") + 1;
+                int end = part.indexOf(">");
+                if (start > 0 && end > start) {
+                    return part.substring(start, end);
+                }
+            }
+        }
+        return null;
+    }
 
     @Override
-    public void createCourse(Course course) {
+    public List<CourseDetailsDto> getCoursesByOwner(Principal principal) {
+        User owner = userService.getUserByEmail(principal.getName());
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByOwner(owner));
+    }
+
+    @Override
+    public List<CourseDetailsDto> getCoursesByEnrollment(Principal principal) {
+        Long canvasUserId = userService.getUserByEmail(principal.getName()).getCanvasUserId();
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(canvasUserId));
+    }
+
+    private void importCourse(Course course) {
+        if (course == null) {
+            throw new BaseRuntimeException("Course cannot be null", HttpStatus.BAD_REQUEST);
+        }
         try {
             courseRepository.save(course);
         } catch (Exception e) {
-            System.out.println("Error while creating course: " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new BaseRuntimeException("An unexpected error occurred while saving the course",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
     public Course getCourseById(Long courseId) {
         return courseRepository.findById(courseId)
-                .orElseThrow(() -> new EntityNotFoundException("Course does not exist"));
-    }
-
-    @Override
-    public Course getCourseByCanvasCourseId(Long canvasCourseId) {
-        return courseRepository.findByCanvasCourseId(canvasCourseId)
-                .orElseThrow(() -> new EntityNotFoundException("Course does not exist"));
+                .orElseThrow(() -> new EntityNotFoundException(Course.class, courseId));
     }
 }

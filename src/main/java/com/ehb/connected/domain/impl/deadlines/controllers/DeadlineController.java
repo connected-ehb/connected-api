@@ -1,9 +1,13 @@
 package com.ehb.connected.domain.impl.deadlines.controllers;
 
 
-import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
+import com.ehb.connected.domain.impl.deadlines.dto.DeadlineCreateDto;
+import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
+import com.ehb.connected.domain.impl.deadlines.dto.DeadlineUpdateDto;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,36 +20,40 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/deadlines")
+@RequestMapping("/api/deadlines")
 @RequiredArgsConstructor
 public class DeadlineController {
 
     private final DeadlineService deadlineService;
 
-    @GetMapping("/{assignmentId}")
-    public List<Deadline> getAllDeadlines(@PathVariable Long assignmentId){
-        return deadlineService.getAllDeadlinesByAssignmentId(assignmentId);
+    @PreAuthorize("hasAuthority('deadline:read')")
+    @GetMapping("/assignment/{assignmentId}")
+    public ResponseEntity<List<DeadlineDetailsDto>> getAllDeadlinesForAssignmentId(@PathVariable Long assignmentId){
+        return ResponseEntity.ok(deadlineService.getAllDeadlinesByAssignmentId(assignmentId));
     }
 
-    @GetMapping("/{id}")
-    public Deadline getDeadlineById(@PathVariable Long id) {
-        return deadlineService.getDeadlineById(id);
+    @PreAuthorize("hasAuthority('deadline:read')")
+    @GetMapping("/{deadlineId}")
+    public ResponseEntity<DeadlineDetailsDto> getDeadlineById(@PathVariable Long deadlineId) {
+        return ResponseEntity.ok(deadlineService.getDeadlineById(deadlineId));
     }
 
-    @PostMapping()
-    public Deadline createDeadline(@RequestBody Deadline deadline) {
-        return deadlineService.createDeadline(deadline);
+    @PreAuthorize("hasAuthority('deadline:create')")
+    @PostMapping("/{assignmentId}")
+    public ResponseEntity<DeadlineDetailsDto> createDeadline(@PathVariable Long assignmentId, @RequestBody DeadlineCreateDto deadlineDto) {
+        return ResponseEntity.ok(deadlineService.createDeadline(assignmentId, deadlineDto));
     }
 
-    @PatchMapping("/{id}")
-    public Deadline updateDeadline(@PathVariable Long id, @RequestBody Deadline deadline) {
-        return deadlineService.updateDeadline(deadline);
+    @PreAuthorize("hasAuthority('deadline:update')")
+    @PatchMapping("/{deadlineId}")
+    public ResponseEntity<DeadlineDetailsDto> updateDeadline(@PathVariable Long deadlineId, @RequestBody DeadlineUpdateDto deadlineDto) {
+        return ResponseEntity.ok(deadlineService.updateDeadline(deadlineId, deadlineDto));
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteDeadline(@PathVariable Long id) {
-        deadlineService.deleteDeadline(id);
+    @PreAuthorize("hasAuthority('deadline:delete')")
+    @DeleteMapping("/{deadlineId}")
+    public ResponseEntity<Void> deleteDeadline(@PathVariable Long deadlineId) {
+        deadlineService.deleteDeadline(deadlineId);
+        return ResponseEntity.noContent().build();
     }
-
-
 }
