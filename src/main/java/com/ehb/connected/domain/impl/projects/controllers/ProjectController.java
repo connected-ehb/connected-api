@@ -2,8 +2,7 @@ package com.ehb.connected.domain.impl.projects.controllers;
 
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
-import com.ehb.connected.domain.impl.applications.dto.ApplicationDto;
-import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
@@ -13,9 +12,14 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
+import com.ehb.connected.domain.impl.reviews.dto.ReviewCreateDto;
+import com.ehb.connected.domain.impl.reviews.dto.ReviewDetailsDto;
+import com.ehb.connected.domain.impl.reviews.service.ReviewService;
+import com.ehb.connected.domain.impl.users.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -29,91 +33,123 @@ public class ProjectController {
     private final ProjectService projectService;
     private final FeedbackService feedbackService;
     private final ApplicationService applicationService;
+    private final ReviewService reviewService;
 
-    @GetMapping
-    public List<ProjectDetailsDto> getAllProjects(@RequestHeader Long assignmentId){
-        return projectService.getAllProjects(assignmentId);
+    @PreAuthorize("hasAnyAuthority('project:read')")
+    @GetMapping("/{projectId}")
+    public ResponseEntity<ProjectDetailsDto> getProjectById(Principal principal, @PathVariable Long projectId){
+        return ResponseEntity.ok(projectService.getProjectById(principal, projectId));
     }
 
-    @GetMapping("/published")
-    public List<ProjectDetailsDto> getAllPublishedProjects(@RequestHeader Long assignmentId){
-        return projectService.getAllPublishedProjectsInAssignment(assignmentId);
+    //TODO: find better endpoint
+    @PreAuthorize("hasAnyAuthority('project:read_all')")
+    @GetMapping("/assignment/{assignmentId}")
+    public ResponseEntity<List<ProjectDetailsDto>> getAllProjects(@PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getAllProjectsByAssignmentId(assignmentId));
     }
 
-    @GetMapping("/{id}")
-    public ProjectDetailsDto getProjectById(@PathVariable Long id){
-        return projectService.getProjectById(id);
+    @PreAuthorize("hasAnyAuthority('project:read')")
+    @GetMapping("/member/assignment/{assignmentId}")
+    public ResponseEntity<ProjectDetailsDto> getProjectByUserAndAssignmentId(@AuthenticationPrincipal User user, @PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getProjectByUserAndAssignmentId(user, assignmentId));
     }
 
-    @PostMapping("/create")
-    public ProjectDetailsDto createProject(Principal principal, @RequestHeader Long assignmentId, @RequestBody ProjectCreateDto project){
-        return projectService.createProject(principal, assignmentId, project);
+    @PreAuthorize("hasAnyAuthority('project:read_published_or_owned')")
+    @GetMapping("/{assignmentId}/published")
+    public ResponseEntity<List<ProjectDetailsDto>> getAllPublishedProjects(Principal principal, @PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getAllPublishedOrOwnedProjectsByAssignmentId(principal, assignmentId));
     }
 
-    @PutMapping("/update/{id}")
-    public ProjectDetailsDto updateProject(Principal principal, @PathVariable Long id, @RequestBody ProjectUpdateDto project){
-        return projectService.updateProject(principal, id, project);
+    @PreAuthorize("hasAnyAuthority('project:create')")
+    @PostMapping("/{assignmentId}")
+    public ResponseEntity<ProjectDetailsDto> createProject(Principal principal, @PathVariable Long assignmentId, @RequestBody ProjectCreateDto project){
+        return ResponseEntity.ok(projectService.createProject(principal, assignmentId, project));
     }
 
-    @DeleteMapping("/delete/{id}")
-    public void deleteProject(@PathVariable Long id){
-        projectService.deleteProject(id);
+    @PreAuthorize("hasAnyAuthority('project:create_global')")
+    @PostMapping("/global")
+    public ResponseEntity<ProjectDetailsDto> createGlobalProject(Principal principal, @RequestBody ProjectCreateDto project){
+        return ResponseEntity.ok(projectService.createGlobalProject(principal, project));
     }
 
-    @PostMapping("/status")
-    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, @RequestHeader Long projectId, @RequestHeader ProjectStatusEnum status) {
-        return projectService.changeProjectStatus(principal, projectId, status);
+    @PreAuthorize("hasAnyAuthority('project:read')")
+    @GetMapping("/global")
+    public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(@AuthenticationPrincipal User principal){
+        return ResponseEntity.ok(projectService.getAllGlobalProjects(principal));
     }
 
-    @GetMapping("/{id}/applications")
-    public List<ApplicationDto> getAllApplications(Principal principal, @PathVariable Long id) { return projectService.getAllApplications(principal, id);}
-
-    @PostMapping("/{id}/applications/{applicationId}/approve")
-    public void approveApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
-        projectService.reviewApplication(principal, id, applicationId, ApplicationStatusEnum.APPROVED);
+    @PreAuthorize("hasAnyAuthority('project:update')")
+    @PatchMapping("/{projectId}")
+    public ResponseEntity<ProjectDetailsDto> updateProject(Principal principal, @PathVariable Long projectId, @RequestBody ProjectUpdateDto project){
+        return ResponseEntity.ok(projectService.updateProject(principal, projectId, project));
     }
 
-    @PostMapping("/{id}/applications/{applicationId}/reject")
-    public void rejectApplication(Principal principal, @PathVariable Long id, @PathVariable Long applicationId) {
-        projectService.reviewApplication(principal, id, applicationId, ApplicationStatusEnum.REJECTED);
+    @PreAuthorize("hasAnyAuthority('project:change_status')")
+    @PostMapping("/{projectId}/status")
+    public ResponseEntity<ProjectDetailsDto> changeProjectStatus(Principal principal, @PathVariable Long projectId, @RequestHeader ProjectStatusEnum status) {
+        return ResponseEntity.ok(projectService.changeProjectStatus(principal, projectId, status));
+    }
+
+    @PreAuthorize("hasAnyAuthority('application:read')")
+    @GetMapping("/{projectId}/applications")
+    public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.getAllApplicationsByProjectId(principal, projectId));
     }
 
     // Feedback endpoints
-    @PostMapping("/{id}/feedback")
-    public ResponseEntity<FeedbackDto> giveFeedback(Principal principal, @PathVariable Long id, @RequestBody FeedbackCreateDto feedbackDto) {
-       return ResponseEntity.ok(feedbackService.giveFeedback(principal, id, feedbackDto));
+    @PreAuthorize("hasAnyAuthority('feedback:create')")
+    @PostMapping("/{projectId}/feedback")
+    public ResponseEntity<FeedbackDto> giveFeedback(Principal principal, @PathVariable Long projectId, @RequestBody FeedbackCreateDto feedbackDto) {
+       return ResponseEntity.ok(feedbackService.giveFeedback(principal, projectId, feedbackDto));
     }
 
-    @PutMapping("/{id}/feedback/{feedbackId}")
-    public ResponseEntity<FeedbackDto> updateFeedback(
-            Principal principal,
-            @PathVariable Long id,
-            @PathVariable Long feedbackId,
-            @RequestBody FeedbackCreateDto feedbackDto) {
-        return ResponseEntity.ok(feedbackService.updateFeedback(principal, id, feedbackId, feedbackDto));
+    @PreAuthorize("hasAnyAuthority('feedback:read')")
+    @GetMapping("/{projectId}/feedback")
+    public ResponseEntity<List<FeedbackDto>> getFeedbacks(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(feedbackService.getAllFeedbackForProject(principal, projectId));
     }
 
-    @DeleteMapping("/{id}/feedback/{feedbackId}")
-    public ResponseEntity<Void> deleteFeedback(
-            Principal principal,
-            @PathVariable Long id,
-            @PathVariable Long feedbackId) {
-        feedbackService.deleteFeedback(principal, id, feedbackId);
-        return ResponseEntity.noContent().build();
+
+    @PreAuthorize("hasAnyAuthority('project:apply')")
+    @PostMapping("/{projectId}/apply")
+    public ResponseEntity<ApplicationDetailsDto> applyForProject(Principal principal, @PathVariable Long projectId, @RequestBody ApplicationCreateDto application) {
+        return ResponseEntity.ok(applicationService.createApplication(principal, projectId, application));
     }
 
-    @GetMapping("/{id}/feedback")
-    public ResponseEntity<List<FeedbackDto>> getFeedbacks(Principal principal, @PathVariable Long id) {
-        return ResponseEntity.ok(feedbackService.getAllFeedbackForProject(principal, id));
+    @PreAuthorize("hasAnyAuthority('project:claim')")
+    @PostMapping("/{projectId}/claim")
+    public ResponseEntity<ProjectDetailsDto> claimProject(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.claimProject(principal, projectId));
     }
 
-    @PostMapping("/{id}/apply")
-    public ResponseEntity<ApplicationDto> applyForProject(Principal principal, @PathVariable Long id, @RequestBody ApplicationCreateDto application) {
-        return ResponseEntity.ok(applicationService.createApplication(principal, id, application));
+    @PreAuthorize("hasAnyAuthority('project:remove_member')")
+    @DeleteMapping("/{projectId}/members/{memberId}")
+    public ResponseEntity<Void> removeMember(Principal principal, @PathVariable Long projectId, @PathVariable Long memberId) {
+        projectService.removeMember(principal, projectId, memberId);
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{id}/members/{memberId}")
-    public void removeMember(Principal principal, @PathVariable Long id, @PathVariable Long memberId) {
-        projectService.removeMember(principal, id, memberId);
+    @PreAuthorize("hasAnyAuthority('project:publish')")
+    @PostMapping("/{assignmentId}/publish")
+    public ResponseEntity<List<ProjectDetailsDto>> publishAllProjects(Principal principal, @PathVariable Long assignmentId) {
+        return ResponseEntity.ok(projectService.publishAllProjects(principal, assignmentId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('project:import')")
+    @PostMapping("/{projectId}/import/{assignmentId}")
+    public ResponseEntity<ProjectDetailsDto> importProject(Principal principal, @PathVariable Long assignmentId, @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.importProject(principal, assignmentId, projectId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('review:read_all')")
+    @GetMapping("{projectId}/reviews")
+    public ResponseEntity<List<ReviewDetailsDto>> getAllReviews(Principal principal, @PathVariable Long projectId) {
+        return ResponseEntity.ok(reviewService.getAllReviewsByProjectId(principal, projectId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('review:create')")
+    @PostMapping("{projectId}/reviews")
+    public ResponseEntity<ReviewDetailsDto> createOrUpdateReviewForProject(Principal principal, @PathVariable Long projectId, @RequestBody ReviewCreateDto reviewCreateDto) {
+        return ResponseEntity.ok(reviewService.createOrUpdateReviewForProject(principal, projectId, reviewCreateDto));
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class UserDetailsMapper {
 
     private final TagMapper tagMapper;
+
     //map a user to a auth user details dto without a principal
     public authUserDetailsDto toDto(User user) {
         authUserDetailsDto userDetailsDto = new authUserDetailsDto();
@@ -33,7 +34,7 @@ public class UserDetailsMapper {
         userDetailsDto.setEmail(user.getEmail());
         userDetailsDto.setFirstName(user.getFirstName());
         userDetailsDto.setLastName(user.getLastName());
-        userDetailsDto.setAvatarUrl(principal.getAttribute("picture"));
+        userDetailsDto.setAvatarUrl(null);
         userDetailsDto.setRole(user.getRole());
         return userDetailsDto;
     }
@@ -50,7 +51,9 @@ public class UserDetailsMapper {
         dto.setLinkedinUrl(user.getLinkedinUrl());
         dto.setFieldOfStudy(user.getFieldOfStudy());
         dto.setAboutMe(user.getAboutMe());
-        dto.setTags(tagMapper.toDtoList(user.getTags()));
+        if (user.getTags() != null) {
+            dto.setTags(tagMapper.toDtoList(user.getTags()));
+        }
         return dto;
     }
 

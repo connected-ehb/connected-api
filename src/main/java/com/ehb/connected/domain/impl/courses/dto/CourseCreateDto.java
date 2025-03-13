@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class CourseCreateDto {
-    String uuid;
-    String name;
-    LocalDateTime startAt;
-    LocalDateTime endAt;
-    Long canvasCourseId;
+    private Long canvasId;
+    private String uuid;
+    private String name;
+    private LocalDateTime startAt;
+    private LocalDateTime endAt;
 }
