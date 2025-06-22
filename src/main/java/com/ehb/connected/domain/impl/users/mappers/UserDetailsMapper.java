@@ -47,7 +47,9 @@ public class UserDetailsMapper {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setProfileImageUrl(user.getProfileImageUrl());
-        dto.setRole(user.getRole().name());
+        if (user.getRole() != null) {
+            dto.setRole(user.getRole().name());
+        }
         dto.setLinkedinUrl(user.getLinkedinUrl());
         dto.setFieldOfStudy(user.getFieldOfStudy());
         dto.setAboutMe(user.getAboutMe());

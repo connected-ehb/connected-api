@@ -28,7 +28,7 @@ spring:
             client-authentication-method: client_secret_post
             redirect-uri: '{baseUrl}/login/oauth2/code/canvas'
             authorization-grant-type: authorization_code
-            scope: email, offline_access
+            scope: offline_access
             client-name: Canvas
         provider:
           canvas:
