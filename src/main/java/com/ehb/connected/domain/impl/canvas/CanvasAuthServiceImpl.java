@@ -28,8 +28,6 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     @Value("${spring.security.oauth2.client.provider.canvas.token-uri}")
     private String tokenUri;
-    @Value("${custom.admin-token}")
-    private String adminToken;
     @Value("${custom.canvas-api-uri}")
     private String canvasApiUri;
 
@@ -62,19 +60,6 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();
-    }
-
-    @Override
-    public Object getNonAdminUserEmail(Map<String, Object> attributes) {
-        String fallbackUri = canvasApiUri + "/api/v1/users/" + attributes.get("id").toString();
-        Map<String, Object> userDetail;
-        try {
-            userDetail = getUserInfo(fallbackUri, adminToken);
-        } catch (Exception e) {
-            throw new BaseRuntimeException("Failed to fetch user details from Canvas API", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        return userDetail.get("email");
     }
 
     @Override

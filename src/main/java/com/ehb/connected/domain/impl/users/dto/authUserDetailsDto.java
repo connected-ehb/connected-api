@@ -13,4 +13,5 @@ public class authUserDetailsDto {
     private String lastName;
     private String avatarUrl;
     private Role role;
+    private Boolean isVerified;
 }

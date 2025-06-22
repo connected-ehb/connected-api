@@ -24,6 +24,7 @@ public class UserDetailsMapper {
         userDetailsDto.setLastName(user.getLastName());
         userDetailsDto.setAvatarUrl(null);
         userDetailsDto.setRole(user.getRole());
+        userDetailsDto.setIsVerified(user.isEmailVerified());
         return userDetailsDto;
     }
 

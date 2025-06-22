@@ -1,7 +1,7 @@
 package com.ehb.connected.domain.impl.users.services;
 
 
-import com.ehb.connected.domain.impl.auth.entities.RegistrationRequestDto;
+import com.ehb.connected.domain.impl.users.dto.EmailRequestDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
@@ -19,4 +19,6 @@ public interface UserService {
     User getUserByEmail(String email);
     List<User> getAllUsersByRole(Role role);
     void requestDeleteUser(Principal principal);
+    void createEmailVerificationToken(User principal, EmailRequestDto emailRequestDto);
+    void verifyEmailToken(String token);
 }

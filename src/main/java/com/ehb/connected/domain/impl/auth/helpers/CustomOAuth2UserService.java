@@ -46,9 +46,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         logger.info("Received user attributes: {}", attributes);
 
         // 3. Fallback logic if email is missing.
-        if (attributes.get("email") == null) {
-            attributes.put("email", canvasAuthService.getNonAdminUserEmail(attributes));
-        }
 
         // 4. Extract email and determine role.
         String email = attributes.get("email").toString();

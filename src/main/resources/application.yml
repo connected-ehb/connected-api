@@ -1,5 +1,4 @@
 custom:
-  admin-token: ${ADMIN_TOKEN}
   canvas-api-uri: https://canvas.mertenshome.com
   frontend-uri: http://localhost:4200
 

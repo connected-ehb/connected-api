@@ -60,6 +60,10 @@ public class User implements OAuth2User, UserDetails, Serializable {
     private String accessToken;
     private String refreshToken;
 
+    private String emailVerificationToken;
+    private LocalDateTime emailVerificationTokenExpiry;
+    private boolean emailVerified = false;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
