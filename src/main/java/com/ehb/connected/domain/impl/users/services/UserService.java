@@ -1,10 +1,12 @@
 package com.ehb.connected.domain.impl.users.services;
 
 
-import com.ehb.connected.domain.impl.auth.entities.RegistrationRequestDto;
+import com.ehb.connected.domain.impl.users.dto.EmailRequestDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
+import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.security.Principal;
 import java.util.List;
@@ -17,6 +19,9 @@ public interface UserService {
     void deleteUser(Long id);
     User getUserByPrincipal(Principal principal);
     User getUserByEmail(String email);
+    AuthUserDetailsDto getCurrentUser(OAuth2User principal);
     List<User> getAllUsersByRole(Role role);
     void requestDeleteUser(Principal principal);
+    void createEmailVerificationToken(User principal, EmailRequestDto emailRequestDto);
+    void verifyEmailToken(String token);
 }

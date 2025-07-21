@@ -1,7 +1,7 @@
 package com.ehb.connected.domain.impl.users.mappers;
 
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
-import com.ehb.connected.domain.impl.users.dto.authUserDetailsDto;
+import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
@@ -16,26 +16,28 @@ public class UserDetailsMapper {
     private final TagMapper tagMapper;
 
     //map a user to a auth user details dto without a principal
-    public authUserDetailsDto toDto(User user) {
-        authUserDetailsDto userDetailsDto = new authUserDetailsDto();
+    public AuthUserDetailsDto toDto(User user) {
+        AuthUserDetailsDto userDetailsDto = new AuthUserDetailsDto();
         userDetailsDto.setId(user.getId());
         userDetailsDto.setEmail(user.getEmail());
         userDetailsDto.setFirstName(user.getFirstName());
         userDetailsDto.setLastName(user.getLastName());
         userDetailsDto.setAvatarUrl(null);
         userDetailsDto.setRole(user.getRole());
+        userDetailsDto.setIsVerified(user.isEmailVerified());
         return userDetailsDto;
     }
 
     //map a user to a auth user details dto with a principal
-    public  authUserDetailsDto toDtoWithPrincipal(User user, OAuth2User principal) {
-        authUserDetailsDto userDetailsDto = new authUserDetailsDto();
+    public AuthUserDetailsDto toDtoWithPrincipal(User user, OAuth2User principal) {
+        AuthUserDetailsDto userDetailsDto = new AuthUserDetailsDto();
         userDetailsDto.setId(user.getId());
         userDetailsDto.setEmail(user.getEmail());
         userDetailsDto.setFirstName(user.getFirstName());
         userDetailsDto.setLastName(user.getLastName());
         userDetailsDto.setAvatarUrl(null);
         userDetailsDto.setRole(user.getRole());
+        userDetailsDto.setIsVerified(user.isEmailVerified());
         return userDetailsDto;
     }
 
@@ -56,6 +58,7 @@ public class UserDetailsMapper {
         if (user.getTags() != null) {
             dto.setTags(tagMapper.toDtoList(user.getTags()));
         }
+        dto.setIsVerified(user.isEmailVerified());
         return dto;
     }
 
@@ -72,6 +75,7 @@ public class UserDetailsMapper {
         user.setFieldOfStudy(dto.getFieldOfStudy());
         user.setAboutMe(dto.getAboutMe());
         user.setTags(tagMapper.toEntityList(dto.getTags()));
+        user.setEmailVerified(dto.getIsVerified());
         return user;
     }
 }

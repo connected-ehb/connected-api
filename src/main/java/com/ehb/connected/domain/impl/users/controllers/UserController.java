@@ -1,19 +1,15 @@
 package com.ehb.connected.domain.impl.users.controllers;
 
 
+import com.ehb.connected.domain.impl.users.dto.EmailRequestDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.HashMap;
@@ -49,5 +45,17 @@ public class UserController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "User deletion requested and will be processed in 60 days");
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("send-verification-email")
+    public ResponseEntity<Void> sendVerificationEmail(@AuthenticationPrincipal User principal, @RequestBody EmailRequestDto emailRequestDto){
+        userService.createEmailVerificationToken(principal, emailRequestDto);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<Void> verifyToken(@RequestParam String token) {
+        userService.verifyEmailToken(token);
+        return ResponseEntity.ok().build();
     }
 }

@@ -73,14 +73,15 @@ public class TokenRefreshFilter extends OncePerRequestFilter {
 
                     if (isExpired) {
                         logger.info("[TokenFilter] Access token is expired for principal: {}. Token refreshed (if necessary).", principalName);
-                       String newAccessToken = canvasAuthService.refreshAccessToken(authorizedClient);
+                        String newAccessToken = canvasAuthService.refreshAccessToken(authorizedClient);
 
                         // Update the principal with the new access token
                         new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, newAccessToken, Instant.now(), expiresAt);
                         OAuth2AuthenticationToken newAuth = new OAuth2AuthenticationToken(oauth2Token.getPrincipal(), oauth2Token.getAuthorities(), oauth2Token.getAuthorizedClientRegistrationId());
                         SecurityContextHolder.getContext().setAuthentication(newAuth);
 
-                        User user = userRepository.findByEmail(principalName).orElseThrow(() -> new EntityNotFoundException("User not found"));
+                        User user = userRepository.findByCanvasUserId(Long.parseLong(principalName))
+                                .orElseThrow(() -> new EntityNotFoundException("User not found with canvasId: " + principalName));
                         user.setAccessToken(newAccessToken);
                         userRepository.save(user);
 
@@ -98,3 +99,4 @@ public class TokenRefreshFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+    
