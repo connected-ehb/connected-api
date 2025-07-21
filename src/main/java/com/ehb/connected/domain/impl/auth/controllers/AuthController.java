@@ -4,7 +4,7 @@ import com.ehb.connected.domain.impl.auth.entities.LoginRequestDto;
 import com.ehb.connected.domain.impl.auth.entities.RegistrationRequestDto;
 import com.ehb.connected.domain.impl.auth.services.AuthService;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
-import com.ehb.connected.domain.impl.users.dto.authUserDetailsDto;
+import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.services.UserService;
@@ -28,9 +28,8 @@ public class AuthController {
     private final UserDetailsMapper userDetailsMapper;
 
     @GetMapping("/user")
-    public authUserDetailsDto getCurrentUser(@AuthenticationPrincipal User principal) {
-        User user = userService.getUserByEmail(principal.getEmail());
-        return userDetailsMapper.toDtoWithPrincipal(user, principal);
+    public ResponseEntity<AuthUserDetailsDto> getCurrentUser(@AuthenticationPrincipal User principal) {
+        return ResponseEntity.ok(userService.getCurrentUser(principal));
     }
 
     @PostMapping("/logout")
@@ -40,13 +39,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginRequestDto request) {
+    public ResponseEntity<UserDetailsDto> loginUser(@RequestBody LoginRequestDto request) {
         UserDetailsDto userDetails = authService.login(request);
         return ResponseEntity.ok(userDetails);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegistrationRequestDto request) {
+    public ResponseEntity<UserDetailsDto> registerUser(@RequestBody RegistrationRequestDto request) {
         UserDetailsDto registeredUser = authService.register(request);
         return ResponseEntity.ok(registeredUser);
     }

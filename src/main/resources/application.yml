@@ -2,7 +2,26 @@ custom:
   canvas-api-uri: https://canvas.mertenshome.com
   frontend-uri: http://localhost:4200
 
+
+
+
 spring:
+  mail:
+    host: smtp.smtp2go.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connection-timeout: 5000
+          timeout: 5000
+          write-timeout: 5000
   application:
     name: connected
   datasource:
@@ -31,7 +50,7 @@ spring:
             client-name: Canvas
         provider:
           canvas:
-            user-name-attribute: email
+            user-name-attribute: id
             authorization-uri: ${custom.canvas-api-uri}/login/oauth2/auth
             token-uri: ${custom.canvas-api-uri}/login/oauth2/token
             user-info-uri: ${custom.canvas-api-uri}/api/v1/users/self?include[]=email

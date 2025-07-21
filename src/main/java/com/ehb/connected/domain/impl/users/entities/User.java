@@ -48,7 +48,7 @@ public class User implements OAuth2User, UserDetails, Serializable {
 
     private String firstName;
     private String lastName;
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String email;
     private String password;
 
@@ -91,12 +91,6 @@ public class User implements OAuth2User, UserDetails, Serializable {
     @Transient
     private Map<String, Object> attributes;
 
-    // OAuth2User methods
-    @Override
-    public String getName() {
-        return email;
-    }
-
     @Override
     public <A> A getAttribute(String name) {
         return OAuth2User.super.getAttribute(name);
@@ -118,8 +112,24 @@ public class User implements OAuth2User, UserDetails, Serializable {
         return password;
     }
 
+    // OAuth2User methods
+    @Override
+    public String getName() {
+        // Always use canvasUserId as the primary identifier for the principal's name
+        if (this.canvasUserId != null) {
+            return this.canvasUserId.toString();
+        }
+        // Fallback to email if canvasUserId is somehow null (should not happen in this flow)
+        if (this.email != null && !this.email.isEmpty()) {
+            return this.email;
+        }
+        return null; // Should not happen for an authenticated user
+    }
+
     @Override
     public String getUsername() {
-        return email;
+        // Make UserDetails.getUsername() consistent with OAuth2User.getName()
+        // This ensures Spring Security always has a valid principal name.
+        return this.getName();
     }
 }

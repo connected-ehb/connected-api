@@ -3,6 +3,7 @@ package com.ehb.connected.domain.impl.users.services;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
+import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.EmailRequestDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -12,7 +13,9 @@ import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -31,6 +34,9 @@ public class UserServiceImpl implements UserService {
     private final TagMapper tagMapper;
     private final EnrollmentRepository enrollmentRepository;
     private final EmailService emailService;
+
+    @Value("${custom.frontend-uri}")
+    private String frontendUri;
 
     @Override
     public List<UserDetailsDto> getAllStudentsByCourseId(Long courseId) {
@@ -86,6 +92,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public AuthUserDetailsDto getCurrentUser(OAuth2User principal) {
+        if (principal == null) {
+            return null;
+        }
+        String principalName = principal.getName();
+        User user;
+        try {
+            // If principalName is a number, it's a canvasUserId
+            long canvasUserId = Long.parseLong(principalName);
+            user = userRepository.findByCanvasUserId(canvasUserId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        } catch (NumberFormatException e) {
+            // Otherwise, it's an email
+            user = userRepository.findByEmail(principalName)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        }
+
+        return userDetailsMapper.toDtoWithPrincipal(user, principal);
+    }
+
+    @Override
     public List<User> getAllUsersByRole(Role role) {
         return userRepository.findAllByRole(role);
     }
@@ -115,9 +142,7 @@ public class UserServiceImpl implements UserService {
         user.setEmailVerified(false);
         userRepository.save(user);
 
-        String baseUrl = "http://localhost:8080";
-
-        String url = baseUrl + "/verify?token=" + token;
+        String url = frontendUri + "/verify?token=" + token; // This now correctly points to your frontend
         System.out.println(url);
         emailService.sendVerificationEmail(email, url);
     }

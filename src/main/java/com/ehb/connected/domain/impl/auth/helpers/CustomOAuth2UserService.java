@@ -27,8 +27,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     public CustomOAuth2UserService(UserRepository userRepository,
                                    OAuth2AuthorizedClientService authorizedClientService,
-                                      CanvasAuthService canvasAuthService
-                                   ) {
+                                   CanvasAuthService canvasAuthService
+    ) {
         this.userRepository = userRepository;
         this.authorizedClientService = authorizedClientService;
         this.canvasAuthService = canvasAuthService;
@@ -45,21 +45,23 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         logger.info("Received user attributes: {}", attributes);
 
-        // 3. Fallback logic if email is missing.
+        // 3. Use canvasUserId to find the user
+        Long canvasUserId = Long.parseLong(attributes.get("id").toString());
+        User user = userRepository.findByCanvasUserId(canvasUserId).orElse(new User());
 
-        // 4. Extract email and determine role.
-        String email = attributes.get("email").toString();
-        Role role = canvasAuthService.determineRoleByEmail(email);
-
-        // 5. Load or create the local user entity.
-        User user = userRepository.findByEmail(email).orElse(new User());
-
-        if(user.getAccessToken() != null) {
+        if(user.getAccessToken() != null && !user.getAccessToken().equals(accessToken)) {
             canvasAuthService.deleteAccessToken(user.getAccessToken());
         }
 
-        user.setEmail(email);
-        user.setRole(role);
+        // When a user logs in for the first time, email and role will be null.
+        // These will be set after the user provides them and verifies their email.
+        if (user.getId() == null) { // New user
+            user.setEmail(null);
+            user.setRole(null);
+            user.setEmailVerified(false);
+        }
+
+
         user.setAccessToken(accessToken);
         user.setAttributes(attributes);
         user.setCanvasUserId(Long.parseLong(attributes.get("id").toString()));
@@ -69,7 +71,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         // 6. Retrieve refresh token via the OAuth2AuthorizedClientService.
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(registrationId, email);
+
+        // The principal name is what Spring Security uses to identify the user.
+        // It's derived from the 'user-name-attribute' in your application.yml, which should be set to 'id'.
+        // We use the canvasUserId we fetched from the attributes as the principal name.
+        String principalName = String.valueOf(canvasUserId);
+        OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(registrationId, principalName);
+
         if (authorizedClient != null && authorizedClient.getRefreshToken() != null) {
             user.setRefreshToken(authorizedClient.getRefreshToken().getTokenValue());
         }
@@ -81,4 +89,3 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return user;
     }
 }
-
