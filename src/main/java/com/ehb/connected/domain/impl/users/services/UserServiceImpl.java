@@ -23,7 +23,6 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -64,10 +63,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetailsDto updateUser(Principal principal, UserDetailsDto userDto) {
         User user = getUserFromPrincipal(principal);
-
-        if (!Objects.equals(user.getEmail(), user.getEmail())) {
-            throw new BaseRuntimeException("User is not owner of the profile", HttpStatus.FORBIDDEN);
-        }
 
         user.setAboutMe(userDto.getAboutMe());
         user.setFieldOfStudy(userDto.getFieldOfStudy());
