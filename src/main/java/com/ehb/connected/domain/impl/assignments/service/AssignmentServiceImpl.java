@@ -5,6 +5,7 @@ import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
+import com.ehb.connected.domain.impl.auth.helpers.CanvasTokenService;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.domain.impl.users.entities.User;
@@ -26,6 +27,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final CourseService courseService;
     private final UserService userService;
     private final AssignmentMapper assignmentMapper;
+    private final CanvasTokenService canvasTokenService;
 
     private final WebClient webClient;
 
@@ -53,7 +55,7 @@ public class AssignmentServiceImpl implements AssignmentService {
      * <p>
      * The method performs the following steps:
      * <ul>
-     *   <li>Obtains the currently authenticated user and retrieves their Canvas access token.</li>
+     *   <li>Obtains the currently authenticated user and retrieves their Canvas access token (refreshing if needed).</li>
      *   <li>Fetches the course using its internal ID to determine the corresponding Canvas course ID.</li>
      *   <li>Calls the Canvas API to retrieve a list of assignments for the specified Canvas course.</li>
      *   <li>Filters the returned assignments by checking if each assignment (based on its Canvas assignment ID)
@@ -70,8 +72,8 @@ public class AssignmentServiceImpl implements AssignmentService {
     //TODO: Check .block() usage and refactor to avoid blocking calls.
     @Override
     public List<AssignmentDetailsDto> getNewAssignmentsFromCanvas(Principal principal, Long courseId) {
-        final User user = userService.getUserByEmail(principal.getName());
-        final String token = user.getAccessToken();
+        final User user = userService.getUserFromAnyPrincipal(principal);
+        final String token = canvasTokenService.getValidAccessToken(principal);
         final Course course = courseService.getCourseById(courseId);
         final Long canvasCourseId = course.getCanvasId();
 

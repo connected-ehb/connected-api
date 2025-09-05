@@ -23,5 +23,12 @@ public interface UserService {
     List<User> getAllUsersByRole(Role role);
     void requestDeleteUser(Principal principal);
     void createEmailVerificationToken(User principal, EmailRequestDto emailRequestDto);
+    void createEmailVerificationTokenByCanvasId(OAuth2User principal, EmailRequestDto emailRequestDto);
     void verifyEmailToken(String token);
+    
+    /**
+     * Get a user from any type of principal (OAuth2 or form-based authentication)
+     * This method handles the different principal name formats automatically
+     */
+    User getUserFromAnyPrincipal(Principal principal);
 }

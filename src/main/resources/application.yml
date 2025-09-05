@@ -1,5 +1,5 @@
 custom:
-  canvas-api-uri: https://canvas.mertenshome.com
+  canvas-api-uri: https://canvas.ehb.be
   frontend-uri: http://localhost:4200
 
 
@@ -46,7 +46,11 @@ spring:
             client-authentication-method: client_secret_post
             redirect-uri: '{baseUrl}/login/oauth2/code/canvas'
             authorization-grant-type: authorization_code
-            scope: offline_access
+            scope:
+              - "url:GET|/api/v1/users/:id"
+              - "url:GET|/api/v1/courses"
+              - "url:GET|/api/v1/courses/:course_id/assignments"
+              - "url:GET|/api/v1/courses/:course_id/enrollments"
             client-name: Canvas
         provider:
           canvas:

@@ -2,7 +2,6 @@ package com.ehb.connected.config;
 
 import com.ehb.connected.domain.impl.auth.helpers.CustomAuthenticationSuccessHandler;
 import com.ehb.connected.domain.impl.auth.helpers.CustomOAuth2UserService;
-import com.ehb.connected.domain.impl.auth.helpers.TokenRefreshFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +14,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -23,7 +21,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final TokenRefreshFilter tokenRefreshFilter;
     private final CorsConfig corsConfig;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
@@ -38,7 +35,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/logout", "/auth/register", "/login/**", "/login/oauth2/authorization/canvas", "/auth/logout", "/oauth2/authorization/canvas", "/error","/ws/**", "/actuator/**").permitAll()
+                        // Public endpoints
+                        .requestMatchers(
+                                "/auth/login", 
+                                "/auth/register", 
+                                "/login/**", 
+                                "/login/oauth2/authorization/canvas", 
+                                "/oauth2/authorization/canvas", 
+                                "/error",
+                                "/ws/**", 
+                                "/actuator/**",
+                                "/api/users/verify" // Email verification endpoint
+                        ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -46,26 +54,28 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
+                        .successHandler(customAuthenticationSuccessHandler)
                         .defaultSuccessUrl(frontendUri, true)
-                        .failureUrl(frontendUri + "/login")
+                        .failureUrl(frontendUri + "/login?error=oauth2")
                 )
                 .formLogin(form -> form
                         .loginPage(frontendUri + "/login")
                         .loginProcessingUrl("/auth/login")
-                        .defaultSuccessUrl(frontendUri, true)
                         .successHandler(customAuthenticationSuccessHandler)
+                        .defaultSuccessUrl(frontendUri, true)
+                        .failureUrl(frontendUri + "/login?error=form")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .logoutSuccessHandler(customLogoutSuccessHandler)
+                        .logoutSuccessUrl(frontendUri + "/login?logout=success")
                         .permitAll()
                 )
                 .exceptionHandling(exception -> exception
-                        // Ensure API requests return 401 instead of redirecting
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                )
-                .addFilterBefore(tokenRefreshFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout -> logout
-                                .logoutUrl("/logout")
-                                .logoutSuccessHandler(customLogoutSuccessHandler)
-                        .permitAll()
                 );
+
         return httpSecurity.build();
     }
 }
