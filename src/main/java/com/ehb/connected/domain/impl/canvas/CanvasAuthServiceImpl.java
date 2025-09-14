@@ -5,10 +5,10 @@ import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -21,10 +21,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     private final WebClient webClient;
+
+    public CanvasAuthServiceImpl(@Qualifier("canvasAuthWebClient") WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     @Value("${spring.security.oauth2.client.provider.canvas.token-uri}")
     private String tokenUri;
@@ -84,7 +87,12 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     @NotNull
     private static Map<String, String> getData(OAuth2AuthorizedClient authorizedClient) {
-        String refreshToken = authorizedClient.getRefreshToken().getTokenValue();
+        var refreshTokenObj = authorizedClient.getRefreshToken();
+        if (refreshTokenObj == null) {
+            throw new BaseRuntimeException("Missing refresh token", HttpStatus.UNAUTHORIZED);
+        }
+
+        String refreshToken = refreshTokenObj.getTokenValue();
         String clientId = authorizedClient.getClientRegistration().getClientId();
         String clientSecret = authorizedClient.getClientRegistration().getClientSecret();
         String redirectUri = authorizedClient.getClientRegistration().getRedirectUri();
@@ -111,3 +119,4 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
         return email.endsWith("@ehb.be") ? Role.TEACHER : Role.STUDENT;
     }
 }
+

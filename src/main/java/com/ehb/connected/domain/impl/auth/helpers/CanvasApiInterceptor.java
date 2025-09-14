@@ -1,8 +1,8 @@
 package com.ehb.connected.domain.impl.auth.helpers;
 
-import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Component;
@@ -18,22 +18,17 @@ import reactor.core.publisher.Mono;
 public class CanvasApiInterceptor {
 
     private final TokenRefreshService tokenRefreshService;
-    private final UserService userService;
 
     /**
      * Creates an ExchangeFilterFunction that automatically refreshes tokens before making Canvas API calls
      * @return ExchangeFilterFunction for token refresh
      */
     public ExchangeFilterFunction tokenRefreshFilter() {
-        return new ExchangeFilterFunction() {
-            @Override
-            public Mono<ClientResponse> filter(ClientRequest request, ExchangeFunction next) {
-                // Only apply token refresh for Canvas API calls
-                if (isCanvasApiCall(request)) {
-                    return refreshTokenAndProceed(request, next);
-                }
-                return next.exchange(request);
+        return (@NotNull ClientRequest request, @NotNull ExchangeFunction next) -> {
+            if (isCanvasApiCall(request)) {
+                return refreshTokenAndProceed(request, next);
             }
+            return next.exchange(request);
         };
     }
 
