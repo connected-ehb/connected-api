@@ -52,10 +52,15 @@ public class CourseServiceImpl implements CourseService {
         List<Map<String, Object>> canvasCourses;
         try {
             canvasCourses = webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/courses")
-                            .queryParam("EnrollmentType", "teacher")
-                            .build())
+                    .uri(uriBuilder -> {
+                        return uriBuilder
+                                .path("/api/v1/courses")
+                                //TODO: enable filtering by teacher in production
+                                //.queryParam("enrollment_type", "teacher")
+                                .queryParam("per_page", "1000")
+                                .queryParam("state[]", "active")
+                                .build();
+                    })
                     .header("Authorization", "Bearer " + token)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
