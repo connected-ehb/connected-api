@@ -7,7 +7,7 @@ import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentCreateDto;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
-import com.ehb.connected.domain.impl.assignments.service.AssignmentService;
+import com.ehb.connected.domain.impl.assignments.service.AssignmentServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +25,7 @@ import java.util.List;
 @RequestMapping("/api/assignments")
 @RequiredArgsConstructor
 public class AssignmentController {
-    private final AssignmentService assignmentService;
+    private final AssignmentServiceImpl assignmentService;
     private final ApplicationService applicationService;
     private final AnnouncementService announcementService;
 

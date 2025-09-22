@@ -41,7 +41,7 @@ public class ProjectUserService {
     }
 
     public boolean isUserMemberOfAnyProjectInAssignment(Principal principal, Long assignmentId) {
-        User currentUser = userService.getUserByEmail(principal.getName());
+        User currentUser = userService.getUserFromAnyPrincipal(principal);
         return projectRepository.existsByAssignmentIdAndMembersContainingAndStatusNotIn(assignmentId, currentUser, List.of(ProjectStatusEnum.REJECTED));
     }
 }

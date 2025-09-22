@@ -35,7 +35,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        final User user = userService.getUserByEmail(principal.getName());
+        final User user = userService.getUserFromAnyPrincipal(principal);
         if (user.getRole() == Role.STUDENT) {
             throw new UserUnauthorizedException(user.getId());
         }
@@ -73,7 +73,7 @@ public class FeedbackServiceImpl implements FeedbackService {
                 .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
 
         // Ensure that the current user is the owner of the feedback
-        final User currentUser = userService.getUserByEmail(principal.getName());
+        final User currentUser = userService.getUserFromAnyPrincipal(principal);
         if (!feedback.getUser().getId().equals(currentUser.getId())) {
             throw new UserUnauthorizedException(currentUser.getId());
         }
@@ -89,7 +89,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         final Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
 
-        final User currentUser = userService.getUserByEmail(principal.getName());
+        final User currentUser = userService.getUserFromAnyPrincipal(principal);
         if(!feedback.getUser().getId().equals(currentUser.getId())) {
             throw new UserUnauthorizedException(currentUser.getId());
         }

@@ -16,22 +16,19 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Entity
 @Setter
@@ -39,17 +36,20 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
-public class User implements OAuth2User, UserDetails, Serializable {
+public class User implements UserDetails, Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
     private Long canvasUserId;
 
     private String firstName;
     private String lastName;
+    
     @Column(unique = true)
     private String email;
+    
     private String password;
 
     private String fieldOfStudy;
@@ -57,15 +57,23 @@ public class User implements OAuth2User, UserDetails, Serializable {
     private String linkedinUrl;
     private String aboutMe;
 
+    // OAuth2 tokens - stored for Canvas API calls
     private String accessToken;
     private String refreshToken;
 
+    // Email verification
     private String emailVerificationToken;
     private LocalDateTime emailVerificationTokenExpiry;
     private boolean emailVerified = false;
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    // Account status
+    private boolean accountNonExpired = true;
+    private boolean accountNonLocked = true;
+    private boolean credentialsNonExpired = true;
+    private boolean enabled = true;
 
     @OneToMany(mappedBy = "applicant", cascade = CascadeType.ALL)
     private List<Application> applications = new ArrayList<>();
@@ -88,48 +96,36 @@ public class User implements OAuth2User, UserDetails, Serializable {
 
     private LocalDateTime deleteRequestedAt;
 
-    @Transient
-    private Map<String, Object> attributes;
-
-    @Override
-    public <A> A getAttribute(String name) {
-        return OAuth2User.super.getAttribute(name);
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (role == null) {
             return new HashSet<>();
         }
-
-        Set<GrantedAuthority> authorities = new HashSet<>(role.getAuthorities());
-        return authorities;
-    }
-
-    // UserDetails methods
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    // OAuth2User methods
-    @Override
-    public String getName() {
-        // Always use canvasUserId as the primary identifier for the principal's name
-        if (this.canvasUserId != null) {
-            return this.canvasUserId.toString();
-        }
-        // Fallback to email if canvasUserId is somehow null (should not happen in this flow)
-        if (this.email != null && !this.email.isEmpty()) {
-            return this.email;
-        }
-        return null; // Should not happen for an authenticated user
+        return role.getAuthorities();
     }
 
     @Override
     public String getUsername() {
-        // Make UserDetails.getUsername() consistent with OAuth2User.getName()
-        // This ensures Spring Security always has a valid principal name.
-        return this.getName();
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return accountNonExpired;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return accountNonLocked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return credentialsNonExpired;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled && emailVerified;
     }
 }

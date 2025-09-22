@@ -10,6 +10,7 @@ import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,9 +31,11 @@ public class CourseController {
     private final AssignmentService assignmentService;
     private final UserService userService;
 
-    @PreAuthorize("hasAnyAuthority('canvas:sync')")
+    //@PreAuthorize("hasAnyAuthority('canvas:sync')")
     @PostMapping("/canvas")
-    public ResponseEntity<List<CourseDetailsDto>> getNewCoursesFromCanvas(Principal principal) {
+    public ResponseEntity<List<CourseDetailsDto>> getNewCoursesFromCanvas(Authentication principal) {
+        Authentication finalPrincipal = principal;
+        String principalName = finalPrincipal.getName();
         List<CourseDetailsDto> newCourses = courseService.getNewCoursesFromCanvas(principal);
         return ResponseEntity.ok(newCourses);
     }

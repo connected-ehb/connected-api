@@ -15,11 +15,9 @@ import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewCreateDto;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewDetailsDto;
 import com.ehb.connected.domain.impl.reviews.service.ReviewService;
-import com.ehb.connected.domain.impl.users.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -50,8 +48,8 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyAuthority('project:read')")
     @GetMapping("/member/assignment/{assignmentId}")
-    public ResponseEntity<ProjectDetailsDto> getProjectByUserAndAssignmentId(@AuthenticationPrincipal User user, @PathVariable Long assignmentId){
-        return ResponseEntity.ok(projectService.getProjectByUserAndAssignmentId(user, assignmentId));
+    public ResponseEntity<ProjectDetailsDto> getProjectByUserAndAssignmentId(Principal principal, @PathVariable Long assignmentId){
+        return ResponseEntity.ok(projectService.getProjectByUserAndAssignmentId(principal, assignmentId));
     }
 
     @PreAuthorize("hasAnyAuthority('project:read_published_or_owned')")
@@ -74,7 +72,7 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyAuthority('project:read')")
     @GetMapping("/global")
-    public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(@AuthenticationPrincipal User principal){
+    public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(Principal principal){
         return ResponseEntity.ok(projectService.getAllGlobalProjects(principal));
     }
 

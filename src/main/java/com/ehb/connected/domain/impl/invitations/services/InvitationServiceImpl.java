@@ -14,7 +14,6 @@ import java.security.Principal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +23,8 @@ public class InvitationServiceImpl implements InvitationService{
     Logger logger = LoggerFactory.getLogger(InvitationServiceImpl.class);
 
     @Override
-    public InvitationDetailsDto generateInvitation(User user) {
+    public InvitationDetailsDto generateInvitation(Principal principal) {
+        User user = userService.getUserFromAnyPrincipal(principal);
         String code = generateSecureCode(26);
         Invitation invitation = Invitation.builder()
                 .code(code)

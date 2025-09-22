@@ -6,7 +6,6 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
-import com.ehb.connected.domain.impl.users.entities.User;
 
 import java.security.Principal;
 import java.util.List;
@@ -15,7 +14,7 @@ public interface ProjectService {
     ProjectDetailsDto getProjectById(Principal principal, Long id);
     Project getProjectById(Long id);
     List<ProjectDetailsDto> getAllProjectsByAssignmentId(Long assignmentId);
-    ProjectDetailsDto getProjectByUserAndAssignmentId(User user, Long assignmentId);
+    ProjectDetailsDto getProjectByUserAndAssignmentId(Principal principal, Long assignmentId);
     List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId);
     List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status);
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
@@ -36,5 +35,5 @@ public interface ProjectService {
 
     ProjectDetailsDto createGlobalProject(Principal principal, ProjectCreateDto project);
 
-    List<ProjectDetailsDto> getAllGlobalProjects(User principal);
+    List<ProjectDetailsDto> getAllGlobalProjects(Principal principal);
 }
