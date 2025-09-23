@@ -1,0 +1,28 @@
+name: Dev Deployment
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, dev, connected, api]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t connected-api:dev .
+
+      - name: Stop and remove old container
+        run: |
+          docker compose -f docker-compose.yml down || true
+
+      - name: Start new containers
+        run: |
+          docker compose -f docker-compose.yml up -d --build
