@@ -19,4 +19,5 @@ public class UserDetailsDto {
     private String fieldOfStudy;
     private String aboutMe;
     private List<TagDto> tags;
+    private Boolean isVerified;
 }

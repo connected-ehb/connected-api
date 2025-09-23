@@ -15,4 +15,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByCanvasUserId(Long canvasUserId);
 
     List<User> findAllByRole(Role role);
+    Optional<User> findByEmailVerificationToken(String token);
 }

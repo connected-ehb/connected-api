@@ -1,5 +1,6 @@
 package com.ehb.connected.domain.impl.courses.services;
 
+import com.ehb.connected.domain.impl.auth.helpers.CanvasTokenService;
 import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
@@ -25,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,22 +39,28 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
     private final UserServiceImpl userService;
     private final EnrollmentService enrollmentService;
+    private final CanvasTokenService canvasTokenService;
     private final WebClient webClient;
 
     private static final Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
 
     @Override
     public List<CourseDetailsDto> getNewCoursesFromCanvas(Principal principal) {
-        User user = userService.getUserByEmail(principal.getName());
-        String token = user.getAccessToken();
+        User user = userService.getUserFromAnyPrincipal(principal);
+        String token = canvasTokenService.getValidAccessToken(principal);
 
         List<Map<String, Object>> canvasCourses;
         try {
             canvasCourses = webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/courses")
-                            .queryParam("EnrollmentType", "teacher")
-                            .build())
+                    .uri(uriBuilder -> {
+                        return uriBuilder
+                                .path("/api/v1/courses")
+                                //TODO: enable filtering by teacher in production
+                                //.queryParam("enrollment_type", "teacher")
+                                .queryParam("per_page", "1000")
+                                .queryParam("state[]", "active")
+                                .build();
+                    })
                     .header("Authorization", "Bearer " + token)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
@@ -72,17 +80,34 @@ public class CourseServiceImpl implements CourseService {
         }
 
         if (canvasCourses == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "No courses returned from Canvas API");
+            return new ArrayList<>();
         }
 
-        return canvasCourses.stream()
-                .filter(courseMap -> {
-                    Long canvasCourseId = Long.parseLong(courseMap.get("id").toString());
-                    return !existsByCanvasId(canvasCourseId);
-                })
-                .map(courseMapper::fromCanvasMapToCourseDetailsDto)
-                .toList();
+        List<CourseDetailsDto> newCourses = new ArrayList<>();
+        for (Map<String, Object> canvasCourse : canvasCourses) {
+            Long canvasId = Long.parseLong(canvasCourse.get("id").toString());
+            if (!existsByCanvasId(canvasId)) {
+                Course course = new Course();
+                course.setName((String) canvasCourse.get("name"));
+                course.setUuid((String) canvasCourse.get("uuid"));
+                course.setCanvasId(canvasId);
+                course.setOwner(user);
+
+                // Parse dates
+                String startAtStr = (String) canvasCourse.get("start_at");
+                String endAtStr = (String) canvasCourse.get("end_at");
+                if (startAtStr != null) {
+                    course.setStartAt(LocalDateTime.parse(startAtStr.replace("Z", "")));
+                }
+                if (endAtStr != null) {
+                    course.setEndAt(LocalDateTime.parse(endAtStr.replace("Z", "")));
+                }
+
+                newCourses.add(courseMapper.toCourseDetailsDto(course));
+            }
+        }
+
+        return newCourses;
     }
 
     private boolean existsByCanvasId(Long canvasId) {
@@ -91,8 +116,8 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto) {
-        User user = userService.getUserByEmail(principal.getName());
-        String token = user.getAccessToken();
+        User user = userService.getUserFromAnyPrincipal(principal);
+        String token = canvasTokenService.getValidAccessToken(principal);
 
         Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
         importCourse(courseEntity);
@@ -158,14 +183,14 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public List<CourseDetailsDto> getCoursesByOwner(Principal principal) {
-        User owner = userService.getUserByEmail(principal.getName());
+        User owner = userService.getUserFromAnyPrincipal(principal);
         return courseMapper.toCourseDetailsDtoList(courseRepository.findByOwner(owner));
     }
 
     @Override
     public List<CourseDetailsDto> getCoursesByEnrollment(Principal principal) {
-        Long canvasUserId = userService.getUserByEmail(principal.getName()).getCanvasUserId();
-        return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(canvasUserId));
+        User user = userService.getUserFromAnyPrincipal(principal);
+        return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(user.getCanvasUserId()));
     }
 
     private void importCourse(Course course) {

@@ -5,10 +5,10 @@ import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -21,15 +21,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     private final WebClient webClient;
 
+    public CanvasAuthServiceImpl(@Qualifier("canvasAuthWebClient") WebClient webClient) {
+        this.webClient = webClient;
+    }
+
     @Value("${spring.security.oauth2.client.provider.canvas.token-uri}")
     private String tokenUri;
-    @Value("${custom.admin-token}")
-    private String adminToken;
     @Value("${custom.canvas-api-uri}")
     private String canvasApiUri;
 
@@ -65,19 +66,6 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
     }
 
     @Override
-    public Object getNonAdminUserEmail(Map<String, Object> attributes) {
-        String fallbackUri = canvasApiUri + "/api/v1/users/" + attributes.get("id").toString();
-        Map<String, Object> userDetail;
-        try {
-            userDetail = getUserInfo(fallbackUri, adminToken);
-        } catch (Exception e) {
-            throw new BaseRuntimeException("Failed to fetch user details from Canvas API", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        return userDetail.get("email");
-    }
-
-    @Override
     public String refreshAccessToken(OAuth2AuthorizedClient authorizedClient) {
         Map<String, String> formData = getData(authorizedClient);
 
@@ -99,7 +87,12 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     @NotNull
     private static Map<String, String> getData(OAuth2AuthorizedClient authorizedClient) {
-        String refreshToken = authorizedClient.getRefreshToken().getTokenValue();
+        var refreshTokenObj = authorizedClient.getRefreshToken();
+        if (refreshTokenObj == null) {
+            throw new BaseRuntimeException("Missing refresh token", HttpStatus.UNAUTHORIZED);
+        }
+
+        String refreshToken = refreshTokenObj.getTokenValue();
         String clientId = authorizedClient.getClientRegistration().getClientId();
         String clientSecret = authorizedClient.getClientRegistration().getClientSecret();
         String redirectUri = authorizedClient.getClientRegistration().getRedirectUri();
@@ -126,3 +119,4 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
         return email.endsWith("@ehb.be") ? Role.TEACHER : Role.STUDENT;
     }
 }
+

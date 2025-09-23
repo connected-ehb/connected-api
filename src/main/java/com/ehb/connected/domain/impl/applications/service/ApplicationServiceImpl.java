@@ -72,7 +72,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public ApplicationDetailsDto getApplicationById(Principal principal, Long applicationId) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new EntityNotFoundException(Application.class, applicationId));
-        User user = userService.getUserByEmail(principal.getName());
+        User user = userService.getUserFromAnyPrincipal(principal);
         // Checks if the user has access to the application
         if (user.equals(application.getProject().getProductOwner()) ||
                 user.equals(application.getApplicant()) ||
@@ -111,7 +111,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public ApplicationDetailsDto createApplication(Principal principal, Long projectId, ApplicationCreateDto applicationDto) {
 
         final Project project = projectService.getProjectById(projectId);
-        final User currentUser = userService.getUserByEmail(principal.getName());
+        final User currentUser = userService.getUserFromAnyPrincipal(principal);
 
         if (currentUser.getRole() != Role.STUDENT) {
             throw new UserUnauthorizedException(currentUser.getId());

@@ -46,6 +46,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error(String.format("[ERROR] %s %s %s", request.getMethod(), request.getServletPath(), ex.getMessage()));
         return new ResponseEntity<>(exceptionResponse, HttpStatus.FORBIDDEN);
     }
+
     @Override
     protected @NotNull ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,

@@ -1,87 +1,98 @@
 package com.ehb.connected.domain.impl.auth.helpers;
 
-import java.util.Map;
-
 import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
-import com.ehb.connected.domain.impl.users.entities.Role;
+import com.ehb.connected.domain.impl.canvas.entities.CanvasAttributes;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
-public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+import java.util.Map;
 
-    private final Logger logger = LoggerFactory.getLogger(CustomOAuth2UserService.class);
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+
     private final UserRepository userRepository;
     private final OAuth2AuthorizedClientService authorizedClientService;
-
     private final CanvasAuthService canvasAuthService;
-
-    public CustomOAuth2UserService(UserRepository userRepository,
-                                   OAuth2AuthorizedClientService authorizedClientService,
-                                      CanvasAuthService canvasAuthService
-                                   ) {
-        this.userRepository = userRepository;
-        this.authorizedClientService = authorizedClientService;
-        this.canvasAuthService = canvasAuthService;
-    }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // 1. Retrieve user info endpoint URI and access token.
-        String userInfoUri = canvasAuthService.getUserInfoUri(userRequest);
-        String accessToken = canvasAuthService.getAccessToken(userRequest);
-
-        // 2. Fetch user attributes.
-        Map<String, Object> attributes = canvasAuthService.getUserInfo(userInfoUri, accessToken);
-
-        logger.info("Received user attributes: {}", attributes);
-
-        // 3. Fallback logic if email is missing.
-        if (attributes.get("email") == null) {
-            attributes.put("email", canvasAuthService.getNonAdminUserEmail(attributes));
-        }
-
-        // 4. Extract email and determine role.
-        String email = attributes.get("email").toString();
-        Role role = canvasAuthService.determineRoleByEmail(email);
-
-        // 5. Load or create the local user entity.
-        User user = userRepository.findByEmail(email).orElse(new User());
-
-        if(user.getAccessToken() != null) {
+        // First, get the OAuth2 user from the default service
+        OAuth2User oauth2User = super.loadUser(userRequest);
+        
+        // Get the attributes that Spring Security already fetched
+        Map<String, Object> attributes = oauth2User.getAttributes();
+        
+        log.info("Received Canvas user attributes from OAuth2: {}", attributes);
+        
+        // Convert to strongly typed CanvasAttributes
+        CanvasAttributes canvasAttributes = CanvasAttributes.fromOAuth2Attributes(attributes);
+        
+        // Find or create user using the typed attributes
+        User user = userRepository.findByCanvasUserId(canvasAttributes.getId())
+                .orElseGet(() -> createNewUser(canvasAttributes));
+        
+        // Update tokens
+        updateUserTokens(user, userRequest);
+        
+        // Save user
+        user = userRepository.save(user);
+        
+        // Create OAuth2 user with our User entity as principal
+        return new DefaultOAuth2User(
+                user.getAuthorities(),
+                attributes,
+                "id" // name attribute key
+        );
+    }
+    
+    private User createNewUser(CanvasAttributes canvasAttributes) {
+        User user = new User();
+        user.setCanvasUserId(canvasAttributes.getId());
+        user.setFirstName(canvasAttributes.getFirstName());
+        user.setLastName(canvasAttributes.getLastName());
+        user.setProfileImageUrl(canvasAttributes.getAvatarUrl());
+        user.setEmail(null); // Will be set during email verification
+        user.setRole(null); // Will be set during email verification
+        user.setEmailVerified(false);
+        user.setEnabled(true);
+        
+        log.info("Created new user from Canvas attributes: {} {} (ID: {})", 
+                canvasAttributes.getFirstName(), 
+                canvasAttributes.getLastName(), 
+                canvasAttributes.getId());
+        
+        return user;
+    }
+    
+    private void updateUserTokens(User user, OAuth2UserRequest userRequest) {
+        // Get access token from the request
+        String accessToken = userRequest.getAccessToken().getTokenValue();
+        
+        // Update access token
+        if (user.getAccessToken() != null && !user.getAccessToken().equals(accessToken)) {
             canvasAuthService.deleteAccessToken(user.getAccessToken());
         }
-
-        user.setEmail(email);
-        user.setRole(role);
         user.setAccessToken(accessToken);
-        user.setAttributes(attributes);
-        user.setCanvasUserId(Long.parseLong(attributes.get("id").toString()));
-        user.setFirstName((String) attributes.get("first_name"));
-        user.setLastName((String) attributes.get("last_name"));
-        user.setProfileImageUrl((String) attributes.get("avatar_url"));
-
-        // 6. Retrieve refresh token via the OAuth2AuthorizedClientService.
+        
+        // Update refresh token
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(registrationId, email);
+        String principalName = user.getCanvasUserId().toString();
+        OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(registrationId, principalName);
+        
         if (authorizedClient != null && authorizedClient.getRefreshToken() != null) {
             user.setRefreshToken(authorizedClient.getRefreshToken().getTokenValue());
         }
-
-        // 7. Persist the user.
-        userRepository.save(user);
-
-        // 8. Return the User instance directly.
-        return user;
     }
 }
-

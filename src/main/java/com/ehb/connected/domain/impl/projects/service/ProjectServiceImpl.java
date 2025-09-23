@@ -82,7 +82,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto getProjectByUserAndAssignmentId(User user, Long assignmentId) {
+    public ProjectDetailsDto getProjectByUserAndAssignmentId(Principal principal, Long assignmentId) {
+        User user = userService.getUserFromAnyPrincipal(principal);
         //project can be null if the user is not a member of any project in the assignment
         if (projectRepository.findByMembersAndAssignmentId(List.of(user), assignmentId) == null) {
             return null;
@@ -451,9 +452,10 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectDetailsDto> getAllGlobalProjects(User principal) {
-        if (principal.getRole() == Role.RESEARCHER) {
-            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(principal));
+    public List<ProjectDetailsDto> getAllGlobalProjects(Principal principal) {
+        User user = userService.getUserFromAnyPrincipal(principal);
+        if (user.getRole() == Role.RESEARCHER) {
+            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(user));
         } else {
             // Return all projects where createdBy user has role RESEARCHER and has no assignment
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByRoleAndAssignmentIsNull(Role.RESEARCHER));

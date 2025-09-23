@@ -14,8 +14,6 @@ public interface CanvasAuthService {
 
     Map<String, Object> getUserInfo(String url, String accessToken);
 
-    Object getNonAdminUserEmail(Map<String, Object> attributes);
-
     String refreshAccessToken(OAuth2AuthorizedClient authorizedClient);
 
     String getUserInfoUri(OAuth2UserRequest userRequest);

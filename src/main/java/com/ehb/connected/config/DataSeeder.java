@@ -42,12 +42,12 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        seedUsers();
-        seedCourses();
-        seedAssignments(); // Seeding assignments
-        seedProjects();    // Seeding projects
-        seedEnrollments();
-        //seedAnnouncements();
+//        seedUsers();
+//        seedCourses();
+//        seedAssignments(); // Seeding assignments
+//        seedProjects();    // Seeding projects
+//        seedEnrollments();
+//        seedAnnouncements();
     }
 
     private void seedUsers() {
