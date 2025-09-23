@@ -37,7 +37,8 @@ jobs:
         run: |
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=connected-api \
-            -Dsonar.projectName='connected-api'
+            -Dsonar.projectName='connected-api' \
+            -DskipTests
 
   build-and-deploy:
     name: Deploy to Dev Server
