@@ -27,8 +27,6 @@ import java.util.Map;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
-
     @ExceptionHandler(value = BaseRuntimeException.class)
     protected ResponseEntity<Object> handleBaseRuntimeException(BaseRuntimeException exception, HttpServletRequest request) {
         return logAndReturnError(exception, exception.getStatus(), request);
