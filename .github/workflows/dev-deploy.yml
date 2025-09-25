@@ -85,10 +85,10 @@ jobs:
           EOF
 
       - name: Stop and remove old container
-        run: docker compose -f docker-compose.yml down || true
+        run: docker compose -f compose.dev.yml down || true
 
       - name: Start new containers
-        run: docker compose -f docker-compose.yml up -d --build
+        run: docker compose -f compose.dev.yml up -d --build
 
       - name: Clean up secrets
         if: always()

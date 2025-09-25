@@ -4,7 +4,7 @@ services:
     container_name: connected_db
     environment:
       MYSQL_DATABASE: connected
-      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_USER: connected
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_pw}
     ports:
@@ -18,6 +18,8 @@ services:
       retries: 20
 
   app:
+    build:
+      context: .
     image: connected-api:dev
     container_name: connected_app
     env_file: .env
