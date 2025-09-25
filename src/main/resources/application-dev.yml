@@ -1,10 +1,6 @@
-custom:
-  canvas-api-uri: https://canvas.ehb.be
-  frontend-uri: http://localhost:4200
-
-
-
-
+connected:
+  canvas-uri: https://canvas.ehb.be
+  frontend-uri: https://connected.mertenshome.com
 spring:
   mail:
     host: smtp.smtp2go.com
@@ -55,6 +51,6 @@ spring:
         provider:
           canvas:
             user-name-attribute: id
-            authorization-uri: ${custom.canvas-api-uri}/login/oauth2/auth
-            token-uri: ${custom.canvas-api-uri}/login/oauth2/token
-            user-info-uri: ${custom.canvas-api-uri}/api/v1/users/self?include[]=email
+            authorization-uri: ${connected.canvas-uri}/login/oauth2/auth
+            token-uri: ${connected.canvas-uri}/login/oauth2/token
+            user-info-uri: ${connected.canvas-uri}/api/v1/users/self?include[]=email

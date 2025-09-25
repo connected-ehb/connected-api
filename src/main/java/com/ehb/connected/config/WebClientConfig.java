@@ -11,7 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
 
-    @Value("${custom.canvas-api-uri}")
+    @Value("${connected.canvas-uri}")
     private String canvasApiUri;
 
     // Primary WebClient used across the app with token-refresh filter applied

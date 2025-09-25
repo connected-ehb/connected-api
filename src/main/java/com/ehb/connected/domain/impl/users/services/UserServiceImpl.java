@@ -35,7 +35,7 @@ public class UserServiceImpl implements UserService {
     private final EnrollmentRepository enrollmentRepository;
     private final EmailService emailService;
 
-    @Value("${custom.frontend-uri}")
+    @Value("${connected.frontend-uri}")
     private String frontendUri;
 
     @Override

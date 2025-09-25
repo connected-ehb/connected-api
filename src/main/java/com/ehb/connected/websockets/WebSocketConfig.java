@@ -16,7 +16,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    @Value("${custom.frontend-uri}")
+    @Value("${connected.frontend-uri}")
     private String frontendUri;
 
 

@@ -31,7 +31,7 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     @Value("${spring.security.oauth2.client.provider.canvas.token-uri}")
     private String tokenUri;
-    @Value("${custom.canvas-api-uri}")
+    @Value("${connected.canvas-uri}")
     private String canvasApiUri;
 
     Logger logger = LoggerFactory.getLogger(CanvasAuthServiceImpl.class);

@@ -11,9 +11,9 @@ import java.util.List;
 
 @Configuration
 public class CorsConfig {
-    @Value("${custom.canvas-api-uri}")
+    @Value("${connected.canvas-uri}")
     private String canvasApiUri;
-    @Value("${custom.frontend-uri}")
+    @Value("${connected.frontend-uri}")
     private String frontendUri;
 
     @Bean
