@@ -9,6 +9,7 @@ jobs:
   sonar-analysis:
     name: Build and analyze
     runs-on: [self-hosted, dev, connected, api]   # run on your runner
+    environment: dev
     container:
       image: maven:3.9.8-eclipse-temurin-17       # temporary Maven+JDK container
     steps:
@@ -43,6 +44,7 @@ jobs:
   build-and-deploy:
     name: Deploy to Dev Server
     runs-on: [self-hosted, dev, connected, api]
+    environment: dev
     needs: sonar-analysis   # only run if sonar succeeds
     steps:
       - name: Checkout code
@@ -52,13 +54,36 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
+        run: docker build -t connected-api:dev .
+
+      - name: Write .env for Compose
+        shell: bash
         run: |
-          docker build -t connected-api:dev .
+          umask 077
+          cat > .env << 'EOF'
+          SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
+          DB_URL=${{ secrets.DB_URL }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          CANVAS_URI=${{ secrets.CANVAS_URI }}
+          CANVAS_CLIENT_ID=${{ secrets.CANVAS_CLIENT_ID }}
+          CANVAS_CLIENT_SECRET=${{ secrets.CANVAS_CLIENT_SECRET }}
+          FRONTEND_URI=${{ secrets.FRONTEND_URI }}
+
+          # Mail (dev)
+          MAIL_HOST=${{ secrets.MAIL_HOST }}
+          MAIL_PORT=${{ secrets.MAIL_PORT }}
+          MAIL_PROTOCOL=${{ secrets.MAIL_PROTOCOL }}
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+          EOF
 
       - name: Stop and remove old container
-        run: |
-          docker compose -f docker-compose.yml down || true
+        run: docker compose -f docker-compose.yml down || true
 
       - name: Start new containers
-        run: |
-          docker compose -f docker-compose.yml up -d --build
+        run: docker compose -f docker-compose.yml up -d --build
+
+      - name: Clean up secrets
+        if: always()
+        run: rm -f .env

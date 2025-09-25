@@ -3,31 +3,46 @@ services:
     image: mysql:8.0
     container_name: connected_db
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: connected
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_pw}
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_ROOT_PASSWORD:-root_pw} || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   app:
-    build: .
+    image: connected-api:dev
     container_name: connected_app
-    ports:
-      - "8080:8080"
+    env_file: .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/connected
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Map only what's actually used by application-dev.yml
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
 
+      CANVAS_URI: ${CANVAS_URI}
       CANVAS_CLIENT_ID: ${CANVAS_CLIENT_ID}
       CANVAS_CLIENT_SECRET: ${CANVAS_CLIENT_SECRET}
+      FRONTEND_URI: ${FRONTEND_URI}
 
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_PROTOCOL: ${MAIL_PROTOCOL}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
 
 volumes:
   db_data:
