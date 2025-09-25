@@ -74,6 +74,7 @@ jobs:
           CANVAS_CLIENT_ID=${{ secrets.CANVAS_CLIENT_ID }}
           CANVAS_CLIENT_SECRET=${{ secrets.CANVAS_CLIENT_SECRET }}
           FRONTEND_URI=${{ secrets.FRONTEND_URI }}
+          BACKEND_URL=${{ secrets.BACKEND_URL }}
 
           # Mail (dev)
           MAIL_HOST=${{ secrets.MAIL_HOST }}

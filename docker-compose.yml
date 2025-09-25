@@ -22,7 +22,6 @@ services:
     container_name: connected_app
     env_file: .env
     environment:
-      # Map only what's actually used by application-dev.yml
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
@@ -32,6 +31,7 @@ services:
       CANVAS_CLIENT_ID: ${CANVAS_CLIENT_ID}
       CANVAS_CLIENT_SECRET: ${CANVAS_CLIENT_SECRET}
       FRONTEND_URI: ${FRONTEND_URI}
+      BACKEND_URL: ${BACKEND_URL}
 
       MAIL_HOST: ${MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT}
