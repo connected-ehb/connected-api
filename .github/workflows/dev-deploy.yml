@@ -8,26 +8,28 @@ on:
 jobs:
   sonar-analysis:
     name: Build and analyze
-    runs-on: [self-hosted, dev, connected, api]   # run on your runner
+    runs-on: [self-hosted, dev, connected, api]
     environment: dev
     container:
-      image: maven:3.9.8-eclipse-temurin-17       # temporary Maven+JDK container
+      image: maven:3.9.8-eclipse-temurin-17
+      options: --user 1000:1000
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          clean: true
 
       - name: Cache SonarQube packages
         uses: actions/cache@v4
         with:
-          path: /root/.sonar/cache
+          path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
-          path: /root/.m2
+          path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
@@ -49,6 +51,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
