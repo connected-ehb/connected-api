@@ -19,9 +19,7 @@ public class EmailService {
 
         message.setFrom(fromEmail);
 
-        // also send to list of emails
         message.setTo(email);
-        message.setCc("mertensgill@outlook.com", "gilldyr@outlook.com", "mcgaming.gm@gmail.com", "m.gill.mertens@gmail.com");
 
         message.setSubject("Verify your email");
         message.setText(url);
