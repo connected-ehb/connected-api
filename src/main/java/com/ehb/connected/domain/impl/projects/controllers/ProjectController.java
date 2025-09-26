@@ -15,6 +15,7 @@ import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewCreateDto;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewDetailsDto;
 import com.ehb.connected.domain.impl.reviews.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -78,7 +79,7 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyAuthority('project:update')")
     @PatchMapping("/{projectId}")
-    public ResponseEntity<ProjectDetailsDto> updateProject(Principal principal, @PathVariable Long projectId, @RequestBody ProjectUpdateDto project){
+    public ResponseEntity<ProjectDetailsDto> updateProject(Principal principal, @PathVariable Long projectId, @Valid @RequestBody ProjectUpdateDto project){
         return ResponseEntity.ok(projectService.updateProject(principal, projectId, project));
     }
 

@@ -75,47 +75,33 @@ public class ProjectMapper {
     }
 
     public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
-
-        if(entity.getStatus() == ProjectStatusEnum.PENDING || entity.getCreatedBy().getRole().equals(Role.TEACHER)){
-            if (dto.getTitle() != null) {
-                entity.setTitle(dto.getTitle());
-            }
-            if (dto.getDescription() != null) {
-                entity.setDescription(dto.getDescription());
-            }
-            if (dto.getShortDescription() != null) {
-                entity.setShortDescription(dto.getShortDescription());
-            }
-
-            if (dto.getTeamSize() != 0) {
-                entity.setTeamSize(dto.getTeamSize());
-            }
+        if (canEdit(entity)) {
+            entity.setTitle(dto.getTitle());
+            entity.setDescription(dto.getDescription());
+            entity.setShortDescription(dto.getShortDescription());
+            entity.setTeamSize(dto.getTeamSize());
         }
 
-        if (dto.getRepositoryUrl() != null) {
-            entity.setRepositoryUrl(dto.getRepositoryUrl());
-        }
-        if (dto.getBoardUrl() != null) {
-            entity.setBoardUrl(dto.getBoardUrl());
-        }
-        if (dto.getBackgroundImage() != null) {
-            entity.setBackgroundImage(dto.getBackgroundImage());
-        }
+        entity.setRepositoryUrl(dto.getRepositoryUrl());
+        entity.setBoardUrl(dto.getBoardUrl());
+        entity.setBackgroundImage(dto.getBackgroundImage());
 
-        if (dto.getTags() != null) {
-            entity.getTags().clear();
-            entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
-        }
+        entity.getTags().clear();
+        entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
     }
 
     public ResearcherProjectDetailsDto toResearcherDetailsDto(Project project) {
         ProjectDetailsDto detailsDto = toDetailsDto(project);
         ResearcherProjectDetailsDto dto = new ResearcherProjectDetailsDto(detailsDto);
 
-        if(project.getAssignment() != null){
+        if (project.getAssignment() != null) {
             dto.setCourseName(project.getAssignment().getCourse().getName());
             dto.setAssignmentName(project.getAssignment().getName());
         }
         return dto;
+    }
+
+    private boolean canEdit(Project entity) {
+        return entity.getStatus().equals(ProjectStatusEnum.PENDING) || entity.getStatus().equals(ProjectStatusEnum.NEEDS_REVISION) || entity.getCreatedBy().getRole().equals(Role.TEACHER);
     }
 }
