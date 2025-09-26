@@ -60,14 +60,14 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage(frontendUri + "/login")
-                        .loginProcessingUrl("/auth/login")
+                        .loginProcessingUrl("/api/auth/login")
                         .successHandler(customAuthenticationSuccessHandler)
                         .defaultSuccessUrl(frontendUri, true)
                         .failureUrl(frontendUri + "/login?error=form")
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
+                        .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler(customLogoutSuccessHandler)
                         .logoutSuccessUrl(frontendUri + "/login?logout=success")
                         .permitAll()
