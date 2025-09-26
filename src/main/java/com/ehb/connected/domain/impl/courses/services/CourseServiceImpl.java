@@ -26,7 +26,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +93,7 @@ public class CourseServiceImpl implements CourseService {
                 Course course = new Course();
                 course.setName((String) canvasCourse.get("name"));
                 course.setUuid((String) canvasCourse.get("uuid"));
+                course.setCanvasCreatedAt(OffsetDateTime.parse((String) canvasCourse.get("created_at")));
                 course.setCanvasId(canvasId);
                 course.setOwner(user);
 
