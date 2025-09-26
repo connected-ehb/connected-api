@@ -1,6 +1,6 @@
 package com.ehb.connected.exceptions;
 
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 
 import java.util.function.Supplier;

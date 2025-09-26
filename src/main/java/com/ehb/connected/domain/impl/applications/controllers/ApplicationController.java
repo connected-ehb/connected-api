@@ -14,7 +14,7 @@ import java.security.Principal;
 
 
 @RestController
-@RequestMapping("api/applications")
+@RequestMapping("/api/applications")
 @RequiredArgsConstructor
 public class ApplicationController {
 
