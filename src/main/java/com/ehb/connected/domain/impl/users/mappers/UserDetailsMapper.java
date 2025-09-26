@@ -22,7 +22,7 @@ public class UserDetailsMapper {
         userDetailsDto.setEmail(user.getEmail());
         userDetailsDto.setFirstName(user.getFirstName());
         userDetailsDto.setLastName(user.getLastName());
-        userDetailsDto.setAvatarUrl(null);
+        userDetailsDto.setProfileImageUrl(null);
         userDetailsDto.setRole(user.getRole());
         userDetailsDto.setIsVerified(user.isEmailVerified());
         return userDetailsDto;
@@ -35,7 +35,7 @@ public class UserDetailsMapper {
         userDetailsDto.setEmail(user.getEmail());
         userDetailsDto.setFirstName(user.getFirstName());
         userDetailsDto.setLastName(user.getLastName());
-        userDetailsDto.setAvatarUrl(null);
+        userDetailsDto.setProfileImageUrl(user.getProfileImageUrl());
         userDetailsDto.setRole(user.getRole());
         userDetailsDto.setIsVerified(user.isEmailVerified());
         return userDetailsDto;

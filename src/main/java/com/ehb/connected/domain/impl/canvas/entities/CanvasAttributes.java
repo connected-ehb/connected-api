@@ -18,7 +18,7 @@ public class CanvasAttributes {
     private ZonedDateTime createdAt;
     private String sortableName;
     private String shortName;
-    private String avatarUrl;
+    private String profileImageUrl;
     private String lastName;
     private String firstName;
     private String locale;
@@ -44,7 +44,7 @@ public class CanvasAttributes {
         canvasAttributes.setName((String) attributes.get("name"));
         canvasAttributes.setSortableName((String) attributes.get("sortable_name"));
         canvasAttributes.setShortName((String) attributes.get("short_name"));
-        canvasAttributes.setAvatarUrl((String) attributes.get("avatar_url"));
+        canvasAttributes.setProfileImageUrl((String) attributes.get("avatar_url"));
         canvasAttributes.setLastName((String) attributes.get("last_name"));
         canvasAttributes.setFirstName((String) attributes.get("first_name"));
         canvasAttributes.setLocale((String) attributes.get("locale"));

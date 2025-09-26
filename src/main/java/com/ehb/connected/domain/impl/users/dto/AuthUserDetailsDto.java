@@ -11,7 +11,7 @@ public class AuthUserDetailsDto {
     private String email;
     private String firstName;
     private String lastName;
-    private String avatarUrl;
+    private String profileImageUrl;
     private Role role;
     private Boolean isVerified;
 }
