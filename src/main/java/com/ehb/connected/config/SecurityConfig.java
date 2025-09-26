@@ -37,8 +37,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
-                                "/auth/login", 
-                                "/auth/register", 
+                                "/api/auth/login",
+                                "/api/auth/register",
                                 "/login/**", 
                                 "/login/oauth2/authorization/canvas", 
                                 "/oauth2/authorization/canvas", 
