@@ -44,4 +44,8 @@ public class ProjectUserService {
         User currentUser = userService.getUserFromAnyPrincipal(principal);
         return projectRepository.existsByAssignmentIdAndMembersContainingAndStatusNotIn(assignmentId, currentUser, List.of(ProjectStatusEnum.REJECTED));
     }
+
+    public boolean isProjectEditable(Project project) {
+        return !project.getStatus().equals(ProjectStatusEnum.APPROVED) && !project.getStatus().equals(ProjectStatusEnum.REJECTED) && !project.getStatus().equals(ProjectStatusEnum.PUBLISHED);
+    }
 }

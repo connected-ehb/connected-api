@@ -5,9 +5,8 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
-import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
-import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +19,7 @@ import java.util.List;
 public class ProjectMapper {
     private final TagMapper tagMapper;
     private final UserDetailsMapper userMapper;
+    private final ProjectUserService projectUserService;
 
 
     public List<ProjectDetailsDto> toDetailsDtoList(List<Project> projects) {
@@ -46,19 +46,6 @@ public class ProjectMapper {
         );
     }
 
-    public ProjectCreateDto toCreateDto(Project project) {
-        return new ProjectCreateDto(
-                project.getTitle(),
-                project.getDescription(),
-                project.getShortDescription(),
-                project.getRepositoryUrl(),
-                project.getBoardUrl(),
-                project.getBackgroundImage(),
-                project.getTeamSize(),
-                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).toList() : Collections.emptyList()
-        );
-    }
-
     public Project toEntity(ProjectCreateDto dto) {
         Project project = new Project();
         project.setTitle(dto.getTitle());
@@ -75,7 +62,7 @@ public class ProjectMapper {
     }
 
     public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
-        if (canEdit(entity)) {
+        if(projectUserService.isProjectEditable(entity)) {
             entity.setTitle(dto.getTitle());
             entity.setDescription(dto.getDescription());
             entity.setShortDescription(dto.getShortDescription());
@@ -99,9 +86,5 @@ public class ProjectMapper {
             dto.setAssignmentName(project.getAssignment().getName());
         }
         return dto;
-    }
-
-    private boolean canEdit(Project entity) {
-        return entity.getStatus().equals(ProjectStatusEnum.PENDING) || entity.getStatus().equals(ProjectStatusEnum.NEEDS_REVISION) || entity.getCreatedBy().getRole().equals(Role.TEACHER);
     }
 }
