@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Getter
@@ -14,6 +15,7 @@ public class CourseDetailsDto {
     private Long canvasId;
     private String uuid;
     private String name;
+    private OffsetDateTime canvasCreatedAt;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private Long ownerId;
