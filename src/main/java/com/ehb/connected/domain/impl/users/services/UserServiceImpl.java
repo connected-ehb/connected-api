@@ -23,6 +23,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -128,7 +129,14 @@ public class UserServiceImpl implements UserService {
 
         String url = frontendUri + "/verify?token=" + token; // This now correctly points to your frontend
         System.out.println(url);
-        emailService.sendVerificationEmail(email, url);
+        emailService.sendEmail(
+                email,
+                "Please verify your email",
+                "verify-email",
+                Map.of(
+                        "url", url
+                )
+        );
     }
 
     @Override
@@ -156,7 +164,14 @@ public class UserServiceImpl implements UserService {
 
         String url = frontendUri + "/verify?token=" + token;
         System.out.println(url);
-        emailService.sendVerificationEmail(email, url);
+        emailService.sendEmail(
+                email,
+                "Please verify your email",
+                "verify-email",
+                Map.of(
+                        "url", url
+                )
+        );
     }
 
     @Override

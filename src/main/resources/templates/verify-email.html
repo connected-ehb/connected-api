@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Verify Email</title>
+</head>
+<body>
+<h2>Hello!</h2>
+<p>Please verify your email by clicking the link below:</p>
+<!--/*@thymesVar id="url" type="String"*/-->
+<a th:href="${url}">Verify Email</a>
+
+<hr/>
+<p>If you are having trouble clicking the "Verify Email" button, copy and paste the URL below into your web browser:</p>
+<p th:text="${url}"></p>
+</body>
+</html>
