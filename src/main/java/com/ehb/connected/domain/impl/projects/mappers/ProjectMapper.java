@@ -62,7 +62,7 @@ public class ProjectMapper {
     }
 
     public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
-        if(projectUserService.isProjectEditable(entity)) {
+        if(entity.isEditable()) {
             entity.setTitle(dto.getTitle());
             entity.setDescription(dto.getDescription());
             entity.setShortDescription(dto.getShortDescription());

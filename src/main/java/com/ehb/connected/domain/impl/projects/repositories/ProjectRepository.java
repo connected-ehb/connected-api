@@ -1,5 +1,6 @@
 package com.ehb.connected.domain.impl.projects.repositories;
 
+import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -24,7 +25,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Project findByMembersAndAssignmentId(List<User> users, Long assignmentId);
 
     List<Project> findAllByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
-    boolean existsByAssignmentIdAndMembersContainingAndStatusNotIn(Long assignmentId, User user, List<ProjectStatusEnum> status);
+    boolean existsByAssignmentAndMembersContainingAndStatusNotIn(Assignment assignment, User user, List<ProjectStatusEnum> status);
     boolean existsByAssignmentIdAndGid(Long assignmentId, UUID gid);
 
     List<Project> findAllByCreatedBy(User principal);

@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,4 +39,8 @@ public class Deadline {
     @ManyToOne
     @JoinColumn(name = "assignment_id", nullable = false)
     private Assignment assignment;
+
+    public boolean hasExpired() {
+        return this.getDueDate().isBefore(LocalDateTime.now(Clock.systemUTC()));
+    }
 }

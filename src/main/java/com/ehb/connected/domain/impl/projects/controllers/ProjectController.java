@@ -80,7 +80,7 @@ public class ProjectController {
     @PreAuthorize("hasAnyAuthority('project:update')")
     @PatchMapping("/{projectId}")
     public ResponseEntity<ProjectDetailsDto> updateProject(Principal principal, @PathVariable Long projectId, @Valid @RequestBody ProjectUpdateDto project){
-        return ResponseEntity.ok(projectService.updateProject(principal, projectId, project));
+        return ResponseEntity.ok(projectService.save(principal, projectId, project));
     }
 
     @PreAuthorize("hasAnyAuthority('project:change_status')")
@@ -112,7 +112,7 @@ public class ProjectController {
     @PreAuthorize("hasAnyAuthority('project:apply')")
     @PostMapping("/{projectId}/apply")
     public ResponseEntity<ApplicationDetailsDto> applyForProject(Principal principal, @PathVariable Long projectId, @RequestBody ApplicationCreateDto application) {
-        return ResponseEntity.ok(applicationService.createApplication(principal, projectId, application));
+        return ResponseEntity.ok(applicationService.create(principal, projectId, application));
     }
 
     @PreAuthorize("hasAnyAuthority('project:claim')")

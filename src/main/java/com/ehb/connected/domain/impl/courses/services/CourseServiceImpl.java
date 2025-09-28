@@ -47,7 +47,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public List<CourseDetailsDto> getNewCoursesFromCanvas(Principal principal) {
-        User user = userService.getUserFromAnyPrincipal(principal);
+        User user = userService.getUserByPrincipal(principal);
         String token = canvasTokenService.getValidAccessToken(principal);
 
         List<Map<String, Object>> canvasCourses;
@@ -118,7 +118,6 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto) {
-        User user = userService.getUserFromAnyPrincipal(principal);
         String token = canvasTokenService.getValidAccessToken(principal);
 
         Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
@@ -185,13 +184,13 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public List<CourseDetailsDto> getCoursesByOwner(Principal principal) {
-        User owner = userService.getUserFromAnyPrincipal(principal);
+        User owner = userService.getUserByPrincipal(principal);
         return courseMapper.toCourseDetailsDtoList(courseRepository.findByOwner(owner));
     }
 
     @Override
     public List<CourseDetailsDto> getCoursesByEnrollment(Principal principal) {
-        User user = userService.getUserFromAnyPrincipal(principal);
+        User user = userService.getUserByPrincipal(principal);
         return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(user.getCanvasUserId()));
     }
 

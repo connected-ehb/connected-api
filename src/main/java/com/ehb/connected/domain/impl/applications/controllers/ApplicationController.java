@@ -36,6 +36,6 @@ public class ApplicationController {
     @PreAuthorize("hasAnyAuthority('application:read')")
     @GetMapping("/{applicationId}")
     public ResponseEntity<ApplicationDetailsDto> getApplicationById(Principal principal, @PathVariable Long applicationId) {
-        return ResponseEntity.ok(applicationService.getApplicationById(principal, applicationId));
+        return ResponseEntity.ok(applicationService.getById(principal, applicationId));
     }
 }

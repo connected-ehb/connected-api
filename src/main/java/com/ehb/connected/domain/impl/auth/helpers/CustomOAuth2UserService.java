@@ -45,6 +45,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         // Update tokens
         updateUserTokens(user, userRequest);
+
+        // TODO update all user attributes in database
         
         // Save user
         user = userRepository.save(user);

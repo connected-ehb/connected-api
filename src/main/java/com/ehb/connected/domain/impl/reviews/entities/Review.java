@@ -2,20 +2,22 @@ package com.ehb.connected.domain.impl.reviews.entities;
 
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.users.entities.User;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Entity
+@Table(
+        name = "review",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_review_project_reviewer",
+                columnNames = {"project_id", "reviewer_id"}
+        )
+)
 @Setter
 @Getter
 @NoArgsConstructor
@@ -35,4 +37,20 @@ public class Review {
     @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
+
+    public boolean isOwner(User user) {
+        return reviewer.equals(user);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Review review = (Review) o;
+        return Objects.equals(id, review.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }
