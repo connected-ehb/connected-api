@@ -45,7 +45,8 @@ public class SecurityConfig {
                                 "/error",
                                 "/ws/**", 
                                 "/actuator/**",
-                                "/api/users/verify" // Email verification endpoint
+                                "/api/users/verify", // Email verification endpoint
+                                "/api/bugs"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
