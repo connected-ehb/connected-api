@@ -45,6 +45,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         // Update tokens
         updateUserTokens(user, userRequest);
+
+        // TODO update all user attributes in database
         
         // Save user
         user = userRepository.save(user);
@@ -62,7 +64,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setCanvasUserId(canvasAttributes.getId());
         user.setFirstName(canvasAttributes.getFirstName());
         user.setLastName(canvasAttributes.getLastName());
-        user.setProfileImageUrl(canvasAttributes.getAvatarUrl());
+        user.setProfileImageUrl(canvasAttributes.getProfileImageUrl());
         user.setEmail(null); // Will be set during email verification
         user.setRole(null); // Will be set during email verification
         user.setEmailVerified(false);

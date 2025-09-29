@@ -1,7 +1,7 @@
 package com.ehb.connected.exceptions;
 
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 
 @Getter

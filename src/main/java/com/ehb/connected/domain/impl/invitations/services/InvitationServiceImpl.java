@@ -24,7 +24,7 @@ public class InvitationServiceImpl implements InvitationService{
 
     @Override
     public InvitationDetailsDto generateInvitation(Principal principal) {
-        User user = userService.getUserFromAnyPrincipal(principal);
+        User user = userService.getUserByPrincipal(principal);
         String code = generateSecureCode(26);
         Invitation invitation = Invitation.builder()
                 .code(code)

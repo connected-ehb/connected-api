@@ -11,9 +11,9 @@ import java.util.List;
 
 @Configuration
 public class CorsConfig {
-    @Value("${custom.canvas-api-uri}")
+    @Value("${connected.canvas-uri}")
     private String canvasApiUri;
-    @Value("${custom.frontend-uri}")
+    @Value("${connected.frontend-uri}")
     private String frontendUri;
 
     @Bean
@@ -24,6 +24,7 @@ public class CorsConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"));
         configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         // Apply configuration for all endpoints

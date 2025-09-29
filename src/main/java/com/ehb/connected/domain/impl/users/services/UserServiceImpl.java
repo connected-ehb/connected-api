@@ -10,9 +10,9 @@ import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
+import com.ehb.connected.exceptions.AuthenticationRequiredException;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
-import com.ehb.connected.exceptions.AuthenticationRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -23,6 +23,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,7 @@ public class UserServiceImpl implements UserService {
     private final EnrollmentRepository enrollmentRepository;
     private final EmailService emailService;
 
-    @Value("${custom.frontend-uri}")
+    @Value("${connected.frontend-uri}")
     private String frontendUri;
 
     @Override
@@ -52,7 +53,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
+        return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(UserService.class, id));
     }
 
     @Override
@@ -62,7 +63,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetailsDto updateUser(Principal principal, UserDetailsDto userDto) {
-        User user = getUserFromPrincipal(principal);
+        User user = getUserByPrincipal(principal);
 
         user.setAboutMe(userDto.getAboutMe());
         user.setFieldOfStudy(userDto.getFieldOfStudy());
@@ -78,12 +79,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByPrincipal(Principal principal) {
-        return getUserFromPrincipal(principal);
-    }
+        if (principal == null) {
+            throw new AuthenticationRequiredException();
+        }
 
-    @Override
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        String principalName = principal.getName();
+
+        try {
+            // Try to parse as Canvas ID (OAuth2 authentication)
+            long canvasUserId = Long.parseLong(principalName);
+            return userRepository.findByCanvasUserId(canvasUserId)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found for canvas ID: " + canvasUserId));
+        } catch (NumberFormatException e) {
+            // Try as email (form-based authentication)
+            return userRepository.findByEmail(principalName)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found for email: " + principalName));
+        }
     }
 
     @Override
@@ -91,44 +102,16 @@ public class UserServiceImpl implements UserService {
         if (principal == null) {
             return null;
         }
-        
+
         User user = getUserFromOAuth2Principal(principal);
         return userDetailsMapper.toDtoWithPrincipal(user, principal);
     }
 
     @Override
-    public List<User> getAllUsersByRole(Role role) {
-        return userRepository.findAllByRole(role);
-    }
-
-    @Override
     public void requestDeleteUser(Principal principal) {
-        User user = getUserFromPrincipal(principal);
+        User user = getUserByPrincipal(principal);
         user.setDeleteRequestedAt(LocalDateTime.now());
         userRepository.save(user);
-    }
-
-    @Override
-    public void createEmailVerificationToken(User principal, EmailRequestDto emailRequestDto) {
-        Long canvasUserId = principal.getCanvasUserId();
-        String email = emailRequestDto.getEmail();
-        User user = userRepository.findByCanvasUserId(canvasUserId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-
-        if (!email.endsWith("@ehb.be") && !email.endsWith("@student.ehb.be")) {
-            throw new BaseRuntimeException("Use a school email", HttpStatus.BAD_REQUEST);
-        }
-
-        String token = UUID.randomUUID().toString();
-        user.setEmail(email);
-        user.setEmailVerificationToken(token);
-        user.setEmailVerificationTokenExpiry(LocalDateTime.now().plusMinutes(15));
-        user.setEmailVerified(false);
-        userRepository.save(user);
-
-        String url = frontendUri + "/verify?token=" + token; // This now correctly points to your frontend
-        System.out.println(url);
-        emailService.sendVerificationEmail(email, url);
     }
 
     @Override
@@ -136,10 +119,10 @@ public class UserServiceImpl implements UserService {
         if (principal == null) {
             throw new AuthenticationRequiredException();
         }
-        
+
         String canvasUserId = principal.getName();
         String email = emailRequestDto.getEmail();
-        
+
         User user = userRepository.findByCanvasUserId(Long.parseLong(canvasUserId))
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -156,7 +139,14 @@ public class UserServiceImpl implements UserService {
 
         String url = frontendUri + "/verify?token=" + token;
         System.out.println(url);
-        emailService.sendVerificationEmail(email, url);
+        emailService.sendEmail(
+                email,
+                "Please verify your email",
+                "verify-email",
+                Map.of(
+                        "url", url
+                )
+        );
     }
 
     @Override
@@ -184,37 +174,15 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * Utility method to get a User from a Principal, handling both OAuth2 and form-based authentication
-     */
-    private User getUserFromPrincipal(Principal principal) {
-        if (principal == null) {
-            throw new AuthenticationRequiredException();
-        }
-        
-        String principalName = principal.getName();
-        
-        try {
-            // Try to parse as Canvas ID (OAuth2 authentication)
-            long canvasUserId = Long.parseLong(principalName);
-            return userRepository.findByCanvasUserId(canvasUserId)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found for canvas ID: " + canvasUserId));
-        } catch (NumberFormatException e) {
-            // Try as email (form-based authentication)
-            return userRepository.findByEmail(principalName)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found for email: " + principalName));
-        }
-    }
-
-    /**
      * Utility method to get a User from an OAuth2User principal
      */
     private User getUserFromOAuth2Principal(OAuth2User principal) {
         if (principal == null) {
             throw new AuthenticationRequiredException();
         }
-        
+
         String principalName = principal.getName();
-        
+
         try {
             // For OAuth2 users, the principal name is the canvasUserId
             long canvasUserId = Long.parseLong(principalName);
@@ -225,10 +193,5 @@ public class UserServiceImpl implements UserService {
             return userRepository.findByEmail(principalName)
                     .orElseThrow(() -> new EntityNotFoundException("User not found for email: " + principalName));
         }
-    }
-
-    @Override
-    public User getUserFromAnyPrincipal(Principal principal) {
-        return getUserFromPrincipal(principal);
     }
 }

@@ -1,8 +1,8 @@
 package com.ehb.connected.domain.impl.feedbacks.service;
 
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
-import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
+import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.feedbacks.mappers.FeedbackMapper;
 import com.ehb.connected.domain.impl.feedbacks.repositories.FeedbackRepository;
 import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
@@ -35,8 +35,8 @@ public class FeedbackServiceImpl implements FeedbackService {
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        final User user = userService.getUserFromAnyPrincipal(principal);
-        if (user.getRole() == Role.STUDENT) {
+        final User user = userService.getUserByPrincipal(principal);
+        if (user.hasRole(Role.STUDENT)) {
             throw new UserUnauthorizedException(user.getId());
         }
         final Feedback feedback = new Feedback();
@@ -48,9 +48,9 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         // Check if receiver exists and send notification
         if (project.getProductOwner() != null) {
-            String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
-                    UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
-                    UrlHelper.Sluggify(project.getAssignment().getName()),
+            String destinationUrl = UrlHelper.buildCourseAssignmentUrl(
+                    UrlHelper.sluggify(project.getAssignment().getCourse().getName()),
+                    UrlHelper.sluggify(project.getAssignment().getName()),
                     "projects/" + project.getId(),
                     "feedback");
 
@@ -62,48 +62,40 @@ public class FeedbackServiceImpl implements FeedbackService {
         }
 
 
-
         return feedbackMapper.toDto(feedback);
     }
 
     @Override
     public FeedbackDto updateFeedback(Principal principal, Long feedbackId, FeedbackCreateDto feedbackDto) {
-        //Retrieve the feedback by id
         final Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
+        final User user = userService.getUserByPrincipal(principal);
 
-        // Ensure that the current user is the owner of the feedback
-        final User currentUser = userService.getUserFromAnyPrincipal(principal);
-        if (!feedback.getUser().getId().equals(currentUser.getId())) {
-            throw new UserUnauthorizedException(currentUser.getId());
+        if (!feedback.isOwner(user)) {
+            throw new UserUnauthorizedException(user.getId());
         }
 
-        // Update comment
         feedback.setComment(feedbackDto.getComment());
         return feedbackMapper.toDto(feedbackRepository.save(feedback));
     }
 
     @Override
-    public void deleteFeedback(Principal principal,Long feedbackId) {
-        // Retrieve the feedback by id
+    public void deleteFeedback(Principal principal, Long feedbackId) {
         final Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
 
-        final User currentUser = userService.getUserFromAnyPrincipal(principal);
-        if(!feedback.getUser().getId().equals(currentUser.getId())) {
-            throw new UserUnauthorizedException(currentUser.getId());
+        final User user = userService.getUserByPrincipal(principal);
+        if (!feedback.isOwner(user)) {
+            throw new UserUnauthorizedException(user.getId());
         }
-        // Delete the feedback
         feedbackRepository.delete(feedback);
     }
 
     @Override
     public List<FeedbackDto> getAllFeedbackForProject(Principal principal, Long projectId) {
-        // Check if project exists
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        // Return all feedback related to the project
         return feedbackMapper.toDtoList(feedbackRepository.findAllByProjectOrderByCreatedAtDesc(project));
     }
 }

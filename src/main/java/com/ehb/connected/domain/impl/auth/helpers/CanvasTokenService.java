@@ -39,7 +39,7 @@ public class CanvasTokenService {
         }
 
         // If no refresh was needed or no OAuth2 token, get the token from the database
-        User user = userService.getUserFromAnyPrincipal(principal);
+        User user = userService.getUserByPrincipal(principal);
         String accessToken = user.getAccessToken();
         
         if (accessToken == null || accessToken.trim().isEmpty()) {

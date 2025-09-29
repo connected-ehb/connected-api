@@ -26,7 +26,7 @@ public class SecurityConfig {
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
 
-    @Value("${custom.frontend-uri}")
+    @Value("${connected.frontend-uri}")
     private String frontendUri;
 
     @Bean
@@ -37,8 +37,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
-                                "/auth/login", 
-                                "/auth/register", 
+                                "/api/auth/login",
+                                "/api/auth/register",
                                 "/login/**", 
                                 "/login/oauth2/authorization/canvas", 
                                 "/oauth2/authorization/canvas", 
@@ -60,14 +60,14 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage(frontendUri + "/login")
-                        .loginProcessingUrl("/auth/login")
+                        .loginProcessingUrl("/api/auth/login")
                         .successHandler(customAuthenticationSuccessHandler)
                         .defaultSuccessUrl(frontendUri, true)
                         .failureUrl(frontendUri + "/login?error=form")
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
+                        .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler(customLogoutSuccessHandler)
                         .logoutSuccessUrl(frontendUri + "/login?logout=success")
                         .permitAll()

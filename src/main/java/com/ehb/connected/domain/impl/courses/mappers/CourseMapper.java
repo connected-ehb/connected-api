@@ -24,10 +24,11 @@ public class CourseMapper {
         Course course = new Course();
         course.setName(courseCreateDto.getName());
         course.setUuid(courseCreateDto.getUuid());
+        course.setCanvasCreatedAt(courseCreateDto.getCanvasCreatedAt());
         course.setStartAt(courseCreateDto.getStartAt());
         course.setEndAt(courseCreateDto.getEndAt());
         course.setAssignments(new ArrayList<>());
-        course.setOwner(userService.getUserFromAnyPrincipal(principal));
+        course.setOwner(userService.getUserByPrincipal(principal));
         course.setCanvasId(courseCreateDto.getCanvasId());
         return course;
     }
@@ -37,6 +38,7 @@ public class CourseMapper {
         courseDto.setId(course.getId());
         courseDto.setName(course.getName());
         courseDto.setUuid(course.getUuid());
+        courseDto.setCanvasCreatedAt(course.getCanvasCreatedAt());
         courseDto.setStartAt(course.getStartAt());
         courseDto.setEndAt(course.getEndAt());
         courseDto.setOwnerId(course.getOwner().getId());
