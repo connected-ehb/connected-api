@@ -72,11 +72,11 @@ CREATE TABLE user_tags (
 -- Table: projects
 CREATE TABLE projects (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    gid BINARY(16) NOT NULL,
+    gid BINARY(16),
     title VARCHAR(255),
     description TEXT,
     short_description VARCHAR(500),
-    status ENUM('APPROVED','NEEDS_REVISION','PENDING','PUBLISHED','REJECTED','REVISED') NOT NULL,
+    status ENUM('APPROVED','NEEDS_REVISION','PENDING','PUBLISHED','REJECTED','REVISED') NOT NULL DEFAULT 'PENDING',
     repository_url VARCHAR(512),
     board_url VARCHAR(512),
     background_image VARCHAR(512),
@@ -133,14 +133,6 @@ CREATE TABLE announcements (
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE discussions (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    comment VARCHAR(255),
-    project_id BIGINT NOT NULL,
-    CONSTRAINT fk_discussions_project
-        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE deadlines (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255),
@@ -168,7 +160,7 @@ CREATE TABLE feedbacks (
 
 CREATE TABLE reviews (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    status ENUM('THUMBS_UP','THUMBS_DOWN') NOT NULL,
+    status ENUM('THUMBS_UP','THUMBS_DOWN') NOT NULL DEFAULT 'THUMBS_DOWN',
     reviewer_id BIGINT,
     project_id BIGINT,
     CONSTRAINT fk_reviews_reviewer
@@ -207,4 +199,16 @@ CREATE TABLE enrollments (
     CONSTRAINT fk_enrollments_course
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE bugs (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    description TEXT NOT NULL DEFAULT '',
+    route VARCHAR(512),
+    app_version VARCHAR(64),
+    user_id BIGINT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    CONSTRAINT fk_bugs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_bugs_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
