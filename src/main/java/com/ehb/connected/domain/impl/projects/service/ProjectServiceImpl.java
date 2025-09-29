@@ -86,10 +86,11 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDetailsDto getProjectByUserAndAssignmentId(Principal principal, Long assignmentId) {
         User user = userService.getUserByPrincipal(principal);
         //project can be null if the user is not a member of any project in the assignment
-        if (projectRepository.findByMembersAndAssignmentId(List.of(user), assignmentId) == null) {
+        Project project = projectRepository.findByMembersAndAssignmentIdAndStatus(List.of(user), assignmentId, ProjectStatusEnum.PUBLISHED);
+        if (project == null) {
             return null;
         }
-        return projectMapper.toDetailsDto(projectRepository.findByMembersAndAssignmentId(List.of(user), assignmentId));
+        return projectMapper.toDetailsDto(project);
     }
 
     @Override

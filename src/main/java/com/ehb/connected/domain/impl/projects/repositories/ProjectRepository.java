@@ -22,7 +22,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
                                                           @Param("status") ProjectStatusEnum status,
                                                           @Param("user") User user);
 
-    Project findByMembersAndAssignmentId(List<User> users, Long assignmentId);
+    Project findByMembersAndAssignmentIdAndStatus(List<User> users, Long assignmentId, ProjectStatusEnum status);
 
     List<Project> findAllByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
     boolean existsByAssignmentAndMembersContainingAndStatusNotIn(Assignment assignment, User user, List<ProjectStatusEnum> status);
