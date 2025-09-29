@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "feedbacks")
 public class Feedback {
 
     @Id

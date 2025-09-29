@@ -3,7 +3,7 @@
 ############################
 # Stage 1: Build the JAR
 ############################
-FROM maven:3.9.8-eclipse-temurin-17 AS build
+FROM maven:3.9.11-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
 COPY pom.xml .
@@ -15,7 +15,7 @@ RUN mvn -q -DskipTests package
 ############################
 # Stage 2: Run with JRE and wait-for-db
 ############################
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Install netcat for a tiny wait loop (no healthchecks involved)
