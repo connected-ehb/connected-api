@@ -202,7 +202,7 @@ CREATE TABLE enrollments (
 
 CREATE TABLE bugs (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    description TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL,
     route VARCHAR(512),
     app_version VARCHAR(64),
     user_id BIGINT NULL,
