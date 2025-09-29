@@ -20,7 +20,7 @@ services:
   app:
     build:
       context: .
-    image: connected-api:dev
+    image: connected-api:prod
     container_name: connected_app
     env_file: .env
     environment:

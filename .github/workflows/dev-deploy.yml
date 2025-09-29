@@ -70,11 +70,13 @@ jobs:
           DB_URL=${{ secrets.DB_URL }}
           DB_USERNAME=${{ secrets.DB_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
           CANVAS_URI=${{ secrets.CANVAS_URI }}
           CANVAS_CLIENT_ID=${{ secrets.CANVAS_CLIENT_ID }}
           CANVAS_CLIENT_SECRET=${{ secrets.CANVAS_CLIENT_SECRET }}
           FRONTEND_URI=${{ secrets.FRONTEND_URI }}
           BACKEND_URL=${{ secrets.BACKEND_URL }}
+          HIBERNATE_DDL_AUTO=${{ secrets.HIBERNATE_DDL_AUTO }}
 
           # Mail (dev)
           MAIL_HOST=${{ secrets.MAIL_HOST }}
