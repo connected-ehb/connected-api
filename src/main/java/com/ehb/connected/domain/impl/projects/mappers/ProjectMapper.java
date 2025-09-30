@@ -5,9 +5,8 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
-import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
-import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,6 +19,7 @@ import java.util.List;
 public class ProjectMapper {
     private final TagMapper tagMapper;
     private final UserDetailsMapper userMapper;
+    private final ProjectUserService projectUserService;
 
 
     public List<ProjectDetailsDto> toDetailsDtoList(List<Project> projects) {
@@ -46,19 +46,6 @@ public class ProjectMapper {
         );
     }
 
-    public ProjectCreateDto toCreateDto(Project project) {
-        return new ProjectCreateDto(
-                project.getTitle(),
-                project.getDescription(),
-                project.getShortDescription(),
-                project.getRepositoryUrl(),
-                project.getBoardUrl(),
-                project.getBackgroundImage(),
-                project.getTeamSize(),
-                project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).toList() : Collections.emptyList()
-        );
-    }
-
     public Project toEntity(ProjectCreateDto dto) {
         Project project = new Project();
         project.setTitle(dto.getTitle());
@@ -75,44 +62,26 @@ public class ProjectMapper {
     }
 
     public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
-
-        if(entity.getStatus() == ProjectStatusEnum.PENDING || entity.getCreatedBy().getRole().equals(Role.TEACHER)){
-            if (dto.getTitle() != null) {
-                entity.setTitle(dto.getTitle());
-            }
-            if (dto.getDescription() != null) {
-                entity.setDescription(dto.getDescription());
-            }
-            if (dto.getShortDescription() != null) {
-                entity.setShortDescription(dto.getShortDescription());
-            }
-
-            if (dto.getTeamSize() != 0) {
-                entity.setTeamSize(dto.getTeamSize());
-            }
+        if(entity.isEditable()) {
+            entity.setTitle(dto.getTitle());
+            entity.setDescription(dto.getDescription());
+            entity.setShortDescription(dto.getShortDescription());
+            entity.setTeamSize(dto.getTeamSize());
         }
 
-        if (dto.getRepositoryUrl() != null) {
-            entity.setRepositoryUrl(dto.getRepositoryUrl());
-        }
-        if (dto.getBoardUrl() != null) {
-            entity.setBoardUrl(dto.getBoardUrl());
-        }
-        if (dto.getBackgroundImage() != null) {
-            entity.setBackgroundImage(dto.getBackgroundImage());
-        }
+        entity.setRepositoryUrl(dto.getRepositoryUrl());
+        entity.setBoardUrl(dto.getBoardUrl());
+        entity.setBackgroundImage(dto.getBackgroundImage());
 
-        if (dto.getTags() != null) {
-            entity.getTags().clear();
-            entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
-        }
+        entity.getTags().clear();
+        entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
     }
 
     public ResearcherProjectDetailsDto toResearcherDetailsDto(Project project) {
         ProjectDetailsDto detailsDto = toDetailsDto(project);
         ResearcherProjectDetailsDto dto = new ResearcherProjectDetailsDto(detailsDto);
 
-        if(project.getAssignment() != null){
+        if (project.getAssignment() != null) {
             dto.setCourseName(project.getAssignment().getCourse().getName());
             dto.setAssignmentName(project.getAssignment().getName());
         }

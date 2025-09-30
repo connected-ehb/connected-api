@@ -53,7 +53,7 @@ public class ReviewServiceImpl implements ReviewService {
         User user = userService.getUserByPrincipal(principal);
         Review review = reviewRepository.findByIdAndReviewer(reviewId, user)
                 .orElseThrow(() -> new EntityNotFoundException(Review.class, reviewId));
-        if (!review.getReviewer().equals(user)) {
+        if (!review.isOwner(user)) {
             throw new BaseRuntimeException("You are not allowed to delete this review", HttpStatus.FORBIDDEN);
         }
         reviewRepository.delete(review);

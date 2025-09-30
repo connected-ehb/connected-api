@@ -1,0 +1,5 @@
+# db/migration directory for Flyway SQL migrations
+# Place migration files here, named like:
+#   V1__initial_schema.sql
+#   V2__add_projects_table.sql
+# See application.yml for Flyway configuration (prod profile validates schema and can baseline an existing DB).

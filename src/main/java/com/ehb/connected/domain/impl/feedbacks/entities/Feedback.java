@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "feedbacks")
 public class Feedback {
 
     @Id
@@ -39,4 +40,8 @@ public class Feedback {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public boolean isOwner(User user) {
+        return this.user.equals(user);
+    }
 }

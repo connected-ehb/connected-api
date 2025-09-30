@@ -25,10 +25,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Setter
@@ -96,6 +93,10 @@ public class User implements UserDetails, Serializable {
 
     private LocalDateTime deleteRequestedAt;
 
+    public boolean hasRole(Role role) {
+        return this.role.equals(role);
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (role == null) {
@@ -127,5 +128,29 @@ public class User implements UserDetails, Serializable {
     @Override
     public boolean isEnabled() {
         return enabled && emailVerified;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id) && Objects.equals(canvasUserId, user.canvasUserId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, canvasUserId);
+    }
+
+    public boolean isProductOwner(Project project) {
+        return this.equals(project.getProductOwner());
+    }
+
+    public boolean isApplicant(Application application) {
+        return this.equals(application.getApplicant());
+    }
+
+    public boolean isCreator(Project project) {
+        return project.getCreatedBy().equals(this);
     }
 }

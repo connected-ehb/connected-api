@@ -40,8 +40,8 @@ public class DeadlineServiceImpl implements DeadlineService {
     }
 
     @Override
-    public DeadlineDetailsDto getDeadlineByAssignmentIdAndRestrictions(Long assignmentId, DeadlineRestriction restriction) {
-        return deadlineMapper.toDeadlineDetailsDto(deadlineRepository.findTopByAssignmentIdAndRestrictionOrderByDueDateDesc(assignmentId, restriction));
+    public Deadline getDeadlineByAssignmentAndRestrictions(Assignment assignment, DeadlineRestriction restriction) {
+        return deadlineRepository.findTopByAssignmentIdAndRestrictionOrderByDueDateDesc(assignment.getId(), restriction);
     }
 
     @Override
@@ -76,9 +76,6 @@ public class DeadlineServiceImpl implements DeadlineService {
             return deadlineMapper.toDeadlineDetailsDto(savedDeadline);
 
         } catch (Exception e) {
-            // Log the error with exception details
-            logger.error("Error creating deadline for assignment ID: {}. Error: {}",
-                    assignmentId, e.getMessage(), e);
             throw new BaseRuntimeException("Failed to create deadline", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -18,9 +18,9 @@ public interface ProjectService {
     List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId);
     List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status);
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
-    ProjectDetailsDto updateProject(Principal principal, Long id, ProjectUpdateDto project);
+    ProjectDetailsDto save(Principal principal, Long id, ProjectUpdateDto project);
 
-    void updateProject(Project project);
+    void save(Project project);
 
     ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);
     List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId);

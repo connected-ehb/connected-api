@@ -10,12 +10,23 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Entity
+@Table(
+        name = "reviews",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_review_project_reviewer",
+                columnNames = {"project_id", "reviewer_id"}
+        )
+)
 @Setter
 @Getter
 @NoArgsConstructor
@@ -35,4 +46,20 @@ public class Review {
     @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
+
+    public boolean isOwner(User user) {
+        return reviewer.equals(user);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Review review = (Review) o;
+        return Objects.equals(id, review.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

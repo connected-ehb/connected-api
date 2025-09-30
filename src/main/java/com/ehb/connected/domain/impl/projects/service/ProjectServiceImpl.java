@@ -5,7 +5,7 @@ import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
-import com.ehb.connected.domain.impl.deadlines.dto.DeadlineDetailsDto;
+import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
@@ -20,11 +20,7 @@ import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
-import com.ehb.connected.exceptions.BaseRuntimeException;
-import com.ehb.connected.exceptions.DeadlineExpiredException;
-import com.ehb.connected.exceptions.EntityNotFoundException;
-import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
-import com.ehb.connected.exceptions.UserUnauthorizedException;
+import com.ehb.connected.exceptions.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +28,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
-import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -59,15 +53,22 @@ public class ProjectServiceImpl implements ProjectService {
         User user = userService.getUserByPrincipal(principal);
         Project project = getProjectById(projectId);
 
-        // Check if user is the owner of the project or a teacher and the project is not published
-        if (user.getRole().equals(Role.RESEARCHER)) {
+        if (user.hasRole(Role.RESEARCHER) && user.isCreator(project)) {
             return projectMapper.toResearcherDetailsDto(project);
-        }else if ( project.getCreatedBy().getRole().equals(Role.RESEARCHER) || project.getStatus() == ProjectStatusEnum.PUBLISHED || (user.getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId))) {
+        }
+        if (canViewProject(user, project)) {
             return projectMapper.toDetailsDto(project);
 
         } else {
             throw new UserUnauthorizedException(user.getId());
         }
+    }
+
+    private boolean canViewProject(User user, Project project) {
+        return project.getCreatedBy().hasRole(Role.TEACHER) ||
+                project.getCreatedBy().hasRole(Role.RESEARCHER) ||
+                user.hasRole(Role.TEACHER) ||
+                user.isProductOwner(project);
     }
 
     @Override
@@ -83,19 +84,15 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectDetailsDto getProjectByUserAndAssignmentId(Principal principal, Long assignmentId) {
-        User user = userService.getUserFromAnyPrincipal(principal);
+        User user = userService.getUserByPrincipal(principal);
         //project can be null if the user is not a member of any project in the assignment
-        if (projectRepository.findByMembersAndAssignmentId(List.of(user), assignmentId) == null) {
+        Project project = projectRepository.findByMembersAndAssignmentIdAndStatus(List.of(user), assignmentId, ProjectStatusEnum.PUBLISHED);
+        if (project == null) {
             return null;
         }
-        return projectMapper.toDetailsDto(projectRepository.findByMembersAndAssignmentId(List.of(user), assignmentId));
+        return projectMapper.toDetailsDto(project);
     }
 
-    /**
-     * Get all published projects (For Students)
-     * @param assignmentId the id of the assignment for which to get the published projects
-     * @return List of ProjectDetailsDto
-     */
     @Override
     public List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId) {
         return projectMapper.toDetailsDtoList(
@@ -106,75 +103,21 @@ public class ProjectServiceImpl implements ProjectService {
                 ));
     }
 
-    /**
-     * Creates a new project for a specified assignment.
-     * <p>
-     * This method carries out the following steps:
-     * <ol>
-     *     <li>Retrieves the current user from the provided {@code Principal}.</li>
-     *     <li>Checks if the user is already a member of any project associated with the specified assignment.
-     *         If so, a {@link BaseRuntimeException} with a conflict status is thrown.</li>
-     *     <li>Fetches the assignment using the provided assignment ID. If the assignment is not found, an
-     *         {@link EntityNotFoundException} is thrown.</li>
-     *     <li>For users with the role {@code STUDENT}, attempts to fetch the project creation deadline.
-     *         If a deadline exists and has passed (relative to the current UTC time), a
-     *         {@link DeadlineExpiredException} is thrown.
-     *         If no deadline exists, the check is skipped.</li>
-     *     <li>Maps the provided project data (from {@code ProjectCreateDto}) to a new project entity.</li>
-     *     <li>Depending on the role of the user:
-     *         <ul>
-     *             <li>If the user is a student:
-     *                 <ul>
-     *                     <li>Sets the project status to {@link ProjectStatusEnum#PENDING}.</li>
-     *                     <li>Assigns the user as a member and as the creator (product owner) of the project.</li>
-     *                 </ul>
-     *             </li>
-     *             <li>If the user is a teacher:
-     *                 <ul>
-     *                     <li>Sets the project status to {@link ProjectStatusEnum#APPROVED}.</li>
-     *                     <li>Leaves the members list empty, as teachers cannot be product owners.</li>
-     *                 </ul>
-     *             </li>
-     *         </ul>
-     *     </li>
-     *     <li>Associates the project with the retrieved assignment and saves it to the repository.</li>
-     *     <li>If the project is created by a student, notifies all teachers about the new project via the notification service.</li>
-     * </ol>
-     * </p>
-     *
-     * @param principal    the {@link Principal} representing the user creating the project.
-     * @param assignmentId the unique identifier of the assignment for which the project is being created.
-     * @param projectDto   the data transfer object containing the project details.
-     * @return a {@link ProjectDetailsDto} representing the newly created project.
-     * @throws BaseRuntimeException    if the user is already a member of a project for the specified assignment.
-     * @throws EntityNotFoundException if the assignment with the given ID is not found.
-     * @throws DeadlineExpiredException if the project creation deadline has expired for a student user.
-     */
-
-
     @Override
     public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto projectDto) {
 
         final User user = userService.getUserByPrincipal(principal);
-
-        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, assignmentId)) {
-            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
-        }
-
-
         final Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
 
-        // Fetch deadline for the assignment with the restriction PROJECT_CREATION
-        try {
-            final DeadlineDetailsDto deadlineDto = deadlineService.getDeadlineByAssignmentIdAndRestrictions(assignmentId, DeadlineRestriction.PROJECT_CREATION);
-            // If a deadline exists and has passed, throw an error
-            //check if deadline is not null and if the deadline is before the current time IN UTC!!!!!
-            if (user.getRole() == Role.STUDENT && deadlineDto != null && deadlineDto.getDueDate().isBefore(LocalDateTime.now(Clock.systemUTC()))) {
-                throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
-            }
-        } catch (EntityNotFoundException e) {
-            logger.info("[{}] No project creation deadline found for assignment with ID: {}", ProjectService.class.getSimpleName(), assignmentId);
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(user, assignment)) {
+            throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
+        }
+
+        final Deadline deadline = deadlineService.getDeadlineByAssignmentAndRestrictions(assignment, DeadlineRestriction.PROJECT_CREATION);
+
+        if (user.hasRole(Role.STUDENT) && deadline != null && deadline.hasExpired()) {
+            throw new DeadlineExpiredException(DeadlineRestriction.PROJECT_CREATION);
         }
 
         Project newProject = projectMapper.toEntity(projectDto);
@@ -184,16 +127,15 @@ public class ProjectServiceImpl implements ProjectService {
             newProject.setTeamSize(assignment.getDefaultTeamSize());
         }
 
-
         // If user is a student, make him product owner, else if he is teacher leave it null as teacher cannot be product owner
-        if(user.getRole() == Role.STUDENT) {
+        if (user.hasRole(Role.STUDENT)) {
             newProject.setStatus(ProjectStatusEnum.PENDING);
             newProject.setMembers(List.of(user));
             newProject.setProductOwner(user);
-        } else if (user.getRole() == Role.TEACHER) {
+        } else if (user.hasRole(Role.TEACHER)) {
             newProject.setMembers(List.of());
             newProject.setStatus(ProjectStatusEnum.APPROVED);
-        } else if (user.getRole() == Role.RESEARCHER) {
+        } else if (user.hasRole(Role.RESEARCHER)) {
             newProject.setMembers(List.of());
             newProject.setStatus(ProjectStatusEnum.APPROVED);
             newProject.setGid(UUID.randomUUID());
@@ -208,12 +150,18 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto updateProject(Principal principal, Long projectId, ProjectUpdateDto project) {
+    public ProjectDetailsDto save(Principal principal, Long projectId, ProjectUpdateDto project) {
         final Project existingProject = getProjectById(projectId);
+        final User user = userService.getUserByPrincipal(principal);
 
         // Check if user is the owner of the project
-        if (!projectUserService.isUserOwnerOfProject(principal, projectId)) {
+        if (!user.isProductOwner(existingProject)) {
             throw new UserNotOwnerOfProjectException();
+        }
+
+        // When the project has status needs revision -> revised
+        if (existingProject.getStatus().equals(ProjectStatusEnum.NEEDS_REVISION)) {
+            existingProject.setStatus(ProjectStatusEnum.REVISED);
         }
 
         projectMapper.updateEntityFromDto(project, existingProject);
@@ -221,7 +169,6 @@ public class ProjectServiceImpl implements ProjectService {
         try {
             savedProject = projectRepository.save(existingProject);
         } catch (Exception e) {
-            logger.error("an error occurred while updating project with id: {}", projectId , e);
             throw new BaseRuntimeException("Project could not be updated", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
@@ -230,24 +177,13 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void updateProject(Project project) {
+    public void save(Project project) {
         projectRepository.save(project);
     }
 
-    /**
-     * Change the status of a project (only for teachers)
-     * @param principal the principal of the user changing the status
-     * @param projectId the id of the project to change the status of
-     * @param status the new status of the project
-     * @return ProjectDetailsDto
-     */
     @Override
     public ProjectDetailsDto changeProjectStatus(Principal principal, Long projectId, ProjectStatusEnum status) {
         final User user = userService.getUserByPrincipal(principal);
-
-        if (user.getRole().equals(Role.STUDENT)) {
-            throw new UserUnauthorizedException(user.getId());
-        }
 
         final Project project = getProjectById(projectId);
 
@@ -261,8 +197,8 @@ public class ProjectServiceImpl implements ProjectService {
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
 
-        if(project.getCreatedBy().getRole().equals(Role.RESEARCHER)) {
-            String destinationUrl = UrlHelper.UrlBuilder("/projects", project.getId().toString());
+        if (project.getCreatedBy().getRole().equals(Role.RESEARCHER)) {
+            String destinationUrl = UrlHelper.urlBuilder("/projects", project.getId().toString());
 
             notificationService.createNotification(
                     project.getCreatedBy(),
@@ -271,12 +207,10 @@ public class ProjectServiceImpl implements ProjectService {
             );
         }
 
-
-
         if (project.getProductOwner() != null) {
-            String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
-                    UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
-                    UrlHelper.Sluggify(project.getAssignment().getName()),
+            String destinationUrl = UrlHelper.buildCourseAssignmentUrl(
+                    UrlHelper.sluggify(project.getAssignment().getCourse().getName()),
+                    UrlHelper.sluggify(project.getAssignment().getName()),
                     "projects/" + project.getId());
 
             notificationService.createNotification(
@@ -296,73 +230,63 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toDetailsDtoList(projects);
     }
 
-    /**
-     * Get all applications for a project (only for teachers and project owners)
-     * @param principal the principal of the user getting the applications
-     * @param projectId the id of the project for which to get the applications
-     * @return List of ApplicationDto
-     */
     @Override
     public List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
-        if (userService.getUserByPrincipal(principal).getRole().equals(Role.TEACHER) || projectUserService.isUserOwnerOfProject(principal, projectId)) {
-            final Project project = projectRepository.findById(projectId)
-                    .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
+        final User user = userService.getUserByPrincipal(principal);
+        final Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-            return applicationMapper.toDtoList(project.getApplications());
-        } else {
+        if (!user.hasRole(Role.TEACHER) && !user.isProductOwner(project)) {
             throw new UserNotOwnerOfProjectException();
         }
+        return applicationMapper.toDtoList(project.getApplications());
     }
 
-
-    /**
-     * Remove a member from a project (only for teachers)
-     * @param principal the principal of the user removing the member
-     * @param projectId the id of the project from which to remove the member
-     * @param memberId the id of the member to remove
-     */
     @Override
     public void removeMember(Principal principal, Long projectId, Long memberId) {
         final Project project = getProjectById(projectId);
+        final User actor = userService.getUserByPrincipal(principal);
 
-        final User user = userService.getUserByPrincipal(principal);
-
-        final User kickedMember = userService.getUserById(memberId);
-
-        if (user.getRole().equals(Role.TEACHER)) {
-            final boolean removed = project.getMembers().removeIf(member -> member.getId().equals(memberId));
-            if (removed) {
-                if (projectUserService.isUserOwnerOfProject(memberId, projectId)) {
-                    if (!project.getMembers().isEmpty()) {
-                        project.setProductOwner(project.getMembers().get(0));
-                    } else {
-                        project.setProductOwner(null);
-                    }
-                }
-                project.getApplications().stream()
-                        .filter(application -> application.getApplicant().getId().equals(memberId))
-                        .findFirst()
-                        .ifPresent(application -> application.setStatus(ApplicationStatusEnum.REJECTED));
-                logger.info("[{}] Member ID: {} was successfully removed from project ID: {} by User ID: {}",
-                        ProjectService.class.getSimpleName(), memberId, projectId, user.getId());
-                projectRepository.save(project);
-
-                String destinationUrl = UrlHelper.BuildCourseAssignmentUrl(
-                        UrlHelper.Sluggify(project.getAssignment().getCourse().getName()),
-                        UrlHelper.Sluggify(project.getAssignment().getName()),
-                        "projects/" + project.getId());
-
-                notificationService.createNotification(
-                        kickedMember,
-                        "You have been removed from project: " + project.getTitle(),
-                        destinationUrl
-                );
-            } else {
-                throw new EntityNotFoundException(User.class, memberId);
-            }
-        } else {
-            throw new UserUnauthorizedException(user.getId());
+        // only teachers may remove members
+        if (!actor.hasRole(Role.TEACHER)) {
+            throw new UserUnauthorizedException(actor.getId());
         }
+
+        final User kicked = userService.getUserById(memberId);
+
+        // fail fast if the user isn’t a member of this project
+        final boolean removed = project.getMembers().removeIf(m -> m.getId().equals(memberId));
+        if (!removed) {
+            throw new EntityNotFoundException(User.class, memberId);
+        }
+
+        // If the removed member was the Product Owner, reassign (or clear)
+        if (kicked.isProductOwner(project)) {
+            project.setProductOwner(project.hasAnyMembers() ? project.getMembers().get(0) : null);
+        }
+
+        // Mark any application of the removed user to this project as REJECTED
+        project.getApplications().stream()
+                .filter(a -> a.getApplicant().getId().equals(memberId))
+                .findFirst()
+                .ifPresent(a -> a.setStatus(ApplicationStatusEnum.REJECTED));
+
+        projectRepository.save(project);
+
+        // Notify removed user
+        final String destinationUrl = UrlHelper.buildCourseAssignmentUrl(
+                UrlHelper.sluggify(project.getAssignment().getCourse().getName()),
+                UrlHelper.sluggify(project.getAssignment().getName()),
+                "projects/" + project.getId()
+        );
+        notificationService.createNotification(
+                kicked,
+                "You have been removed from project: " + project.getTitle(),
+                destinationUrl
+        );
+
+        logger.info("[{}] Member ID: {} removed from project ID: {} by User ID: {}",
+                ProjectService.class.getSimpleName(), memberId, projectId, actor.getId());
     }
 
     @Override
@@ -370,13 +294,13 @@ public class ProjectServiceImpl implements ProjectService {
         final User user = userService.getUserByPrincipal(principal);
         final Project project = getProjectById(projectId);
 
-        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, project.getAssignment().getId())) {
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(user, project.getAssignment())) {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
         // reject all other applications of the user
         user.getApplications().stream()
-                .filter(application -> application.getProject().getAssignment().getId().equals(project.getAssignment().getId()))
+                .filter(application -> application.hasSameAssignment(project))
                 .forEach(application -> application.setStatus(ApplicationStatusEnum.REJECTED));
 
         project.getMembers().add(user);
@@ -403,7 +327,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new BaseRuntimeException("Project with GID: " + gid + " already exists in this assignment", HttpStatus.CONFLICT);
         }
 
-        if (projectUserService.isUserMemberOfAnyProjectInAssignment(principal, assignmentId)) {
+        if (projectUserService.isUserMemberOfAnyProjectInAssignment(user, assignment)) {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
@@ -425,7 +349,7 @@ public class ProjectServiceImpl implements ProjectService {
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
 
-        String destinationUrl = UrlHelper.UrlBuilder("/projects", importedProject.getId().toString());
+        String destinationUrl = UrlHelper.urlBuilder("/projects", importedProject.getId().toString());
 
         notificationService.createNotification(
                 project.getCreatedBy(),
@@ -453,8 +377,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<ProjectDetailsDto> getAllGlobalProjects(Principal principal) {
-        User user = userService.getUserFromAnyPrincipal(principal);
-        if (user.getRole() == Role.RESEARCHER) {
+        User user = userService.getUserByPrincipal(principal);
+        if (user.hasRole(Role.RESEARCHER)) {
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(user));
         } else {
             // Return all projects where createdBy user has role RESEARCHER and has no assignment
@@ -463,13 +387,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     }
 
-
-    /**
-     * Get all projects for a specific assignment with a specific status
-     * @param assignmentId the id of the assignment for which to get the projects
-     * @param status the status of the projects to get
-     * @return List of Project
-    */
     @Override
     public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
         return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);

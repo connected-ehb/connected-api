@@ -21,6 +21,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "projects")
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,7 +57,7 @@ public class Project {
     @JoinColumn(name = "created_by_user_id")
     private User createdBy;
 
-    @ManyToOne(fetch= FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_owner_user_id")
     private User productOwner;
 
@@ -66,13 +67,33 @@ public class Project {
 
     @ManyToMany
     @JoinTable(
-            name = "members",
+            name = "project_user",
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> members = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Feedback> feedbacks = new ArrayList<>();
+
+    public boolean hasStatus(ProjectStatusEnum status) {
+        return this.status.equals(status);
+    }
+
+    public boolean hasAnyMembers() {
+        return this.members.isEmpty();
+    }
+
+    public boolean hasUserApplied(User user) {
+        return this.getApplications().stream().anyMatch(user::isApplicant);
+    }
+
+    public boolean hasReachedMaxMembers() {
+        return members.size() >= teamSize;
+    }
+
+    public boolean isEditable() {
+        return !this.hasStatus(ProjectStatusEnum.APPROVED) && !this.hasStatus(ProjectStatusEnum.REJECTED) && !this.hasStatus(ProjectStatusEnum.PUBLISHED);
+    }
 
 }

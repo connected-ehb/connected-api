@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 public class ConnectedApplication {
 
 	public static void main(String[] args) {
+		//klein testje
 		SpringApplication.run(ConnectedApplication.class, args);
 	}
 

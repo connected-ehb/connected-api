@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 @Component
 public  class UrlHelper {
 
-    public static String Sluggify(String input) {
+    public static String sluggify(String input) {
         // Replace spaces with hyphens
         String slug = input.replace(" ", "-");
         //to lowercase
@@ -16,8 +16,8 @@ public  class UrlHelper {
         return slug;
     }
 
-    public static String BuildCourseAssignmentUrl(String courseName, String assignmentName, String... parts){
-        return UrlBuilder(concatenateArrays(new String[]{"course", courseName, "assignment", assignmentName}, parts));
+    public static String buildCourseAssignmentUrl(String courseName, String assignmentName, String... parts){
+        return urlBuilder(concatenateArrays(new String[]{"course", courseName, "assignment", assignmentName}, parts));
     }
 
     private static String[] concatenateArrays(String[] first, String[] second) {
@@ -27,13 +27,13 @@ public  class UrlHelper {
         return result;
     }
 
-    public static String UrlBuilder(String... parts){
+    public static String urlBuilder(String... parts){
         StringBuilder url = new StringBuilder();
         for (String part : parts) {
            if(!url.isEmpty()){
                 url.append("/");
            }
-            url.append(Sluggify(part));
+            url.append(sluggify(part));
         }
         return url.toString();
     }
