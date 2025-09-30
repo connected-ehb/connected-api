@@ -11,7 +11,7 @@ jobs:
     runs-on: [self-hosted, dev, connected, api]
     environment: dev
     container:
-      image: maven:3.9.8-eclipse-temurin-17
+      image: maven:3.9.8-eclipse-temurin-21
       options: --user 1000:1000
     steps:
       - uses: actions/checkout@v4
@@ -57,9 +57,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        run: docker build -t connected-api:dev .
 
       - name: Write .env for Compose
         shell: bash
