@@ -25,7 +25,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Setter
@@ -38,15 +42,15 @@ public class User implements UserDetails, Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     private Long canvasUserId;
 
     private String firstName;
     private String lastName;
-    
+
     @Column(unique = true)
     private String email;
-    
+
     private String password;
 
     private String fieldOfStudy;
@@ -152,5 +156,12 @@ public class User implements UserDetails, Serializable {
 
     public boolean isCreator(Project project) {
         return project.getCreatedBy().equals(this);
+    }
+
+    public boolean canViewProject(Project project) {
+        return project.getCreatedBy().hasRole(Role.TEACHER) ||
+                project.getCreatedBy().hasRole(Role.RESEARCHER) ||
+                this.hasRole(Role.TEACHER) ||
+                this.isProductOwner(project);
     }
 }
