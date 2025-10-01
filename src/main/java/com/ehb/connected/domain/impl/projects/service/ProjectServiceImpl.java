@@ -186,16 +186,15 @@ public class ProjectServiceImpl implements ProjectService {
 
         final Assignment assignment = project.getAssignment();
 
+        if (project.hasStatus(ProjectStatusEnum.REJECTED)) {
+            throw new BaseRuntimeException("Cannot change status of a rejected project", HttpStatus.CONFLICT);
+        }
+
         if (assignment == null) {
             throw new BaseRuntimeException("Cannot change status of global project", HttpStatus.CONFLICT);
         }
 
         ProjectStatusEnum previousStatus = project.getStatus();
-
-        // this case only happens when a rejected project status gets changed
-        if (project.hasStatus(ProjectStatusEnum.REJECTED) && projectUserService.isUserMemberOfAnyProjectInAssignment(user, assignment)) {
-            throw new BaseRuntimeException("This student is already part of another active project in this assignment.", HttpStatus.CONFLICT);
-        }
 
         project.setStatus(status);
         projectRepository.save(project);
