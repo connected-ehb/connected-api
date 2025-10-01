@@ -211,4 +211,11 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new EntityNotFoundException(Course.class, courseId));
     }
+
+    @Override
+    public void deleteCourseById(Long courseId) {
+        courseRepository.deleteById(courseId);
+    }
+
+
 }
