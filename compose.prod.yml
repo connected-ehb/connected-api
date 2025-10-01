@@ -2,6 +2,7 @@ services:
   db:
     image: mysql:9.4.0
     container_name: connected_db
+    restart: always
     environment:
       MYSQL_DATABASE: connected
       MYSQL_USER: connected
@@ -22,6 +23,7 @@ services:
       context: .
     image: connected-api:prod
     container_name: connected_app
+    restart: always
     env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
