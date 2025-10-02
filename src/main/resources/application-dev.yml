@@ -59,3 +59,7 @@ spring:
             authorization-uri: ${connected.canvas-uri}/login/oauth2/auth
             token-uri: ${connected.canvas-uri}/login/oauth2/token
             user-info-uri: ${connected.canvas-uri}/api/v1/users/self
+server:
+  servlet:
+    session:
+      timeout: 4h
