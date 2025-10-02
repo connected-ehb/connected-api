@@ -31,13 +31,16 @@ public class User implements UserDetails, Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Long canvasUserId;
 
     // ---------- Personal Info ----------
     private String firstName;
     private String lastName;
+
     @Column(unique = true)
     private String email;
+
     private String password;
     private String fieldOfStudy;
     private String profileImageUrl;

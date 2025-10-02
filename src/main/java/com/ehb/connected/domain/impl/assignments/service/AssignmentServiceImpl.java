@@ -82,4 +82,9 @@ public class AssignmentServiceImpl implements AssignmentService {
     private boolean existsAssignmentByCanvasId(Long canvasAssignmentId) {
         return assignmentRepository.existsByCanvasId(canvasAssignmentId);
     }
+
+    public void deleteAssignmentById(Principal principal, Long assignmentId) {
+        Assignment assignment = getAssignmentById(assignmentId);
+        assignmentRepository.delete(assignment);
+    }
 }
