@@ -55,14 +55,12 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
-                        .successHandler(customAuthenticationSuccessHandler)
                         .defaultSuccessUrl(frontendUri, true)
                         .failureUrl(frontendUri + "/login?error=oauth2")
                 )
                 .formLogin(form -> form
                         .loginPage(frontendUri + "/login")
                         .loginProcessingUrl("/api/auth/login")
-                        .successHandler(customAuthenticationSuccessHandler)
                         .defaultSuccessUrl(frontendUri, true)
                         .failureUrl(frontendUri + "/login?error=form")
                         .permitAll()
