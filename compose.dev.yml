@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:9.4.0
-    container_name: connected_db
+    container_name: connected-db-dev
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: connected
@@ -22,7 +22,7 @@ services:
     build:
       context: .
     image: connected-api:dev
-    container_name: connected_app
+    container_name: connected-api-dev
     restart: unless-stopped
     env_file: .env
     environment:

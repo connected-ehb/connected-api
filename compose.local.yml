@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:9.4.0
-    container_name: connected_db
+    container_name: connected-db-local
     environment:
       MYSQL_DATABASE: connected
       MYSQL_USER: ${DB_USERNAME}
