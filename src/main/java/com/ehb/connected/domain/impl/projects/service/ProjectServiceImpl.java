@@ -184,6 +184,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         final Project project = getProjectById(projectId);
 
+        // Check if user is the owner of the project or a teacher
+        // Check if user is the owner of the project or a teacher
         final Assignment assignment = project.getAssignment();
 
         if (project.hasStatus(ProjectStatusEnum.REJECTED)) {
