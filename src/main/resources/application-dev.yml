@@ -2,6 +2,18 @@ connected:
   canvas-uri: ${CANVAS_URI}
   frontend-uri: ${FRONTEND_URI}
 
+logging:
+  level:
+    root: INFO
+    org.hibernate: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+
+server:
+  servlet:
+    session:
+      timeout: 8h
+
 spring:
   application:
     name: connected
@@ -59,7 +71,3 @@ spring:
             authorization-uri: ${connected.canvas-uri}/login/oauth2/auth
             token-uri: ${connected.canvas-uri}/login/oauth2/token
             user-info-uri: ${connected.canvas-uri}/api/v1/users/self
-server:
-  servlet:
-    session:
-      timeout: 4h
