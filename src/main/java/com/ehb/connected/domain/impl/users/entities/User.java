@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.users.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.projects.entities.Project;
+import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -159,7 +160,8 @@ public class User implements UserDetails, Serializable {
     }
 
     public boolean canViewProject(Project project) {
-        return project.getCreatedBy().hasRole(Role.TEACHER) ||
+        return project.hasStatus(ProjectStatusEnum.PUBLISHED) ||
+                project.getCreatedBy().hasRole(Role.TEACHER) ||
                 project.getCreatedBy().hasRole(Role.RESEARCHER) ||
                 this.hasRole(Role.TEACHER) ||
                 this.isProductOwner(project);
