@@ -55,3 +55,6 @@ jobs:
       - name: Clean up secrets
         if: always()
         run: rm -f .env
+
+      - name: Cleanup old images
+        run: docker image prune -f

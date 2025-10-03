@@ -20,7 +20,11 @@ import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
-import com.ehb.connected.exceptions.*;
+import com.ehb.connected.exceptions.BaseRuntimeException;
+import com.ehb.connected.exceptions.DeadlineExpiredException;
+import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
+import com.ehb.connected.exceptions.UserUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,19 +60,12 @@ public class ProjectServiceImpl implements ProjectService {
         if (user.hasRole(Role.RESEARCHER) && user.isCreator(project)) {
             return projectMapper.toResearcherDetailsDto(project);
         }
-        if (canViewProject(user, project)) {
+        if (user.canViewProject(project)) {
             return projectMapper.toDetailsDto(project);
 
         } else {
             throw new UserUnauthorizedException(user.getId());
         }
-    }
-
-    private boolean canViewProject(User user, Project project) {
-        return project.getCreatedBy().hasRole(Role.TEACHER) ||
-                project.getCreatedBy().hasRole(Role.RESEARCHER) ||
-                user.hasRole(Role.TEACHER) ||
-                user.isProductOwner(project);
     }
 
     @Override
@@ -187,11 +184,18 @@ public class ProjectServiceImpl implements ProjectService {
 
         final Project project = getProjectById(projectId);
 
-        if (project.getAssignment() == null) {
+        final Assignment assignment = project.getAssignment();
+
+        if (project.hasStatus(ProjectStatusEnum.REJECTED)) {
+            throw new BaseRuntimeException("Cannot change status of a rejected project", HttpStatus.CONFLICT);
+        }
+
+        if (assignment == null) {
             throw new BaseRuntimeException("Cannot change status of global project", HttpStatus.CONFLICT);
         }
 
         ProjectStatusEnum previousStatus = project.getStatus();
+
         project.setStatus(status);
         projectRepository.save(project);
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",

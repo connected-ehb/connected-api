@@ -2,6 +2,18 @@ connected:
   canvas-uri: ${CANVAS_URI}
   frontend-uri: ${FRONTEND_URI}
 
+logging:
+  level:
+    root: ERROR
+    org.hibernate: ERROR
+    org.springframework.web: ERROR
+    org.springframework.security: ERROR
+
+server:
+  servlet:
+    session:
+      timeout: 4h
+
 spring:
   application:
     name: connected
