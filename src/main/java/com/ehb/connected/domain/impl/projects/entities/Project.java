@@ -53,11 +53,11 @@ public class Project {
     )
     private List<Tag> tags = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "created_by_user_id")
     private User createdBy;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "product_owner_user_id")
     private User productOwner;
 

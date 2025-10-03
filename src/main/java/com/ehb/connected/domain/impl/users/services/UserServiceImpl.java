@@ -138,7 +138,6 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         String url = frontendUri + "/verify?token=" + token;
-        System.out.println(url);
         emailService.sendEmail(
                 email,
                 "Please verify your email",
