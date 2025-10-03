@@ -8,7 +8,7 @@ on:
 jobs:
   sonar-analysis:
     name: Build and analyze
-    runs-on: [self-hosted, dev, connected, api]
+    runs-on: [ self-hosted, dev, connected, api ]
     environment: dev
     container:
       image: maven:3.9.8-eclipse-temurin-21
@@ -45,7 +45,7 @@ jobs:
 
   build-and-deploy:
     name: Deploy to Dev Server
-    runs-on: [self-hosted, dev, connected, api]
+    runs-on: [ self-hosted, dev, connected, api ]
     environment: dev
     needs: sonar-analysis   # only run if sonar succeeds
     steps:
@@ -92,3 +92,6 @@ jobs:
       - name: Clean up secrets
         if: always()
         run: rm -f .env
+
+      - name: Cleanup old images
+        run: docker image prune -f

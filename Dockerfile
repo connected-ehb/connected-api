@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd 
   && rm -rf /var/lib/apt/lists/*
 
 # Copy the built jar (use a glob so version bumps don’t break builds)
-COPY --from=build /workspace/target/*-SNAPSHOT.jar /app/app.jar
+COPY --from=build /workspace/target/connected-*.jar /app/app.jar
+
 
 EXPOSE 8080
 

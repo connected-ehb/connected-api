@@ -2,21 +2,8 @@ package com.ehb.connected.domain.impl.users.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.projects.entities.Project;
-import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,12 +27,14 @@ import java.util.Objects;
 @Table(name = "users")
 public class User implements UserDetails, Serializable {
 
+    // ---------- Identifiers ----------
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long canvasUserId;
 
+    // ---------- Personal Info ----------
     private String firstName;
     private String lastName;
 
@@ -53,30 +42,30 @@ public class User implements UserDetails, Serializable {
     private String email;
 
     private String password;
-
     private String fieldOfStudy;
     private String profileImageUrl;
     private String linkedinUrl;
     private String aboutMe;
 
-    // OAuth2 tokens - stored for Canvas API calls
+    // ---------- OAuth2 / Tokens ----------
     private String accessToken;
     private String refreshToken;
 
-    // Email verification
+    // ---------- Email Verification ----------
     private String emailVerificationToken;
     private LocalDateTime emailVerificationTokenExpiry;
     private boolean emailVerified = false;
 
+    // ---------- Role & Security ----------
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // Account status
     private boolean accountNonExpired = true;
     private boolean accountNonLocked = true;
     private boolean credentialsNonExpired = true;
     private boolean enabled = true;
 
+    // ---------- Relations ----------
     @OneToMany(mappedBy = "applicant", cascade = CascadeType.ALL)
     private List<Application> applications = new ArrayList<>();
 
@@ -96,12 +85,34 @@ public class User implements UserDetails, Serializable {
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<Tag> tags = new ArrayList<>();
 
+    // ---------- Account Management ----------
     private LocalDateTime deleteRequestedAt;
 
+    // ---------- Utility Methods ----------
     public boolean hasRole(Role role) {
         return this.role.equals(role);
     }
 
+    public boolean isProductOwner(Project project) {
+        return this.equals(project.getProductOwner());
+    }
+
+    public boolean isApplicant(Application application) {
+        return this.equals(application.getApplicant());
+    }
+
+    public boolean isCreator(Project project) {
+        return project.getCreatedBy().equals(this);
+    }
+
+    public boolean canViewProject(Project project) {
+        return project.getCreatedBy().hasRole(Role.TEACHER) ||
+                project.getCreatedBy().hasRole(Role.RESEARCHER) ||
+                this.hasRole(Role.TEACHER) ||
+                this.isProductOwner(project);
+    }
+
+    // ---------- UserDetails Implementation ----------
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (role == null) {
@@ -135,6 +146,7 @@ public class User implements UserDetails, Serializable {
         return enabled && emailVerified;
     }
 
+    // ---------- Equals & HashCode ----------
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -145,25 +157,5 @@ public class User implements UserDetails, Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(id, canvasUserId);
-    }
-
-    public boolean isProductOwner(Project project) {
-        return this.equals(project.getProductOwner());
-    }
-
-    public boolean isApplicant(Application application) {
-        return this.equals(application.getApplicant());
-    }
-
-    public boolean isCreator(Project project) {
-        return project.getCreatedBy().equals(this);
-    }
-
-    public boolean canViewProject(Project project) {
-        return project.hasStatus(ProjectStatusEnum.PUBLISHED) ||
-                project.getCreatedBy().hasRole(Role.TEACHER) ||
-                project.getCreatedBy().hasRole(Role.RESEARCHER) ||
-                this.hasRole(Role.TEACHER) ||
-                this.isProductOwner(project);
     }
 }

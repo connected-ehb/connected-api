@@ -7,6 +7,7 @@ import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,32 +22,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-    private final UserService userService;
-    private final UserDetailsMapper userDetailsMapper;
 
     @GetMapping("/user")
-    public ResponseEntity<AuthUserDetailsDto> getCurrentUser(@AuthenticationPrincipal OAuth2User principal) {
-        return ResponseEntity.ok(userService.getCurrentUser(principal));
-    }
-
-    @GetMapping("/status")
-    public ResponseEntity<Object> getAuthenticationStatus(@AuthenticationPrincipal OAuth2User principal) {
-        if (principal == null) {
-            return ResponseEntity.status(401).body(Map.of("authenticated", false));
-        }
-        
-        try {
-            // Try to get user details
-            AuthUserDetailsDto userDetails = userService.getCurrentUser(principal);
-            return ResponseEntity.ok(Map.of(
-                "authenticated", true,
-                "emailVerified", userDetails.getIsVerified(),
-                "role", userDetails.getRole(),
-                "requiresEmailVerification", !userDetails.getIsVerified()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of("authenticated", false));
-        }
+    public ResponseEntity<AuthUserDetailsDto> getCurrentUser(HttpServletRequest request) {
+        return ResponseEntity.ok(authService.refreshSessionIfStale(request));
     }
 
     @PostMapping("/logout")

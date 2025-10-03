@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -69,5 +70,12 @@ public class CourseController {
     @GetMapping("/{courseId}/students")
     public List<UserDetailsDto> getAllEnrolledStudentsByCourse(@PathVariable Long courseId){
         return userService.getAllStudentsByCourseId(courseId);
+    }
+
+    @PreAuthorize("hasAnyAuthority('course:delete')")
+    @DeleteMapping("/{courseId}")
+    public  ResponseEntity<Void> deleteCourse(@PathVariable Long courseId){
+        courseService.deleteCourseById(courseId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -11,6 +11,7 @@ import com.ehb.connected.domain.impl.assignments.service.AssignmentServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +41,13 @@ public class AssignmentController {
     @PostMapping("/")
     public ResponseEntity<AssignmentDetailsDto> createAssignment(@RequestBody AssignmentCreateDto assignmentDto) {
         return ResponseEntity.ok(assignmentService.createAssignment(assignmentDto));
+    }
+
+    @PreAuthorize("hasAnyAuthority('assignment:delete')")
+    @DeleteMapping("/{assignmentId}")
+    public ResponseEntity<Void> deleteAssignment(Principal principal, @PathVariable Long assignmentId) {
+        assignmentService.deleteAssignmentById(principal, assignmentId);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyAuthority('application:read_all')")
