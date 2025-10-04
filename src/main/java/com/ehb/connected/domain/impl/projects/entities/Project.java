@@ -80,7 +80,7 @@ public class Project {
         return this.status.equals(status);
     }
 
-    public boolean hasAnyMembers() {
+    public boolean hasNoMembers() {
         return this.members.isEmpty();
     }
 

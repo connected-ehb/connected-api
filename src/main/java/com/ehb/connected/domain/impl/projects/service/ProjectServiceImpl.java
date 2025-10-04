@@ -266,7 +266,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         // If the removed member was the Product Owner, reassign (or clear)
         if (kicked.isProductOwner(project)) {
-            project.setProductOwner(project.hasAnyMembers() ? project.getMembers().get(0) : null);
+            project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
         }
 
         // Mark any application of the removed user to this project as REJECTED
