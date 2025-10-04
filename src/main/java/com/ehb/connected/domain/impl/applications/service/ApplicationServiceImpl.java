@@ -81,7 +81,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
-        if (!project.hasAnyMembers()) {
+        if (project.hasNoMembers()) {
             throw new BaseRuntimeException("You can only claim this project", HttpStatus.CONFLICT);
         }
     }
