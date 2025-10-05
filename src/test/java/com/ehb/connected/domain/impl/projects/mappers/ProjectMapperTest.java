@@ -1,5 +1,7 @@
 package com.ehb.connected.domain.impl.projects.mappers;
 
+import com.ehb.connected.domain.impl.assignments.entities.Assignment;
+import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
@@ -13,8 +15,6 @@ import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
-import com.ehb.connected.domain.impl.assignments.entities.Assignment;
-import com.ehb.connected.domain.impl.courses.entities.Course;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
