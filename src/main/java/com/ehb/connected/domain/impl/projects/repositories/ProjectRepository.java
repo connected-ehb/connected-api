@@ -30,5 +30,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findAllByCreatedBy(User principal);
 
+    List<Project> findAllByAssignmentIdAndCreatedBy(Long assignmentId, User createdBy);
+
     List<Project> findAllByCreatedByRoleAndAssignmentIsNull(Role role);
 }
