@@ -75,6 +75,7 @@ public enum Role implements GrantedAuthority {
                     Permission.SYNC_CANVAS,
                     Permission.VIEW_STUDENT_COURSE,
                     Permission.READ_ALL_COURSES,
+                    Permission.REFRESH_COURSE,
                     Permission.READ_ALL_ASSIGNMENTS,
                     Permission.READ_ENROLLED_COURSES,
                     Permission.CREATE_DEADLINE,
@@ -90,7 +91,8 @@ public enum Role implements GrantedAuthority {
                     Permission.DELETE_REVIEW,
                     Permission.CREATE_ANNOUNCEMENT,
                     Permission.READ_ALL_ANNOUNCEMENT,
-                    Permission.CREATE_INVITATION
+                    Permission.CREATE_INVITATION,
+                    Permission.READ_DASHBOARD
             )
     ),
     RESEARCHER(

@@ -20,6 +20,8 @@ public interface ProjectService {
     ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto project);
     ProjectDetailsDto save(Principal principal, Long id, ProjectUpdateDto project);
 
+    List<ProjectDetailsDto> findAllInAssignmentCreatedBy(Long assignmentId, Principal principal);
+
     void save(Project project);
 
     ProjectDetailsDto changeProjectStatus(Principal principal, Long id, ProjectStatusEnum status);

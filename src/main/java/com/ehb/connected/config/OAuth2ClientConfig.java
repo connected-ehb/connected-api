@@ -20,7 +20,7 @@ public class OAuth2ClientConfig {
         OAuth2AuthorizedClientProvider authorizedClientProvider =
                 OAuth2AuthorizedClientProviderBuilder.builder()
                         .authorizationCode()
-                        .refreshToken() // This enables the refresh token support
+                        .refreshToken()
                         .build();
 
         AuthorizedClientServiceOAuth2AuthorizedClientManager authorizedClientManager =

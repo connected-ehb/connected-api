@@ -1,6 +1,7 @@
 package com.ehb.connected.config;
 
 import com.ehb.connected.domain.impl.auth.helpers.CustomAuthenticationSuccessHandler;
+import com.ehb.connected.domain.impl.auth.helpers.CustomLogoutSuccessHandler;
 import com.ehb.connected.domain.impl.auth.helpers.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
+                                "/api/auth/**",
                                 "/api/auth/login",
                                 "/api/auth/register",
                                 "/login/**", 
@@ -55,7 +57,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
-                        .defaultSuccessUrl(frontendUri, true)
+                        .successHandler(customAuthenticationSuccessHandler)
                         .failureUrl(frontendUri + "/login?error=oauth2")
                 )
                 .formLogin(form -> form

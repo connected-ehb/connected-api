@@ -29,6 +29,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -123,38 +124,9 @@ public class CourseServiceImpl implements CourseService {
         Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
         importCourse(courseEntity);
 
-        String courseId = courseEntity.getCanvasId().toString();
-        List<Map<String, Object>> allEnrollments = new ArrayList<>();
-        String url = "/api/v1/courses/" + courseId + "/enrollments?per_page=100";
+        final List<Long> userIds = fetchAllCanvasUserIdsForCourse(token, courseEntity.getCanvasId());
 
-        while (url != null) {
-            ResponseEntity<String> responseEntity = webClient.get()
-                    .uri(url)
-                    .header("Authorization", "Bearer " + token)
-                    .retrieve()
-                    .toEntity(String.class)
-                    .block();
-
-            if (responseEntity == null) {
-                break;
-            }
-
-            String body = responseEntity.getBody();
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<Map<String, Object>> enrollments = objectMapper.readValue(body,
-                        new TypeReference<List<Map<String, Object>>>() {});
-                allEnrollments.addAll(enrollments);
-            } catch (Exception e) {
-                throw new BaseRuntimeException("Error parsing enrollments", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            List<String> linkHeaders = responseEntity.getHeaders().get("Link");
-            url = (linkHeaders != null && !linkHeaders.isEmpty()) ? extractNextUrl(linkHeaders.get(0)) : null;
-        }
-
-        for (Map<String, Object> enrollment : allEnrollments) {
-            Long canvasUserId = Long.parseLong(enrollment.get("user_id").toString());
+        for (Long canvasUserId : new HashSet<>(userIds)) {
             enrollmentService.enrollUser(courseEntity, canvasUserId);
         }
 
@@ -217,5 +189,76 @@ public class CourseServiceImpl implements CourseService {
         courseRepository.deleteById(courseId);
     }
 
+    @Override
+    public CourseDetailsDto refreshEnrollments(Principal principal, Long courseId) {
+        final User requester = userService.getUserByPrincipal(principal);
+        final String token = canvasTokenService.getValidAccessToken(principal);
+        final Course course = getCourseById(courseId);
 
+        if (course.getCanvasId() == null) {
+            throw new BaseRuntimeException("Course has no Canvas ID; cannot refresh enrollments.", HttpStatus.BAD_REQUEST);
+        }
+
+        final List<Long> canvasUserIds = fetchAllCanvasUserIdsForCourse(token, course.getCanvasId());
+
+        if (canvasUserIds.isEmpty()) {
+            long current = enrollmentService.countByCourseId(course.getId());
+            if (current > 0) {
+                throw new BaseRuntimeException(
+                        "Canvas returned 0 enrollments. Refusing to clear existing enrollments.",
+                        HttpStatus.CONFLICT
+                );
+            }
+        }
+
+        enrollmentService.replaceCourseEnrollments(course, canvasUserIds);
+
+        logger.info("[{}] Enrollments refreshed for Course ID: {} ({} users) by User ID: {}",
+                CourseService.class.getSimpleName(), courseId, canvasUserIds.size(), requester.getId());
+
+        return courseMapper.toCourseDetailsDto(course);
+    }
+
+    private List<Long> fetchAllCanvasUserIdsForCourse(String token, Long canvasCourseId) {
+        final List<Long> allUserIds = new ArrayList<>();
+        String url = "/api/v1/courses/" + canvasCourseId + "/enrollments?per_page=100";
+
+        while (url != null) {
+            ResponseEntity<String> responseEntity;
+            try {
+                responseEntity = webClient.get()
+                        .uri(url)
+                        .header("Authorization", "Bearer " + token)
+                        .retrieve()
+                        .toEntity(String.class)
+                        .block();
+            } catch (Exception e) {
+                if (e instanceof WebClientResponseException ex && ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                    throw new AccessTokenExpiredException();
+                }
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error fetching enrollments from Canvas API", e);
+            }
+            if (responseEntity == null) break;
+
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<Map<String, Object>> enrollments = objectMapper.readValue(
+                        responseEntity.getBody(),
+                        new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
+                for (Map<String, Object> enrollment : enrollments) {
+                    Object userIdObj = enrollment.get("user_id");
+                    if (userIdObj != null) {
+                        allUserIds.add(Long.parseLong(userIdObj.toString()));
+                    }
+                }
+            } catch (Exception e) {
+                throw new BaseRuntimeException("Error parsing enrollments", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<String> linkHeaders = responseEntity.getHeaders().get("Link");
+            url = (linkHeaders != null && !linkHeaders.isEmpty()) ? extractNextUrl(linkHeaders.get(0)) : null;
+        }
+        return allUserIds;
+    }
 }

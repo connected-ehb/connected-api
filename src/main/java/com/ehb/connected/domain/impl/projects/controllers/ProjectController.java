@@ -151,4 +151,10 @@ public class ProjectController {
     public ResponseEntity<ReviewDetailsDto> createOrUpdateReviewForProject(Principal principal, @PathVariable Long projectId, @RequestBody ReviewCreateDto reviewCreateDto) {
         return ResponseEntity.ok(reviewService.createOrUpdateReviewForProject(principal, projectId, reviewCreateDto));
     }
+
+    @PreAuthorize("hasAnyAuthority('project:read')")
+    @GetMapping("/my-projects/{assignmentId}")
+    public ResponseEntity<List<ProjectDetailsDto>> getMyProjects(Principal principal, @PathVariable  Long assignmentId) {
+        return ResponseEntity.ok(projectService.findAllInAssignmentCreatedBy(assignmentId, principal));
+    }
 }

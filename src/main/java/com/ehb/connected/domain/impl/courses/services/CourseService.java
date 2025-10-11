@@ -15,5 +15,5 @@ public interface CourseService {
     List<CourseDetailsDto> getCoursesByEnrollment(Principal principal);
     Course getCourseById(Long courseId);
     void deleteCourseById(Long courseId);
-
+    CourseDetailsDto refreshEnrollments(Principal principal, Long courseId);
 }

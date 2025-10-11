@@ -78,4 +78,10 @@ public class CourseController {
         courseService.deleteCourseById(courseId);
         return ResponseEntity.noContent().build();
     }
+
+    @PreAuthorize("hasAnyAuthority('course:refresh')")
+    @PostMapping("/{courseId}/enrollments/refresh")
+    public ResponseEntity<CourseDetailsDto> refreshEnrollments(Principal principal, @PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.refreshEnrollments(principal, courseId));
+    }
 }

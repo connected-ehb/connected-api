@@ -53,6 +53,7 @@ public enum Permission {
     READ_ENROLLED_COURSES("course:read_enrolled"),
     UPDATE_COURSE("course:update"),
     DELETE_COURSE("course:delete"),
+    REFRESH_COURSE("course:refresh"),
     VIEW_STUDENT_COURSE("course:view_students"),
 
     CREATE_ASSIGNMENT("assignment:create"),
@@ -71,8 +72,9 @@ public enum Permission {
     CREATE_ANNOUNCEMENT("announcement:create"),
     READ_ALL_ANNOUNCEMENT("announcement:read_all"),
 
-
     SYNC_CANVAS("canvas:sync"),
+
+    READ_DASHBOARD("dashboard:read"),
     ;
 
     private final String permission;

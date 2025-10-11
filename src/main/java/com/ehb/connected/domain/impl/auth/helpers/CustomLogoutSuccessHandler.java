@@ -1,5 +1,6 @@
-package com.ehb.connected.config;
+package com.ehb.connected.domain.impl.auth.helpers;
 
+import com.ehb.connected.domain.impl.auth.services.RememberMeService;
 import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
@@ -20,6 +21,7 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
 
     private final UserRepository userRepository;
     private final CanvasAuthService canvasAuthService;
+    private final RememberMeService rememberMeService;
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -40,6 +42,9 @@ public class CustomLogoutSuccessHandler implements LogoutSuccessHandler {
                 user.setAccessToken(null);
                 user.setRefreshToken(null);
                 userRepository.save(user);
+
+                // Invalidate remember-me token
+                rememberMeService.clearRememberMe(user, response);
             }
         }
     }

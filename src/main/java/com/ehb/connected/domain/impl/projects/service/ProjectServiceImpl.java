@@ -174,6 +174,18 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public List<ProjectDetailsDto> findAllInAssignmentCreatedBy(Long assignmentId, Principal principal) {
+        User user = userService.getUserByPrincipal(principal);
+        List<Project> projects = projectRepository.findAllByAssignmentIdAndCreatedBy(assignmentId, user);
+
+        List<Project> filtered = projects.stream()
+                .filter(p -> p.getCreatedBy().getId().equals((user.getId())) ||
+                        p.getMembers().stream().anyMatch(m -> m.getId().equals(user.getId())))
+                .toList();
+        return projectMapper.toDetailsDtoList(filtered);
+    }
+
+    @Override
     public void save(Project project) {
         projectRepository.save(project);
     }
@@ -395,4 +407,5 @@ public class ProjectServiceImpl implements ProjectService {
     public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
         return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);
     }
+
 }
