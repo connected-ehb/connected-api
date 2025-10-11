@@ -3,19 +3,18 @@ package com.ehb.connected.domain.impl.auth.controllers;
 import com.ehb.connected.domain.impl.auth.entities.LoginRequestDto;
 import com.ehb.connected.domain.impl.auth.entities.RegistrationRequestDto;
 import com.ehb.connected.domain.impl.auth.services.AuthService;
-import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
-import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
-import com.ehb.connected.domain.impl.users.services.UserService;
+import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,7 +24,7 @@ public class AuthController {
 
     @GetMapping("/user")
     public ResponseEntity<AuthUserDetailsDto> getCurrentUser(HttpServletRequest request) {
-        return ResponseEntity.ok(authService.refreshSessionIfStale(request));
+        return ResponseEntity.ok(authService.getCurrentUser(request));
     }
 
     @PostMapping("/logout")
