@@ -91,7 +91,8 @@ public enum Role implements GrantedAuthority {
                     Permission.DELETE_REVIEW,
                     Permission.CREATE_ANNOUNCEMENT,
                     Permission.READ_ALL_ANNOUNCEMENT,
-                    Permission.CREATE_INVITATION
+                    Permission.CREATE_INVITATION,
+                    Permission.READ_DASHBOARD
             )
     ),
     RESEARCHER(
