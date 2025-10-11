@@ -23,11 +23,11 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -36,38 +36,31 @@ import java.util.Objects;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
-    private final UserService userService;
     private final UserDetailsMapper userDetailsMapper;
     private final CanvasAuthService canvasAuthService;
     private final InvitationService invitationService;
     private final PasswordEncoder passwordEncoder;
+    private final RememberMeService rememberMeService;
 
     @Override
     public UserDetailsDto register(RegistrationRequestDto request) {
-        // Validate the invitation code (expires after one use or 24 hours)
         if (!invitationService.validateInvitationCode(request.getInvitationCode())) {
             throw new BaseRuntimeException("Invalid or expired invitation code.", HttpStatus.BAD_REQUEST);
         }
 
-        // Check if a user with the given email already exists
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new BaseRuntimeException("A user with this email already exists.", HttpStatus.CONFLICT);
         }
 
-        // Create and configure a new User entity
         User user = new User();
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        // Encode the password before saving!
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.RESEARCHER);
-        // Save the new user
         user = userRepository.save(user);
 
-        // Mark the invitation code as used
         invitationService.markInvitationAsUsed(request.getInvitationCode());
-
         return userDetailsMapper.toUserDetailsDto(user);
     }
 
@@ -91,6 +84,49 @@ public class AuthServiceImpl implements AuthService {
         user.setAccessToken(null);
         user.setRefreshToken(null);
         userRepository.save(user);
+    }
+
+    /**
+     * Retrieves the current authenticated user.
+     * If the session expired, tries to restore it using the remember-me cookie.
+     */
+    @Override
+    public AuthUserDetailsDto getCurrentUser(HttpServletRequest request) {
+        try {
+            return refreshSessionIfStale(request);
+        } catch (BaseRuntimeException ex) {
+            log.debug("Session invalid or missing, trying remember-me restoration...");
+            return rememberMeService.validateRememberMeToken(request)
+                    .map(user -> restoreSessionFromUser(user, request))
+                    .orElseThrow(() -> ex);
+        }
+    }
+
+    private AuthUserDetailsDto restoreSessionFromUser(User user, HttpServletRequest request) {
+        log.info("Restoring session for remembered user [{}]", user.getEmail());
+
+        CustomOAuth2User principal = new CustomOAuth2User(
+                user,
+                Map.of("id", user.getCanvasUserId()),
+                "id"
+        );
+
+        Authentication auth = new OAuth2AuthenticationToken(
+                principal,
+                principal.getAuthorities(),
+                "canvas"
+        );
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        request.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
+
+        return userDetailsMapper.toDtoWithPrincipal(user, principal);
     }
 
     @Override
@@ -163,5 +199,4 @@ public class AuthServiceImpl implements AuthService {
                 context
         );
     }
-
 }
