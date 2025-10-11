@@ -72,8 +72,9 @@ public enum Permission {
     CREATE_ANNOUNCEMENT("announcement:create"),
     READ_ALL_ANNOUNCEMENT("announcement:read_all"),
 
-
     SYNC_CANVAS("canvas:sync"),
+
+    READ_DASHBOARD("dashboard:read"),
     ;
 
     private final String permission;
