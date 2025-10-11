@@ -9,7 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -25,10 +27,48 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Project findByMembersAndAssignmentIdAndStatus(List<User> users, Long assignmentId, ProjectStatusEnum status);
 
     List<Project> findAllByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
+
     boolean existsByAssignmentAndMembersContainingAndStatusNotIn(Assignment assignment, User user, List<ProjectStatusEnum> status);
+
     boolean existsByAssignmentIdAndGid(Long assignmentId, UUID gid);
 
     List<Project> findAllByCreatedBy(User principal);
 
     List<Project> findAllByCreatedByRoleAndAssignmentIsNull(Role role);
+
+    @Query("""
+              select count(distinct p.createdBy.id)
+              from Project p
+              where p.assignment.id = :assignmentId
+                and p.status in ('APPROVED','PUBLISHED')
+            """)
+    int countDistinctApprovedOwners(@Param("assignmentId") Long assignmentId);
+
+    @Query("""
+              select distinct p.createdBy.id
+              from Project p
+              where p.assignment.id = :assignmentId
+                and p.status in ('APPROVED','PUBLISHED')
+            """)
+    Set<Long> findDistinctApprovedOwnerIds(@Param("assignmentId") Long assignmentId);
+
+    @Query("""
+              select p
+              from Project p
+              where p.assignment.id = :assignmentId
+                and p.status in ('PENDING','REVISED')
+            """)
+    List<Project> findTopReviewQueue(@Param("assignmentId") Long assignmentId);
+
+    @Query("""
+              select p
+              from Project p
+              where p.assignment.id = :assignmentId
+                and p.status = 'NEEDS_REVISION'
+            """)
+    List<Project> findTopNeedsRevision(@Param("assignmentId") Long assignmentId);
+
+    int countByAssignmentIdAndStatusIn(Long assignmentId, Collection<ProjectStatusEnum> statuses);
+
+    int countByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
 }

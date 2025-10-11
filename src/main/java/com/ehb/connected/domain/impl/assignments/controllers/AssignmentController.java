@@ -7,7 +7,9 @@ import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.service.ApplicationService;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentCreateDto;
 import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
+import com.ehb.connected.domain.impl.assignments.dto.DashboardDetailsDto;
 import com.ehb.connected.domain.impl.assignments.service.AssignmentServiceImpl;
+import com.ehb.connected.domain.impl.dashboard.service.DashboardServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +31,7 @@ public class AssignmentController {
     private final AssignmentServiceImpl assignmentService;
     private final ApplicationService applicationService;
     private final AnnouncementService announcementService;
+    private final DashboardServiceImpl dashboardServiceImpl;
 
     @PreAuthorize("hasAnyAuthority('canvas:sync')")
     @PostMapping("/canvas/{courseId}")
@@ -66,5 +69,14 @@ public class AssignmentController {
     @GetMapping("/{assignmentId}/announcements")
     public ResponseEntity<List<AnnouncementDetailsDto>> getAnnouncements(Principal principal, @PathVariable Long assignmentId) {
         return ResponseEntity.ok(announcementService.getAnnouncementsByAssignment(principal, assignmentId));
+    }
+
+    @PreAuthorize("hasAnyAuthority('dashboard:read')")
+    @GetMapping("/{assignmentId}/dashboard")
+    public ResponseEntity<DashboardDetailsDto> getDashboard(
+            @PathVariable Long assignmentId
+    ) {
+        DashboardDetailsDto dashboard = dashboardServiceImpl.getDashboardDetails(assignmentId);
+        return ResponseEntity.ok(dashboard);
     }
 }

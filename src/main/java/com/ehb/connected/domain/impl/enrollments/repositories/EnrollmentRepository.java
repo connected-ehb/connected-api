@@ -10,10 +10,18 @@ import java.util.List;
 
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     List<Enrollment> findByCourseId(Long courseId);
+
     @Modifying
     @Query("DELETE FROM Enrollment e WHERE e.course.id = :courseId")
     void deleteByCourseId(@Param("courseId") Long courseId);
 
     @Query("SELECT COUNT(e) FROM Enrollment e WHERE e.course.id = :courseId")
     long countByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+              select e.canvasUserId
+              from Enrollment e
+              where e.course.id = :courseId
+            """)
+    List<Long> findCanvasUserIdsByCourse(@Param("courseId") Long courseId);
 }
