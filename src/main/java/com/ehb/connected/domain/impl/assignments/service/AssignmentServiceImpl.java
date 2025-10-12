@@ -5,7 +5,6 @@ import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
-import com.ehb.connected.domain.impl.auth.helpers.CanvasTokenService;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
@@ -26,7 +25,6 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final CourseService courseService;
     private final AssignmentMapper assignmentMapper;
-    private final CanvasTokenService canvasTokenService;
 
     private final WebClient webClient;
 
@@ -52,7 +50,6 @@ public class AssignmentServiceImpl implements AssignmentService {
     //TODO: Check .block() usage and refactor to avoid blocking calls.
     @Override
     public List<AssignmentDetailsDto> getNewAssignmentsFromCanvas(Principal principal, Long courseId) {
-        final String token = canvasTokenService.getValidAccessToken(principal);
         final Course course = courseService.getCourseById(courseId);
         final Long canvasCourseId = course.getCanvasId();
 
@@ -61,7 +58,6 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/v1/courses/{canvasCourseId}/assignments")
                         .build(canvasCourseId))
-                .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
                 })

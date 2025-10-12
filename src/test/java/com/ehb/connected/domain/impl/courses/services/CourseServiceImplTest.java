@@ -1,11 +1,9 @@
 package com.ehb.connected.domain.impl.courses.services;
 
-import com.ehb.connected.domain.impl.auth.helpers.CanvasTokenService;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.mappers.CourseMapper;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
-import com.ehb.connected.domain.impl.enrollments.services.EnrollmentService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import com.ehb.connected.exceptions.EntityNotFoundException;
@@ -17,12 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,23 +41,21 @@ class CourseServiceImplTest {
     @Mock private CourseRepository courseRepository;
     @Mock private CourseMapper courseMapper;
     @Mock private UserServiceImpl userService;
-    @Mock private EnrollmentService enrollmentService;
-    @Mock private CanvasTokenService canvasTokenService;
     @Mock private WebClient webClient;
 
     @InjectMocks private CourseServiceImpl courseService;
 
-    private Principal principal;
+    private Authentication principal;
     private User user;
 
     @BeforeEach
     void setUp() {
-        principal = () -> "teacher@ehb.be";
+        principal = mock(Authentication.class);
+        principal.setAuthenticated(true);
         user = new User();
         user.setId(10L);
         user.setCanvasUserId(555L);
         lenient().when(userService.getUserByPrincipal(principal)).thenReturn(user);
-        lenient().when(canvasTokenService.getValidAccessToken(principal)).thenReturn("token");
     }
 
     @Test

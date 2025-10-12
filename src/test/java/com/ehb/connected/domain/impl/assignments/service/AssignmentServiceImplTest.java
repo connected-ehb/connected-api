@@ -5,7 +5,6 @@ import com.ehb.connected.domain.impl.assignments.dto.AssignmentDetailsDto;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
-import com.ehb.connected.domain.impl.auth.helpers.CanvasTokenService;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
@@ -43,7 +42,6 @@ class AssignmentServiceImplTest {
     @Mock private AssignmentRepository assignmentRepository;
     @Mock private CourseService courseService;
     @Mock private AssignmentMapper assignmentMapper;
-    @Mock private CanvasTokenService canvasTokenService;
     @Mock private WebClient webClient;
 
     @InjectMocks private AssignmentServiceImpl assignmentService;
@@ -57,7 +55,6 @@ class AssignmentServiceImplTest {
         course = new Course();
         course.setId(20L);
         course.setCanvasId(200L);
-        lenient().when(canvasTokenService.getValidAccessToken(principal)).thenReturn("token");
         lenient().when(courseService.getCourseById(20L)).thenReturn(course);
     }
 

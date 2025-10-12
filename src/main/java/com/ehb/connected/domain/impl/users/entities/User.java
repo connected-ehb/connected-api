@@ -48,10 +48,6 @@ public class User implements UserDetails, Serializable {
     private String linkedinUrl;
     private String aboutMe;
 
-    // ---------- OAuth2 / Tokens ----------
-    private String accessToken;
-    private String refreshToken;
-
     // ---------- Email Verification ----------
     private String emailVerificationToken;
     private LocalDateTime emailVerificationTokenExpiry;

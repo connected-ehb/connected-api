@@ -25,7 +25,7 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     private final WebClient webClient;
 
-    public CanvasAuthServiceImpl(@Qualifier("canvasAuthWebClient") WebClient webClient) {
+    public CanvasAuthServiceImpl(WebClient webClient) {
         this.webClient = webClient;
     }
 
@@ -41,7 +41,6 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
         try {
             webClient.delete()
                     .uri(tokenUri)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                     .retrieve()
                     .bodyToMono(Void.class)
                     .block();
@@ -59,7 +58,6 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
     public Map<String, Object> getUserInfo(String url, String accessToken) {
         return webClient.get()
                 .uri(url)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();

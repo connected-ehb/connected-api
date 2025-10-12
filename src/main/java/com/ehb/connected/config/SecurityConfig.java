@@ -1,8 +1,8 @@
 package com.ehb.connected.config;
 
-import com.ehb.connected.domain.impl.auth.helpers.CustomAuthenticationSuccessHandler;
-import com.ehb.connected.domain.impl.auth.helpers.CustomLogoutSuccessHandler;
-import com.ehb.connected.domain.impl.auth.helpers.CustomOAuth2UserService;
+import com.ehb.connected.domain.impl.auth.handlers.CustomAuthenticationSuccessHandler;
+import com.ehb.connected.domain.impl.auth.handlers.CustomLogoutSuccessHandler;
+import com.ehb.connected.domain.impl.auth.handlers.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
