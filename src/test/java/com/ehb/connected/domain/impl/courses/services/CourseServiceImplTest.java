@@ -21,6 +21,7 @@ import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,21 +45,22 @@ class CourseServiceImplTest {
 
     @InjectMocks private CourseServiceImpl courseService;
 
-    private Authentication principal;
     private User user;
 
     @BeforeEach
     void setUp() {
-        principal = mock(Authentication.class);
-        principal.setAuthenticated(true);
         user = new User();
         user.setId(10L);
         user.setCanvasUserId(555L);
-        lenient().when(userService.getUserByPrincipal(principal)).thenReturn(user);
+        // ✅ Don't stub anything here - stub in individual tests
     }
 
     @Test
     void getNewCoursesFromCanvasReturnsOnlyUnknownCourses() {
+        // ✅ Create and stub Authentication for this specific test
+        Authentication authentication = mock(Authentication.class);
+        when(userService.getUserByAuthentication(authentication)).thenReturn(user);
+
         Map<String, Object> canvasCourse = Map.of(
                 "id", 123,
                 "name", "Distributed Systems",
@@ -78,7 +79,7 @@ class CourseServiceImplTest {
             return dto;
         });
 
-        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(principal);
+        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(authentication);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Distributed Systems");
@@ -87,15 +88,23 @@ class CourseServiceImplTest {
 
     @Test
     void getNewCoursesFromCanvasReturnsEmptyWhenCanvasRespondsWithNull() {
+        // ✅ Create and stub Authentication for this specific test
+        Authentication authentication = mock(Authentication.class);
+        when(userService.getUserByAuthentication(authentication)).thenReturn(user);
+
         mockCanvasCourseResponse(null);
 
-        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(principal);
+        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(authentication);
 
         assertThat(result).isEmpty();
     }
 
     @Test
     void getCoursesByOwnerReturnsMappedDtos() {
+        // ✅ Create and stub Principal for this specific test
+        Principal principal = mock(Principal.class);
+        when(userService.getUserByPrincipal(principal)).thenReturn(user);
+
         Course course = new Course();
         List<Course> courses = List.of(course);
         CourseDetailsDto dto = new CourseDetailsDto();
@@ -110,6 +119,10 @@ class CourseServiceImplTest {
 
     @Test
     void getCoursesByEnrollmentUsesUserCanvasId() {
+        // ✅ Create and stub Principal for this specific test
+        Principal principal = mock(Principal.class);
+        when(userService.getUserByPrincipal(principal)).thenReturn(user);
+
         Course course = new Course();
         List<Course> courses = List.of(course);
         CourseDetailsDto dto = new CourseDetailsDto();
@@ -153,12 +166,10 @@ class CourseServiceImplTest {
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
         when(webClient.get()).thenReturn(uriSpec);
-        when(uriSpec.uri(ArgumentMatchers.<Function<UriBuilder, URI>>any())).thenReturn(uriSpec);
-        when(uriSpec.header(any(), any())).thenReturn(headersSpec);
+        when(uriSpec.uri(ArgumentMatchers.<Function<UriBuilder, URI>>any())).thenReturn(headersSpec);
+        when(headersSpec.attributes(any())).thenReturn(headersSpec);
         when(headersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(ArgumentMatchers.<ParameterizedTypeReference<List<Map<String, Object>>>>any()))
                 .thenReturn(Mono.justOrEmpty(payload));
     }
 }
-
-
