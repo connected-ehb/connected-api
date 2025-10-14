@@ -266,7 +266,7 @@ class ProjectServiceImplTest {
         projectService.save(principal, 56L, dto);
 
         assertThat(project.getStatus()).isEqualTo(ProjectStatusEnum.REVISED);
-        verify(projectMapper).updateEntityFromDto(dto, project);
+        verify(projectMapper).updateEntityFromDto(actor, dto, project);
         verify(projectRepository).save(project);
     }
 

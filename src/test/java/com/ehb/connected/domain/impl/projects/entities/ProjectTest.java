@@ -62,16 +62,17 @@ class ProjectTest {
     @Test
     void isEditableFalseForTerminalStatusesTrueOtherwise() {
         Project project = new Project();
+        User applicant = new User();
         project.setStatus(ProjectStatusEnum.PENDING);
-        assertThat(project.isEditable()).isTrue();
+        assertThat(project.isEditable(applicant)).isTrue();
 
         project.setStatus(ProjectStatusEnum.APPROVED);
-        assertThat(project.isEditable()).isFalse();
+        assertThat(project.isEditable(applicant)).isFalse();
 
         project.setStatus(ProjectStatusEnum.REJECTED);
-        assertThat(project.isEditable()).isFalse();
+        assertThat(project.isEditable(applicant)).isFalse();
 
         project.setStatus(ProjectStatusEnum.PUBLISHED);
-        assertThat(project.isEditable()).isFalse();
+        assertThat(project.isEditable(applicant)).isFalse();
     }
 }

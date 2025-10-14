@@ -152,7 +152,7 @@ public class ProjectServiceImpl implements ProjectService {
         final User user = userService.getUserByPrincipal(principal);
 
         // Check if user is the owner of the project
-        if (!user.isProductOwner(existingProject)) {
+        if (!user.hasRole(Role.TEACHER) && !user.isProductOwner(existingProject)) {
             throw new UserNotOwnerOfProjectException();
         }
 
@@ -161,7 +161,7 @@ public class ProjectServiceImpl implements ProjectService {
             existingProject.setStatus(ProjectStatusEnum.REVISED);
         }
 
-        projectMapper.updateEntityFromDto(project, existingProject);
+        projectMapper.updateEntityFromDto(user, project, existingProject);
         Project savedProject;
         try {
             savedProject = projectRepository.save(existingProject);
@@ -309,6 +309,10 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectDetailsDto claimProject(Principal principal, Long projectId) {
         final User user = userService.getUserByPrincipal(principal);
         final Project project = getProjectById(projectId);
+
+        if (project.getProductOwner() != null) {
+            throw new BaseRuntimeException("Cannot claim a project with a product owner", HttpStatus.CONFLICT);
+        }
 
         if (projectUserService.isUserMemberOfAnyProjectInAssignment(user, project.getAssignment())) {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);

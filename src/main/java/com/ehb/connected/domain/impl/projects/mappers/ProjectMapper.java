@@ -7,6 +7,7 @@ import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
+import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -61,20 +62,20 @@ public class ProjectMapper {
         return project;
     }
 
-    public void updateEntityFromDto(ProjectUpdateDto dto, Project entity) {
-        if(entity.isEditable()) {
-            entity.setTitle(dto.getTitle());
-            entity.setDescription(dto.getDescription());
-            entity.setShortDescription(dto.getShortDescription());
-            entity.setTeamSize(dto.getTeamSize());
+    public void updateEntityFromDto(User user, ProjectUpdateDto dto, Project project) {
+        if(project.isEditable(user)) {
+            project.setTitle(dto.getTitle());
+            project.setDescription(dto.getDescription());
+            project.setShortDescription(dto.getShortDescription());
+            project.setTeamSize(dto.getTeamSize());
         }
 
-        entity.setRepositoryUrl(dto.getRepositoryUrl());
-        entity.setBoardUrl(dto.getBoardUrl());
-        entity.setBackgroundImage(dto.getBackgroundImage());
+        project.setRepositoryUrl(dto.getRepositoryUrl());
+        project.setBoardUrl(dto.getBoardUrl());
+        project.setBackgroundImage(dto.getBackgroundImage());
 
-        entity.getTags().clear();
-        entity.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
+        project.getTags().clear();
+        project.getTags().addAll(tagMapper.toEntityList(dto.getTags()));
     }
 
     public ResearcherProjectDetailsDto toResearcherDetailsDto(Project project) {
