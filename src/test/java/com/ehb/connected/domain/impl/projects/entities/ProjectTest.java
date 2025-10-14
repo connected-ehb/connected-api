@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.projects.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -63,6 +64,7 @@ class ProjectTest {
     void isEditableFalseForTerminalStatusesTrueOtherwise() {
         Project project = new Project();
         User applicant = new User();
+        applicant.setRole(Role.STUDENT);
         project.setStatus(ProjectStatusEnum.PENDING);
         assertThat(project.isEditable(applicant)).isTrue();
 
