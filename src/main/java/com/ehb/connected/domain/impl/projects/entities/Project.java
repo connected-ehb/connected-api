@@ -4,8 +4,22 @@ import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +27,7 @@ import lombok.Setter;
 import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -76,6 +91,13 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Feedback> feedbacks = new ArrayList<>();
 
+    private static final EnumSet<ProjectStatusEnum> LOCKED =
+            EnumSet.of(ProjectStatusEnum.APPROVED, ProjectStatusEnum.REJECTED, ProjectStatusEnum.PUBLISHED);
+
+    public boolean isLocked() {
+        return status != null && LOCKED.contains(status);
+    }
+
     public boolean hasStatus(ProjectStatusEnum status) {
         return this.status.equals(status);
     }
@@ -92,8 +114,7 @@ public class Project {
         return members.size() >= teamSize;
     }
 
-    public boolean isEditable() {
-        return !this.hasStatus(ProjectStatusEnum.APPROVED) && !this.hasStatus(ProjectStatusEnum.REJECTED) && !this.hasStatus(ProjectStatusEnum.PUBLISHED);
+    public boolean isEditable(User user) {
+        return user.hasRole(Role.TEACHER) || !isLocked();
     }
-
 }
