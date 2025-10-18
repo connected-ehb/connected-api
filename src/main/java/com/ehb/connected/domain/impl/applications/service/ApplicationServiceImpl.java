@@ -18,7 +18,12 @@ import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
-import com.ehb.connected.exceptions.*;
+import com.ehb.connected.exceptions.BaseRuntimeException;
+import com.ehb.connected.exceptions.DeadlineExpiredException;
+import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
+import com.ehb.connected.exceptions.UserUnauthorizedException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,6 +173,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationMapper.toDto(application);
     }
 
+    @Transactional
     @Override
     public ApplicationDetailsDto joinProject(Principal principal, Long applicationId) {
         Application application = applicationRepository.findById(applicationId)
@@ -188,7 +194,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BaseRuntimeException("User is already a member of a project in this assignment", HttpStatus.CONFLICT);
         }
 
-
         List<User> members = project.getMembers();
         //check if project is full
         if (project.hasReachedMaxMembers()) {
@@ -199,6 +204,15 @@ public class ApplicationServiceImpl implements ApplicationService {
         rejectAllOtherApplications(application);
         members.add(user);
         project.setMembers(members);
+
+        // If the project has now reached its maximum members, reject all remaining pending applications
+        if (project.hasReachedMaxMembers()) {
+            project.getApplications().stream()
+                    .filter(app -> app.hasStatus(ApplicationStatusEnum.PENDING))
+                    // TODO This will need a new status
+                    .forEach(app -> app.setStatus(ApplicationStatusEnum.REJECTED));
+        }
+
         projectService.save(project);
 
         logger.info("User [{}] has joined project [{}] based on approved application [{}]", user.getId(), project.getId(), applicationId);
