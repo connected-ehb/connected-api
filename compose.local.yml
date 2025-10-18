@@ -2,6 +2,7 @@ services:
   db:
     image: mysql:9.4.0
     container_name: connected-db-local
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: connected
       MYSQL_USER: ${DB_USERNAME}
@@ -16,5 +17,16 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+  redis:
+    image: redis:8.2.2
+    container_name: connected-redis-local
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   db_data:
+  redis_data:

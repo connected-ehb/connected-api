@@ -4,12 +4,13 @@ package com.ehb.connected.domain.impl.courses.services;
 import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
+import org.springframework.security.core.Authentication;
 
 import java.security.Principal;
 import java.util.List;
 
 public interface CourseService {
-    List<CourseDetailsDto> getNewCoursesFromCanvas(Principal principal);
+    List<CourseDetailsDto> getNewCoursesFromCanvas(Authentication authentication);
     CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto);
     List<CourseDetailsDto> getCoursesByOwner(Principal principal);
     List<CourseDetailsDto> getCoursesByEnrollment(Principal principal);

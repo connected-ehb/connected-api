@@ -1,6 +1,5 @@
 package com.ehb.connected.domain.impl.courses.services;
 
-import com.ehb.connected.domain.impl.auth.helpers.CanvasTokenService;
 import com.ehb.connected.domain.impl.courses.dto.CourseCreateDto;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
@@ -13,13 +12,14 @@ import com.ehb.connected.exceptions.AccessTokenExpiredException;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -41,29 +41,24 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
     private final UserServiceImpl userService;
     private final EnrollmentService enrollmentService;
-    private final CanvasTokenService canvasTokenService;
     private final WebClient webClient;
 
     private static final Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
 
     @Override
-    public List<CourseDetailsDto> getNewCoursesFromCanvas(Principal principal) {
-        User user = userService.getUserByPrincipal(principal);
-        String token = canvasTokenService.getValidAccessToken(principal);
+    public List<CourseDetailsDto> getNewCoursesFromCanvas(Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
 
         List<Map<String, Object>> canvasCourses;
         try {
             canvasCourses = webClient.get()
-                    .uri(uriBuilder -> {
-                        return uriBuilder
-                                .path("/api/v1/courses")
-                                //TODO: enable filtering by teacher in production
-                                //.queryParam("enrollment_type", "teacher")
-                                .queryParam("per_page", "1000")
-                                .queryParam("state[]", "active")
-                                .build();
-                    })
-                    .header("Authorization", "Bearer " + token)
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/v1/courses")
+                            .queryParam("per_page", "1000")
+                            .queryParam("state[]", "active")
+                            .build())
+                    .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction
+                            .authentication(authentication))
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
                     .block();
@@ -119,12 +114,11 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto) {
-        String token = canvasTokenService.getValidAccessToken(principal);
 
         Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
         importCourse(courseEntity);
 
-        final List<Long> userIds = fetchAllCanvasUserIdsForCourse(token, courseEntity.getCanvasId());
+        final List<Long> userIds = fetchAllCanvasUserIdsForCourse(courseEntity.getCanvasId());
 
         for (Long canvasUserId : new HashSet<>(userIds)) {
             enrollmentService.enrollUser(courseEntity, canvasUserId);
@@ -192,14 +186,13 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public CourseDetailsDto refreshEnrollments(Principal principal, Long courseId) {
         final User requester = userService.getUserByPrincipal(principal);
-        final String token = canvasTokenService.getValidAccessToken(principal);
         final Course course = getCourseById(courseId);
 
         if (course.getCanvasId() == null) {
             throw new BaseRuntimeException("Course has no Canvas ID; cannot refresh enrollments.", HttpStatus.BAD_REQUEST);
         }
 
-        final List<Long> canvasUserIds = fetchAllCanvasUserIdsForCourse(token, course.getCanvasId());
+        final List<Long> canvasUserIds = fetchAllCanvasUserIdsForCourse(course.getCanvasId());
 
         if (canvasUserIds.isEmpty()) {
             long current = enrollmentService.countByCourseId(course.getId());
@@ -219,7 +212,7 @@ public class CourseServiceImpl implements CourseService {
         return courseMapper.toCourseDetailsDto(course);
     }
 
-    private List<Long> fetchAllCanvasUserIdsForCourse(String token, Long canvasCourseId) {
+    private List<Long> fetchAllCanvasUserIdsForCourse(Long canvasCourseId) {
         final List<Long> allUserIds = new ArrayList<>();
         String url = "/api/v1/courses/" + canvasCourseId + "/enrollments?per_page=100";
 
@@ -228,7 +221,6 @@ public class CourseServiceImpl implements CourseService {
             try {
                 responseEntity = webClient.get()
                         .uri(url)
-                        .header("Authorization", "Bearer " + token)
                         .retrieve()
                         .toEntity(String.class)
                         .block();

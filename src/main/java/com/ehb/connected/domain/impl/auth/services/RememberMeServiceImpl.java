@@ -46,6 +46,10 @@ public class RememberMeServiceImpl implements RememberMeService {
         response.addCookie(cookie);
     }
 
+    /**
+     * Validates remember-me token and returns the user.
+     * The caller should redirect to OAuth2 login to get fresh tokens.
+     */
     public Optional<User> validateRememberMeToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) return Optional.empty();

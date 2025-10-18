@@ -6,6 +6,7 @@ import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.EmailRequestDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
+import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
@@ -16,6 +17,8 @@ import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -75,6 +78,46 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public User getUserByAuthentication(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AuthenticationRequiredException();
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        // OAuth2 login (Canvas)
+        if (principal instanceof CustomOAuth2User customOAuth2User) {
+            return customOAuth2User.getUser();  // ✅ Direct access to User entity
+        }
+
+        // OAuth2 login (generic)
+        if (principal instanceof OAuth2User oauth2User) {
+            String principalName = oauth2User.getName();
+            try {
+                long canvasUserId = Long.parseLong(principalName);
+                return userRepository.findByCanvasUserId(canvasUserId)
+                        .orElseThrow(() -> new EntityNotFoundException("User not found with Canvas ID: " + canvasUserId));
+            } catch (NumberFormatException e) {
+                throw new AuthenticationRequiredException("Invalid Canvas user ID: " + principalName);
+            }
+        }
+
+        // Form-based login (if you implement UserDetails on User entity)
+        if (principal instanceof User user) {
+            return user;  // ✅ Already a User entity
+        }
+
+        // Fallback for other UserDetails implementations
+        if (principal instanceof UserDetails userDetails) {
+            String email = userDetails.getUsername();
+            return userRepository.findByEmail(email)
+                    .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        }
+
+        throw new AuthenticationRequiredException("Unsupported principal type: " + principal.getClass().getName());
     }
 
     @Override

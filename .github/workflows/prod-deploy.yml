@@ -44,6 +44,10 @@ jobs:
           MAIL_PROTOCOL=${{ secrets.MAIL_PROTOCOL }}
           MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
           MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+          
+          # Redis
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          REDIS_PORT=${{ secrets.REDIS_PORT }}
           EOF
 
       - name: Stop and remove old container
