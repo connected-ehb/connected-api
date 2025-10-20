@@ -1,7 +1,7 @@
-package com.ehb.connected.domain.impl.auth.helpers;
+package com.ehb.connected.domain.impl.auth.handlers;
 
 import com.ehb.connected.domain.impl.auth.services.RememberMeService;
-import com.ehb.connected.domain.impl.users.entities.CustomOAuth2User;
+import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,7 +59,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
                 // ✅ After creating the cookie, redirect browser to frontend
                 String redirectUrl = frontendUri + "/login/success";
-                log.info("OAuth2 login successful for user {}. Redirecting to {}", user.getEmail(), redirectUrl);
+                log.info("OAuth2 login successful for user {}. Redirecting to {}", user.getFirstName() + " " + user.getLastName(), redirectUrl);
                 response.sendRedirect(redirectUrl);
                 return;
 

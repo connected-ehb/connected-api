@@ -75,6 +75,9 @@ public enum Permission {
     SYNC_CANVAS("canvas:sync"),
 
     READ_DASHBOARD("dashboard:read"),
+
+    CREATE_BUG("bug:create"),
+    READ_ALL_BUGS("bug:read_all"),
     ;
 
     private final String permission;

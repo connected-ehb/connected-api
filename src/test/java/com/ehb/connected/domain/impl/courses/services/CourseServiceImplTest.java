@@ -1,11 +1,9 @@
 package com.ehb.connected.domain.impl.courses.services;
 
-import com.ehb.connected.domain.impl.auth.helpers.CanvasTokenService;
 import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.mappers.CourseMapper;
 import com.ehb.connected.domain.impl.courses.repositories.CourseRepository;
-import com.ehb.connected.domain.impl.enrollments.services.EnrollmentService;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import com.ehb.connected.exceptions.EntityNotFoundException;
@@ -17,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
@@ -32,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,27 +41,26 @@ class CourseServiceImplTest {
     @Mock private CourseRepository courseRepository;
     @Mock private CourseMapper courseMapper;
     @Mock private UserServiceImpl userService;
-    @Mock private EnrollmentService enrollmentService;
-    @Mock private CanvasTokenService canvasTokenService;
     @Mock private WebClient webClient;
 
     @InjectMocks private CourseServiceImpl courseService;
 
-    private Principal principal;
     private User user;
 
     @BeforeEach
     void setUp() {
-        principal = () -> "teacher@ehb.be";
         user = new User();
         user.setId(10L);
         user.setCanvasUserId(555L);
-        lenient().when(userService.getUserByPrincipal(principal)).thenReturn(user);
-        lenient().when(canvasTokenService.getValidAccessToken(principal)).thenReturn("token");
+        // ✅ Don't stub anything here - stub in individual tests
     }
 
     @Test
     void getNewCoursesFromCanvasReturnsOnlyUnknownCourses() {
+        // ✅ Create and stub Authentication for this specific test
+        Authentication authentication = mock(Authentication.class);
+        when(userService.getUserByAuthentication(authentication)).thenReturn(user);
+
         Map<String, Object> canvasCourse = Map.of(
                 "id", 123,
                 "name", "Distributed Systems",
@@ -82,7 +79,7 @@ class CourseServiceImplTest {
             return dto;
         });
 
-        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(principal);
+        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(authentication);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Distributed Systems");
@@ -91,15 +88,23 @@ class CourseServiceImplTest {
 
     @Test
     void getNewCoursesFromCanvasReturnsEmptyWhenCanvasRespondsWithNull() {
+        // ✅ Create and stub Authentication for this specific test
+        Authentication authentication = mock(Authentication.class);
+        when(userService.getUserByAuthentication(authentication)).thenReturn(user);
+
         mockCanvasCourseResponse(null);
 
-        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(principal);
+        List<CourseDetailsDto> result = courseService.getNewCoursesFromCanvas(authentication);
 
         assertThat(result).isEmpty();
     }
 
     @Test
     void getCoursesByOwnerReturnsMappedDtos() {
+        // ✅ Create and stub Principal for this specific test
+        Principal principal = mock(Principal.class);
+        when(userService.getUserByPrincipal(principal)).thenReturn(user);
+
         Course course = new Course();
         List<Course> courses = List.of(course);
         CourseDetailsDto dto = new CourseDetailsDto();
@@ -114,6 +119,10 @@ class CourseServiceImplTest {
 
     @Test
     void getCoursesByEnrollmentUsesUserCanvasId() {
+        // ✅ Create and stub Principal for this specific test
+        Principal principal = mock(Principal.class);
+        when(userService.getUserByPrincipal(principal)).thenReturn(user);
+
         Course course = new Course();
         List<Course> courses = List.of(course);
         CourseDetailsDto dto = new CourseDetailsDto();
@@ -157,12 +166,10 @@ class CourseServiceImplTest {
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
 
         when(webClient.get()).thenReturn(uriSpec);
-        when(uriSpec.uri(ArgumentMatchers.<Function<UriBuilder, URI>>any())).thenReturn(uriSpec);
-        when(uriSpec.header(any(), any())).thenReturn(headersSpec);
+        when(uriSpec.uri(ArgumentMatchers.<Function<UriBuilder, URI>>any())).thenReturn(headersSpec);
+        when(headersSpec.attributes(any())).thenReturn(headersSpec);
         when(headersSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(ArgumentMatchers.<ParameterizedTypeReference<List<Map<String, Object>>>>any()))
                 .thenReturn(Mono.justOrEmpty(payload));
     }
 }
-
-

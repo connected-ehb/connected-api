@@ -13,6 +13,7 @@ import com.ehb.connected.domain.impl.tags.dto.TagDto;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
+import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -159,6 +160,9 @@ class ProjectMapperTest {
     @Test
     void updateEntityFromDtoWhenEditableOverwritesMutableFields() {
         ProjectUpdateDto dto = new ProjectUpdateDto();
+        User user = new User();
+        user.setRole(Role.STUDENT);
+
         dto.setTitle("New Title");
         dto.setDescription("New Desc");
         dto.setShortDescription("New Short");
@@ -181,7 +185,7 @@ class ProjectMapperTest {
 
         when(tagMapper.toEntityList(dto.getTags())).thenReturn(List.of(tag));
 
-        projectMapper.updateEntityFromDto(dto, entity);
+        projectMapper.updateEntityFromDto(user, dto, entity);
 
         assertThat(entity.getTitle()).isEqualTo("New Title");
         assertThat(entity.getDescription()).isEqualTo("New Desc");
@@ -196,6 +200,8 @@ class ProjectMapperTest {
     @Test
     void updateEntityFromDtoWhenNotEditableSkipsCoreFieldsButUpdatesAssets() {
         ProjectUpdateDto dto = new ProjectUpdateDto();
+        User user = new User();
+        user.setRole(Role.STUDENT);
         dto.setTitle("Blocked Title");
         dto.setDescription("Blocked Desc");
         dto.setShortDescription("Blocked Short");
@@ -218,7 +224,7 @@ class ProjectMapperTest {
 
         when(tagMapper.toEntityList(dto.getTags())).thenReturn(List.of(tag));
 
-        projectMapper.updateEntityFromDto(dto, entity);
+        projectMapper.updateEntityFromDto(user, dto, entity);
 
         assertThat(entity.getTitle()).isEqualTo("Original Title");
         assertThat(entity.getDescription()).isEqualTo("Original Desc");

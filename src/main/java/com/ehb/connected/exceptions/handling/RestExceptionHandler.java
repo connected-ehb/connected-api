@@ -37,7 +37,17 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         pd.setType(URI.create("about:blank"));
         pd.setProperty("path", request.getRequestURI());
 
-        log.error("[ERROR] {} {} - {}", request.getMethod(), request.getServletPath(), ex.getMessage(), ex);
+        // Smart logging based on HTTP status
+        if (ex.getStatus().is5xxServerError()) {
+            log.error("[{}] {} {} - {}", ex.getStatus().value(), request.getMethod(), request.getServletPath(), ex.getMessage(), ex);
+        } else if (ex.getStatus() == HttpStatus.UNAUTHORIZED || ex.getStatus() == HttpStatus.FORBIDDEN) {
+            log.debug("[{}] {} {} - {}", ex.getStatus().value(), request.getMethod(), request.getServletPath(), ex.getMessage());
+        } else if (ex.getStatus().is4xxClientError()) {
+            log.info("[{}] {} {} - {}", ex.getStatus().value(), request.getMethod(), request.getServletPath(), ex.getMessage());
+        } else {
+            log.warn("[{}] {} {} - {}", ex.getStatus().value(), request.getMethod(), request.getServletPath(), ex.getMessage());
+        }
+
         return ResponseEntity.status(ex.getStatus()).body(pd);
     }
 

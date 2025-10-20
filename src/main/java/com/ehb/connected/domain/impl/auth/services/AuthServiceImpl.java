@@ -6,12 +6,11 @@ import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.invitations.services.InvitationService;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
-import com.ehb.connected.domain.impl.users.entities.CustomOAuth2User;
+import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
-import com.ehb.connected.domain.impl.users.services.UserService;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,13 +21,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -37,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final UserDetailsMapper userDetailsMapper;
+    private final OAuth2AuthorizedClientService authorizedClientService;
     private final CanvasAuthService canvasAuthService;
     private final InvitationService invitationService;
     private final PasswordEncoder passwordEncoder;
@@ -76,57 +80,55 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(Principal principal) {
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        if (user.getAccessToken() != null) {
-            canvasAuthService.deleteAccessToken(user.getAccessToken());
+        // Get current authentication to determine if it's OAuth2
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
+            String registrationId = oauth2Token.getAuthorizedClientRegistrationId();
+            String principalName = oauth2Token.getName();
+
+            // Load the authorized client from Spring's storage
+            OAuth2AuthorizedClient authorizedClient =
+                    authorizedClientService.loadAuthorizedClient(registrationId, principalName);
+
+            if (authorizedClient != null) {
+                String accessToken = authorizedClient.getAccessToken().getTokenValue();
+
+                // Delete/revoke token on Canvas
+                try {
+                    canvasAuthService.deleteAccessToken(accessToken);
+                    log.info("Revoked Canvas access token for user: {}", principalName);
+                } catch (Exception e) {
+                    log.error("Failed to revoke Canvas token for user: {}", principalName, e);
+                }
+
+                // Remove tokens from Spring's storage
+                authorizedClientService.removeAuthorizedClient(registrationId, principalName);
+                log.info("Removed OAuth2 authorized client for user: {}", principalName);
+            }
+        } else {
+            // Handle non-OAuth2 logout (form-based login)
+            User user = userRepository.findByEmail(principal.getName())
+                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
+            log.info("Standard logout for user: {}", user.getEmail());
         }
-        user.setAccessToken(null);
-        user.setRefreshToken(null);
-        userRepository.save(user);
     }
 
-    /**
-     * Retrieves the current authenticated user.
-     * If the session expired, tries to restore it using the remember-me cookie.
-     */
     @Override
     public AuthUserDetailsDto getCurrentUser(HttpServletRequest request) {
         try {
             return refreshSessionIfStale(request);
         } catch (BaseRuntimeException ex) {
-            log.debug("Session invalid or missing, trying remember-me restoration...");
-            return rememberMeService.validateRememberMeToken(request)
-                    .map(user -> restoreSessionFromUser(user, request))
-                    .orElseThrow(() -> ex);
+            log.debug("Session invalid or missing, checking remember-me...");
+
+            Optional<User> rememberedUser = rememberMeService.validateRememberMeToken(request);
+
+            if (rememberedUser.isPresent()) {
+                return restoreOAuth2Session(rememberedUser.get(), request);
+            }
+
+            throw ex;
         }
-    }
-
-    private AuthUserDetailsDto restoreSessionFromUser(User user, HttpServletRequest request) {
-        log.info("Restoring session for remembered user [{}]", user.getEmail());
-
-        CustomOAuth2User principal = new CustomOAuth2User(
-                user,
-                Map.of("id", user.getCanvasUserId()),
-                "id"
-        );
-
-        Authentication auth = new OAuth2AuthenticationToken(
-                principal,
-                principal.getAuthorities(),
-                "canvas"
-        );
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(auth);
-        SecurityContextHolder.setContext(context);
-
-        request.getSession(true).setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                context
-        );
-
-        return userDetailsMapper.toDtoWithPrincipal(user, principal);
     }
 
     @Override
@@ -198,5 +200,62 @@ public class AuthServiceImpl implements AuthService {
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 context
         );
+    }
+
+    private AuthUserDetailsDto restoreOAuth2Session(User user, HttpServletRequest request) {
+        log.info("Restoring OAuth2 session for user: {}", user.getEmail());
+
+        // Check if OAuth2 tokens exist
+        String canvasId = String.valueOf(user.getCanvasUserId());
+        OAuth2AuthorizedClient authorizedClient =
+                authorizedClientService.loadAuthorizedClient("canvas", canvasId);
+
+        if (authorizedClient == null) {
+            log.warn("OAuth2 tokens missing for user: {}", user.getEmail());
+            throw new BaseRuntimeException("Session expired. Please log in again.", HttpStatus.UNAUTHORIZED);
+        }
+
+        // ✅ Reconstruct Canvas-like attributes from database
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("id", user.getCanvasUserId());
+        attributes.put("name", user.getFirstName() + " " + user.getLastName());
+        attributes.put("short_name", user.getFirstName());
+        attributes.put("sortable_name", user.getLastName() + ", " + user.getFirstName());
+        if (user.getProfileImageUrl() != null) {
+            attributes.put("avatar_url", user.getProfileImageUrl());
+        }
+        if (user.getEmail() != null) {
+            attributes.put("primary_email", user.getEmail());
+        }
+        attributes.put("locale", "en");
+
+        CustomOAuth2User principal = new CustomOAuth2User(user, attributes, "id");
+
+        // Verify principal name
+        String principalName = principal.getName();
+        if (!principalName.equals(canvasId)) {
+            log.error("Principal name mismatch: {} vs {}", principalName, canvasId);
+            throw new BaseRuntimeException("Session restoration failed", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // Create authentication
+        OAuth2AuthenticationToken auth = new OAuth2AuthenticationToken(
+                principal,
+                principal.getAuthorities(),
+                "canvas"
+        );
+
+        // Store in context and session
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        request.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
+
+        log.info("Successfully restored OAuth2 session for user: {}", user.getEmail());
+        return userDetailsMapper.toDtoWithPrincipal(user, principal);
     }
 }
