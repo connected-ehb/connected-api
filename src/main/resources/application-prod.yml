@@ -18,6 +18,15 @@ spring:
   application:
     name: connected
 
+  session:
+    redis:
+        namespace: connected
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
