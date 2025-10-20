@@ -37,7 +37,8 @@ public enum Role implements GrantedAuthority {
                     Permission.READ_ALL_APPLICATIONS,
                     Permission.PROJECT_CLAIM,
                     Permission.PROJECT_IMPORT,
-                    Permission.READ_ALL_ANNOUNCEMENT
+                    Permission.READ_ALL_ANNOUNCEMENT,
+                    Permission.CREATE_BUG
             )
     ),
     TEACHER(
@@ -92,7 +93,8 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_ANNOUNCEMENT,
                     Permission.READ_ALL_ANNOUNCEMENT,
                     Permission.CREATE_INVITATION,
-                    Permission.READ_DASHBOARD
+                    Permission.READ_DASHBOARD,
+                    Permission.CREATE_BUG
             )
     ),
     RESEARCHER(
@@ -116,7 +118,8 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_GLOBAL_PROJECT,
                     Permission.READ_NOTIFICATION,
                     Permission.UPDATE_NOTIFICATION,
-                    Permission.DELETE_NOTIFICATION
+                    Permission.DELETE_NOTIFICATION,
+                    Permission.CREATE_BUG
             )
     ),
     ADMIN(
@@ -166,7 +169,9 @@ public enum Role implements GrantedAuthority {
                     Permission.CREATE_REVIEW,
                     Permission.READ_ALL_REVIEW,
                     Permission.UPDATE_REVIEW,
-                    Permission.DELETE_REVIEW
+                    Permission.DELETE_REVIEW,
+                    Permission.CREATE_BUG,
+                    Permission.READ_ALL_BUGS
             )
     );
 
