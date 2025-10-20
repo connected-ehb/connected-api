@@ -28,10 +28,8 @@ public class BugMapper {
     }
 
     public List<BugDetailsDto> toBugDetailsDtoList(List<Bug> bugs) {
-        List<BugDetailsDto> bugDtos = new ArrayList<>();
-        for (Bug bug : bugs) {
-            bugDtos.add(toBugDetailsDto(bug));
-        }
-        return bugDtos;
+        return bugs.stream()
+                .map(this::toBugDetailsDto)
+                .toList();
     }
 }
