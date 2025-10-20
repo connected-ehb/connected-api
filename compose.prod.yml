@@ -21,7 +21,7 @@ services:
   redis:
     image: redis:8.2.2
     container_name: connected-redis-prod
-    restart: unless-stopped
+    restart: always
     ports:
       - "6379:6379"
     volumes:
@@ -60,3 +60,4 @@ services:
 
 volumes:
   db_data:
+  redis_data:
