@@ -1,6 +1,5 @@
 package com.ehb.connected.domain.impl.bugs.dto;
 
-import com.ehb.connected.domain.impl.users.entities.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +12,6 @@ public class BugDetailsDto {
     private String description;
     private String route;
     private String appVersion;
-    private User createdBy;
+    private String createdBy;
     private LocalDateTime createdAt;
 }

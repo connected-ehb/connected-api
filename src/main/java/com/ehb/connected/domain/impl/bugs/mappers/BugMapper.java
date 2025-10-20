@@ -22,7 +22,7 @@ public class BugMapper {
         dto.setDescription(bug.getDescription());
         dto.setRoute(bug.getRoute());
         dto.setAppVersion(bug.getAppVersion());
-        dto.setCreatedBy(bug.getCreatedBy());
+        dto.setCreatedBy(bug.getCreatedBy().getFirstName() + " " + bug.getCreatedBy().getLastName());
         dto.setCreatedAt(bug.getCreatedAt());
         return dto;
     }
