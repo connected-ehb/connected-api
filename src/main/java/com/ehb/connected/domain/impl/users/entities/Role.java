@@ -94,7 +94,8 @@ public enum Role implements GrantedAuthority {
                     Permission.READ_ALL_ANNOUNCEMENT,
                     Permission.CREATE_INVITATION,
                     Permission.READ_DASHBOARD,
-                    Permission.CREATE_BUG
+                    Permission.CREATE_BUG,
+                    Permission.READ_ALL_BUGS
             )
     ),
     RESEARCHER(
