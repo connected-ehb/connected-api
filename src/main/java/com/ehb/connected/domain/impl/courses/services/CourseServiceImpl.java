@@ -11,11 +11,11 @@ import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import com.ehb.connected.exceptions.AccessTokenExpiredException;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -42,6 +42,7 @@ public class CourseServiceImpl implements CourseService {
     private final UserServiceImpl userService;
     private final EnrollmentService enrollmentService;
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
 
     private static final Logger logger = LoggerFactory.getLogger(CourseServiceImpl.class);
 
@@ -51,17 +52,35 @@ public class CourseServiceImpl implements CourseService {
 
         List<Map<String, Object>> canvasCourses;
         try {
-            canvasCourses = webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/v1/courses")
-                            .queryParam("per_page", "1000")
-                            .queryParam("state[]", "active")
-                            .build())
-                    .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction
-                            .authentication(authentication))
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
-                    .block();
+            String url = "/api/v1/courses?per_page=100&state[]=active";
+            List<Map<String,Object>> allCourses = new ArrayList<>();
+
+            while (url != null) {
+                ResponseEntity<String> resp = webClient.get()
+                        .uri(url)
+                        .attributes(ServletOAuth2AuthorizedClientExchangeFilterFunction.authentication(authentication))
+                        .retrieve()
+                        .toEntity(String.class)
+                        .block();
+
+                if (resp == null || resp.getBody() == null) {
+                    break;
+                }
+
+                List<Map<String, Object>> page = objectMapper.readValue(
+                        resp.getBody(),
+                        new TypeReference<List<Map<String, Object>>>() {}
+                );
+                allCourses.addAll(page);
+
+                List<String> linkHeaders = resp.getHeaders().get("Link");
+                url = (linkHeaders != null && !linkHeaders.isEmpty())
+                        ? extractNextUrl(linkHeaders.get(0))
+                        : null;
+            }
+
+            canvasCourses = allCourses;
+
         } catch (Exception e) {
             if (e instanceof WebClientResponseException ex) {
                 if (ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -74,10 +93,6 @@ public class CourseServiceImpl implements CourseService {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Unexpected error occurred while fetching Canvas courses", e);
             }
-        }
-
-        if (canvasCourses == null) {
-            return new ArrayList<>();
         }
 
         List<CourseDetailsDto> newCourses = new ArrayList<>();
@@ -234,7 +249,6 @@ public class CourseServiceImpl implements CourseService {
             if (responseEntity == null) break;
 
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
                 List<Map<String, Object>> enrollments = objectMapper.readValue(
                         responseEntity.getBody(),
                         new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
