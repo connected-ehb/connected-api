@@ -1,9 +1,9 @@
 package com.ehb.connected.domain.impl.auth.handlers;
 
-import com.ehb.connected.domain.impl.auth.entities.UserPrincipal;
+import com.ehb.connected.domain.impl.auth.security.CustomOAuth2User;
+import com.ehb.connected.domain.impl.auth.security.UserPrincipal;
 import com.ehb.connected.domain.impl.auth.services.PrincipalResolver;
 import com.ehb.connected.domain.impl.auth.services.RememberMeService;
-import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;

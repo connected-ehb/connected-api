@@ -8,7 +8,12 @@
       "Bash(mvn:*)",
       "Bash(mvn dependency:tree:*)",
       "Bash(xargs cat:*)",
-      "Bash(./mvnw clean:*)"
+      "Bash(./mvnw clean:*)",
+      "*",
+      "Bash(mkdir:*)",
+      "Bash(tree:*)",
+      "Bash(awk:*)",
+      "Bash(./mvnw compile:*)"
     ],
     "deny": [],
     "ask": []

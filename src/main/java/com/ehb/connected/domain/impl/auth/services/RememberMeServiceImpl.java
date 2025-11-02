@@ -1,6 +1,6 @@
 package com.ehb.connected.domain.impl.auth.services;
 
-import com.ehb.connected.domain.impl.auth.entities.RememberMeToken;
+import com.ehb.connected.domain.impl.auth.models.RememberMeToken;
 import com.ehb.connected.domain.impl.auth.repositories.RememberMeTokenRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
 import jakarta.servlet.http.Cookie;

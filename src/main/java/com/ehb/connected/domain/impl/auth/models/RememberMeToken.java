@@ -1,28 +1,24 @@
-package com.ehb.connected.domain.impl.auth.entities;
+package com.ehb.connected.domain.impl.auth.models;
 
 import com.ehb.connected.domain.impl.users.entities.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Builder
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+/**
+ * Entity representing a remember-me authentication token.
+ * Tokens are stored hashed for security and expire after 30 days.
+ */
 @Entity
 @Table(name = "remember_me_tokens")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RememberMeToken {
+
     @Id
     @Column(length = 256, nullable = false, unique = true)
     private String token;
@@ -36,6 +32,10 @@ public class RememberMeToken {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    /**
+     * Checks if this token has expired.
+     * @return true if current time is after expiration time
+     */
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);
     }

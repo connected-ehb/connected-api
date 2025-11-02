@@ -1,15 +1,15 @@
 package com.ehb.connected.domain.impl.auth.services;
 
-import com.ehb.connected.domain.impl.auth.entities.AuthenticationType;
-import com.ehb.connected.domain.impl.auth.entities.LoginRequestDto;
-import com.ehb.connected.domain.impl.auth.entities.RegistrationRequestDto;
-import com.ehb.connected.domain.impl.auth.entities.UserPrincipal;
+import com.ehb.connected.domain.impl.auth.dto.LoginRequest;
+import com.ehb.connected.domain.impl.auth.dto.RegistrationRequest;
+import com.ehb.connected.domain.impl.auth.security.AuthenticationType;
+import com.ehb.connected.domain.impl.auth.security.CustomOAuth2User;
+import com.ehb.connected.domain.impl.auth.security.UserPrincipal;
 import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.invitations.services.InvitationService;
+import com.ehb.connected.domain.impl.users.Factories.UserFactory;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
-import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
-import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
@@ -30,10 +30,8 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -48,11 +46,11 @@ public class AuthServiceImpl implements AuthService {
     private final InvitationService invitationService;
     private final PasswordEncoder passwordEncoder;
     private final RememberMeService rememberMeService;
-    private final com.ehb.connected.domain.impl.users.Factories.UserFactory userFactory;
+    private final UserFactory userFactory;
     private final PrincipalResolver principalResolver;
 
     @Override
-    public UserDetailsDto register(RegistrationRequestDto request) {
+    public UserDetailsDto register(RegistrationRequest request) {
         if (!invitationService.validateInvitationCode(request.getInvitationCode())) {
             throw new BaseRuntimeException("Invalid or expired invitation code.", HttpStatus.BAD_REQUEST);
         }
@@ -78,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserDetailsDto login(LoginRequestDto request) {
+    public UserDetailsDto login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -271,10 +269,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Create lightweight UserPrincipal for session
-        UserPrincipal userPrincipal = UserPrincipal.fromUser(
-            user,
-            com.ehb.connected.domain.impl.auth.entities.AuthenticationType.OAUTH2
-        );
+        UserPrincipal userPrincipal = UserPrincipal.fromUser(user, AuthenticationType.OAUTH2);
 
         // Reconstruct Canvas-like attributes from database
         Map<String, Object> attributes = new HashMap<>();
