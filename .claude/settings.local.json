@@ -7,7 +7,8 @@
       "Bash(cat:*)",
       "Bash(mvn:*)",
       "Bash(mvn dependency:tree:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(./mvnw clean:*)"
     ],
     "deny": [],
     "ask": []

@@ -16,6 +16,7 @@ import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -86,40 +87,87 @@ public class AuthServiceImpl implements AuthService {
         return userDetailsMapper.toUserDetailsDto(user);
     }
 
+    /**
+     * Performs logout operations for both OAuth2 and form-based authentication.
+     * This method handles:
+     * - Revoking Canvas OAuth2 tokens (if OAuth2 login)
+     * - Removing OAuth2 authorized client from storage
+     * - Clearing remember-me tokens
+     * - Session invalidation is handled by Spring Security's logout filter
+     *
+     * @param authentication The current authentication object
+     * @param response HTTP response for clearing cookies
+     */
     @Override
-    public void logout(Principal principal) {
-        // Get current authentication to determine if it's OAuth2
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    public void logout(Authentication authentication, HttpServletResponse response) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.debug("Logout called with no authenticated user");
+            return;
+        }
 
         if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
-            String registrationId = oauth2Token.getAuthorizedClientRegistrationId();
-            String principalName = oauth2Token.getName();
-
-            // Load the authorized client from Spring's storage
-            OAuth2AuthorizedClient authorizedClient =
-                    authorizedClientService.loadAuthorizedClient(registrationId, principalName);
-
-            if (authorizedClient != null) {
-                String accessToken = authorizedClient.getAccessToken().getTokenValue();
-
-                // Delete/revoke token on Canvas
-                try {
-                    canvasAuthService.deleteAccessToken(accessToken);
-                    log.info("Revoked Canvas access token for user: {}", principalName);
-                } catch (Exception e) {
-                    log.error("Failed to revoke Canvas token for user: {}", principalName, e);
-                }
-
-                // Remove tokens from Spring's storage
-                authorizedClientService.removeAuthorizedClient(registrationId, principalName);
-                log.info("Removed OAuth2 authorized client for user: {}", principalName);
-            }
+            handleOAuth2Logout(oauth2Token, response);
         } else {
-            // Handle non-OAuth2 logout (form-based login)
-            User user = userRepository.findByEmail(principal.getName())
-                    .orElseThrow(() -> new EntityNotFoundException("User not found"));
-            log.info("Standard logout for user: {}", user.getEmail());
+            handleFormLoginLogout(authentication, response);
         }
+    }
+
+    /**
+     * Handles logout for OAuth2 (Canvas) authenticated users.
+     */
+    private void handleOAuth2Logout(OAuth2AuthenticationToken oauth2Token, HttpServletResponse response) {
+        String registrationId = oauth2Token.getAuthorizedClientRegistrationId();
+        String principalName = oauth2Token.getName();
+
+        log.info("Processing OAuth2 logout for user: {} (registration: {})", principalName, registrationId);
+
+        // Load the authorized client from Spring's storage
+        OAuth2AuthorizedClient authorizedClient =
+                authorizedClientService.loadAuthorizedClient(registrationId, principalName);
+
+        if (authorizedClient != null) {
+            String accessToken = authorizedClient.getAccessToken().getTokenValue();
+
+            // Revoke token on Canvas
+            try {
+                canvasAuthService.deleteAccessToken(accessToken);
+                log.info("Successfully revoked Canvas access token for user: {}", principalName);
+            } catch (Exception e) {
+                log.error("Failed to revoke Canvas token for user: {}", principalName, e);
+                // Continue with logout even if revocation fails
+            }
+
+            // Remove tokens from Spring's OAuth2 storage
+            authorizedClientService.removeAuthorizedClient(registrationId, principalName);
+            log.info("Removed OAuth2 authorized client for user: {}", principalName);
+        } else {
+            log.warn("No OAuth2 authorized client found for user: {}", principalName);
+        }
+
+        // Clear remember-me token for OAuth2 users
+        try {
+            Long canvasUserId = Long.parseLong(principalName);
+            userRepository.findByCanvasUserId(canvasUserId).ifPresent(user -> {
+                rememberMeService.clearRememberMe(user, response);
+                log.info("Cleared remember-me token for Canvas user: {}", canvasUserId);
+            });
+        } catch (NumberFormatException e) {
+            log.error("Invalid Canvas user ID format: {}", principalName, e);
+        }
+    }
+
+    /**
+     * Handles logout for form-based (password) authenticated users.
+     */
+    private void handleFormLoginLogout(Authentication authentication, HttpServletResponse response) {
+        String email = authentication.getName();
+        log.info("Processing form login logout for user: {}", email);
+
+        // Clear remember-me token for form users
+        userRepository.findByEmail(email).ifPresent(user -> {
+            rememberMeService.clearRememberMe(user, response);
+            log.info("Cleared remember-me token for user: {}", email);
+        });
     }
 
     @Override

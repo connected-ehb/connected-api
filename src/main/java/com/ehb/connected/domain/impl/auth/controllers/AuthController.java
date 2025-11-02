@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -27,11 +25,9 @@ public class AuthController {
         return ResponseEntity.ok(authService.getCurrentUser(request));
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(Principal principal) {
-        authService.logout(principal);
-        return ResponseEntity.ok().build();
-    }
+    // Note: Logout is handled by Spring Security's logout filter at POST /api/auth/logout
+    // See SecurityConfig.java for logout configuration
+    // The actual logout logic is in AuthService.logout(), called by CustomLogoutSuccessHandler
 
     @PostMapping("/login")
     public ResponseEntity<UserDetailsDto> loginUser(@RequestBody LoginRequestDto request) {
