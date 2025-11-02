@@ -30,7 +30,6 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -178,7 +177,7 @@ public class AuthServiceImpl implements AuthService {
             Optional<User> rememberedUser = rememberMeService.validateRememberMeToken(request);
 
             if (rememberedUser.isPresent()) {
-                return restoreOAuth2Session(rememberedUser.get(), request);
+                return restoreSession(rememberedUser.get(), request);
             }
 
             throw ex;
@@ -255,64 +254,93 @@ public class AuthServiceImpl implements AuthService {
         );
     }
 
-    private AuthUserDetailsDto restoreOAuth2Session(User user, HttpServletRequest request) {
-        log.info("Restoring OAuth2 session for user: {}", user.getEmail());
+    /**
+     * Restores a user session from remember-me token.
+     * Supports both OAuth2 (Canvas) and form-based (researcher) authentication.
+     * <p>
+     * Security notes:
+     * - For OAuth2: Validates that Canvas tokens still exist (basic check)
+     * - For form login: Creates simple authentication
+     * - Does NOT recreate fake OAuth2 attributes
+     * - User should re-login if OAuth2 tokens are expired/revoked
+     */
+    private AuthUserDetailsDto restoreSession(User user, HttpServletRequest request) {
+        log.info("Restoring session for user: {} (id: {})", user.getEmail(), user.getId());
+
+        // Determine authentication type
+        boolean isOAuth2User = user.getCanvasUserId() != null;
+
+        if (isOAuth2User) {
+            return restoreOAuth2UserSession(user, request);
+        } else {
+            return restoreFormUserSession(user, request);
+        }
+    }
+
+    /**
+     * Restores session for OAuth2 (Canvas) users.
+     * Only proceeds if OAuth2 tokens exist in the oauth2_authorized_client table.
+     */
+    private AuthUserDetailsDto restoreOAuth2UserSession(User user, HttpServletRequest request) {
+        String canvasId = String.valueOf(user.getCanvasUserId());
 
         // Check if OAuth2 tokens exist
-        String canvasId = String.valueOf(user.getCanvasUserId());
         OAuth2AuthorizedClient authorizedClient =
                 authorizedClientService.loadAuthorizedClient("canvas", canvasId);
 
         if (authorizedClient == null) {
-            log.warn("OAuth2 tokens missing for user: {}", user.getEmail());
-            throw new BaseRuntimeException("Session expired. Please log in again.", HttpStatus.UNAUTHORIZED);
+            log.warn("OAuth2 tokens missing for Canvas user {}. Require re-login.", user.getCanvasUserId());
+            throw new BaseRuntimeException(
+                    "Your Canvas session has expired. Please log in again.",
+                    HttpStatus.UNAUTHORIZED
+            );
         }
 
-        // Create lightweight UserPrincipal for session
+        // Tokens exist - create minimal authentication
+        // Note: We don't validate the token with Canvas here for performance.
+        // If it's expired, it will fail on next Canvas API call.
         UserPrincipal userPrincipal = UserPrincipal.fromUser(user, AuthenticationType.OAUTH2);
 
-        // Reconstruct Canvas-like attributes from database
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("id", user.getCanvasUserId());
-        attributes.put("name", user.getFirstName() + " " + user.getLastName());
-        attributes.put("short_name", user.getFirstName());
-        attributes.put("sortable_name", user.getLastName() + ", " + user.getFirstName());
-        if (user.getProfileImageUrl() != null) {
-            attributes.put("avatar_url", user.getProfileImageUrl());
-        }
-        if (user.getEmail() != null) {
-            attributes.put("primary_email", user.getEmail());
-        }
-        attributes.put("locale", "en");
+        // Create minimal OAuth2 attributes (just the essentials)
+        Map<String, Object> attributes = Map.of(
+                "id", user.getCanvasUserId()
+        );
 
-        // Create CustomOAuth2User with lightweight principal
         CustomOAuth2User customOAuth2User = new CustomOAuth2User(userPrincipal, attributes, "id");
 
-        // Verify principal name
-        String principalName = customOAuth2User.getName();
-        if (!principalName.equals(canvasId)) {
-            log.error("Principal name mismatch: {} vs {}", principalName, canvasId);
-            throw new BaseRuntimeException("Session restoration failed", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        // Create authentication
+        // Create OAuth2 authentication
         OAuth2AuthenticationToken auth = new OAuth2AuthenticationToken(
                 customOAuth2User,
-                customOAuth2User.getAuthorities(),
+                user.getAuthorities(),
                 "canvas"
         );
 
-        // Store in context and session
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(auth);
-        SecurityContextHolder.setContext(context);
+        // Set security context
+        updateSecurityContext(auth, request);
 
-        request.getSession(true).setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                context
+        log.info("Restored OAuth2 session for Canvas user: {}", user.getCanvasUserId());
+        return userDetailsMapper.toDtoWithPrincipal(user, customOAuth2User);
+    }
+
+    /**
+     * Restores session for form-based (researcher) users.
+     * Creates simple username/password authentication.
+     */
+    private AuthUserDetailsDto restoreFormUserSession(User user, HttpServletRequest request) {
+        // Create simple authentication (no OAuth2 complexity needed)
+        UserPrincipal userPrincipal = UserPrincipal.fromUser(user, AuthenticationType.FORM);
+
+        // Use UsernamePasswordAuthenticationToken for form users
+        Authentication auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                user,  // principal
+                null,  // credentials (already authenticated via remember-me)
+                user.getAuthorities()
         );
 
-        log.info("Successfully restored OAuth2 session for user: {}", user.getEmail());
-        return userDetailsMapper.toDtoWithPrincipal(user, customOAuth2User);
+        // Set security context
+        updateSecurityContext(auth, request);
+
+        log.info("Restored form login session for user: {}", user.getEmail());
+        return userDetailsMapper.toDto(user);
     }
 }

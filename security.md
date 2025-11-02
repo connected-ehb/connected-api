@@ -1161,7 +1161,7 @@ You have two separate logout implementations doing the same thing:
 
 This creates race conditions and potential bugs. The logout flow is confusing and redundant.
 
-# 4. Session Restoration Logic is Risky (AuthServiceImpl.java:212-274)
+# 🟢[FIXED] 4. Session Restoration Logic is Risky (AuthServiceImpl.java:212-274)
 
 The restoreOAuth2Session() method manually reconstructs OAuth2 authentication:
 
