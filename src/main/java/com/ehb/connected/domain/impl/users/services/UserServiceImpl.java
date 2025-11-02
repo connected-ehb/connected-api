@@ -1,5 +1,6 @@
 package com.ehb.connected.domain.impl.users.services;
 
+import com.ehb.connected.domain.impl.auth.services.PrincipalResolver;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
@@ -33,6 +34,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
+    private final PrincipalResolver principalResolver;
     private final UserRepository userRepository;
     private final UserDetailsMapper userDetailsMapper;
     private final TagMapper tagMapper;
@@ -86,38 +89,9 @@ public class UserServiceImpl implements UserService {
             throw new AuthenticationRequiredException();
         }
 
-        Object principal = authentication.getPrincipal();
-
-        // OAuth2 login (Canvas)
-        if (principal instanceof CustomOAuth2User customOAuth2User) {
-            return customOAuth2User.getUser();  // ✅ Direct access to User entity
-        }
-
-        // OAuth2 login (generic)
-        if (principal instanceof OAuth2User oauth2User) {
-            String principalName = oauth2User.getName();
-            try {
-                long canvasUserId = Long.parseLong(principalName);
-                return userRepository.findByCanvasUserId(canvasUserId)
-                        .orElseThrow(() -> new EntityNotFoundException("User not found with Canvas ID: " + canvasUserId));
-            } catch (NumberFormatException e) {
-                throw new AuthenticationRequiredException("Invalid Canvas user ID: " + principalName);
-            }
-        }
-
-        // Form-based login (if you implement UserDetails on User entity)
-        if (principal instanceof User user) {
-            return user;  // ✅ Already a User entity
-        }
-
-        // Fallback for other UserDetails implementations
-        if (principal instanceof UserDetails userDetails) {
-            String email = userDetails.getUsername();
-            return userRepository.findByEmail(email)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
-        }
-
-        throw new AuthenticationRequiredException("Unsupported principal type: " + principal.getClass().getName());
+        // Use PrincipalResolver to extract User from any principal type
+        // This handles OAuth2 (CustomOAuth2User), form login (UserDetails), etc.
+        return principalResolver.getUser(authentication);
     }
 
     @Override

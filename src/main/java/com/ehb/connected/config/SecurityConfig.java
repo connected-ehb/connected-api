@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -33,24 +34,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringRequestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/ws/**")
+                )
+
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
-                                "/api/auth/**",
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/login/**", 
-                                "/login/oauth2/authorization/canvas", 
-                                "/oauth2/authorization/canvas", 
+                                "/api/auth/**",  // Covers /login, /register, /logout, etc.
+                                "/login/**",  // OAuth2 login endpoints
+                                "/oauth2/authorization/**",  // OAuth2 authorization endpoints
                                 "/error",
-                                "/ws/**", 
-                                "/actuator/**",
-                                "/api/users/verify", // Email verification endpoint
-                                "/api/bugs"
+                                "/ws/**",  // WebSocket endpoints
+                                "/actuator/**",  // Actuator endpoints
+                                "/api/users/verify",  // Email verification endpoint
+                                "/api/bugs"  // Public bug reporting
                         ).permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // CORS preflight
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
