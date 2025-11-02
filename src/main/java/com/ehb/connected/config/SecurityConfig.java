@@ -44,6 +44,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(csrfTokenRequestHandler)
+                        // Only ignore CSRF for endpoints that truly can't support it
+                        .ignoringRequestMatchers("/api/auth/register", "/ws/**")
+                        // Note: /login and /logout now require CSRF tokens (proper security)
                 )
 
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
@@ -69,13 +72,8 @@ public class SecurityConfig {
                         .successHandler(customAuthenticationSuccessHandler)
                         .failureUrl(frontendUri + "/login?error=oauth2")
                 )
-                .formLogin(form -> form
-                        .loginPage(frontendUri + "/login")
-                        .loginProcessingUrl("/api/auth/login")
-                        .defaultSuccessUrl(frontendUri, true)
-                        .failureUrl(frontendUri + "/login?error=form")
-                        .permitAll()
-                )
+                // Note: Form login removed - using custom JSON-based authentication
+                // See AuthController.login() for implementation
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler(customLogoutSuccessHandler)

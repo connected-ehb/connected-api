@@ -74,13 +74,53 @@ public class AuthServiceImpl implements AuthService {
         return userDetailsMapper.toUserDetailsDto(user);
     }
 
+    /**
+     * Authenticates a user with email and password (form-based login).
+     * Creates a Spring Security session on successful authentication.
+     *
+     * @param request Login credentials (email + password)
+     * @param httpRequest HTTP request to create session
+     * @param httpResponse HTTP response to set remember-me cookie if needed
+     * @return User details after successful authentication
+     * @throws EntityNotFoundException if user not found
+     * @throws BaseRuntimeException if credentials are invalid
+     */
     @Override
-    public UserDetailsDto login(LoginRequest request) {
+    public UserDetailsDto login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        // 1. Validate credentials
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BaseRuntimeException("Invalid credentials", HttpStatus.UNAUTHORIZED);
         }
+
+        if (!user.isEnabled()) {
+            throw new BaseRuntimeException("Account is disabled", HttpStatus.FORBIDDEN);
+        }
+
+        // 2. Create Spring Security authentication
+        Authentication authentication = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                user,  // principal
+                user.getPassword(),  // credentials
+                user.getAuthorities()  // authorities
+        );
+
+        // 3. Set security context
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        // 4. Save to HTTP session
+        httpRequest.getSession(true).setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
+
+        // 5. Create remember-me token if requested (optional - you can add a checkbox in frontend)
+        // rememberMeService.createRememberMeToken(user, httpResponse);
+
+        log.info("User {} successfully logged in via form authentication", user.getEmail());
         return userDetailsMapper.toUserDetailsDto(user);
     }
 

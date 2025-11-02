@@ -6,6 +6,7 @@ import com.ehb.connected.domain.impl.auth.services.AuthService;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,12 +34,25 @@ public class AuthController {
 
     /**
      * Authenticate a user with email and password (form-based login).
-     * Note: This currently only validates credentials but doesn't create a session.
-     * TODO: Fix to properly integrate with Spring Security.
+     * Creates a Spring Security session on successful authentication.
+     * <p>
+     * Security:
+     * - Requires CSRF token (sent in X-XSRF-TOKEN header)
+     * - Creates HttpSession with Spring Security context
+     * - Returns user details on success
+     *
+     * @param loginRequest JSON body with email and password
+     * @param httpRequest HTTP request to create session
+     * @param httpResponse HTTP response for remember-me cookie
+     * @return User details after successful authentication
      */
     @PostMapping("/login")
-    public ResponseEntity<UserDetailsDto> loginUser(@RequestBody LoginRequest request) {
-        UserDetailsDto userDetails = authService.login(request);
+    public ResponseEntity<UserDetailsDto> loginUser(
+            @RequestBody LoginRequest loginRequest,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+
+        UserDetailsDto userDetails = authService.login(loginRequest, httpRequest, httpResponse);
         return ResponseEntity.ok(userDetails);
     }
 

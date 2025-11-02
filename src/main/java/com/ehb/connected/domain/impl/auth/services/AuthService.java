@@ -14,7 +14,7 @@ import org.springframework.security.core.Authentication;
  */
 public interface AuthService {
     UserDetailsDto register(RegistrationRequest request);
-    UserDetailsDto login(LoginRequest request);
+    UserDetailsDto login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse);
     void logout(Authentication authentication, HttpServletResponse response);
     AuthUserDetailsDto getCurrentUser(HttpServletRequest request);
     AuthUserDetailsDto refreshSessionIfStale(HttpServletRequest request);
