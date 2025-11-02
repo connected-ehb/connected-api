@@ -8,10 +8,18 @@ import java.time.LocalDateTime;
 
 /**
  * Entity representing a remember-me authentication token.
- * Tokens are stored hashed for security and expire after 30 days.
+ * <p>
+ * Security model:
+ * - Tokens are hashed with BCrypt before storage (like passwords)
+ * - Each user can have only one active token (old ones are deleted on login)
+ * - Tokens expire after 30 days
+ * - Tokens can be revoked early (logout, password change, etc.)
  */
 @Entity
-@Table(name = "remember_me_tokens")
+@Table(
+    name = "remember_me_tokens",
+    indexes = @Index(name = "idx_user_id", columnList = "user_id")
+)
 @Getter
 @Setter
 @Builder
@@ -19,22 +27,43 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class RememberMeToken {
 
+    /**
+     * Composite primary key: user ID + token hash.
+     * This allows efficient lookup by user and prevents duplicate tokens.
+     */
     @Id
-    @Column(length = 256, nullable = false, unique = true)
-    private String token;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    /**
+     * Hashed token value (BCrypt).
+     * Never store tokens in plain text!
+     */
+    @Column(nullable = false, length = 60)
+    private String tokenHash;
+
+    /**
+     * User who owns this token.
+     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /**
+     * When the token was created.
+     */
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * When the token expires.
+     * Stored in DB so we can revoke tokens before cookie expiry.
+     */
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
     /**
      * Checks if this token has expired.
-     * @return true if current time is after expiration time
      */
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);

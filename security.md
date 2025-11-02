@@ -1141,7 +1141,7 @@ What's Actually Happening:
 - Users login via your controller but remain unauthenticated in Spring Security's eyes
 - No SecurityContext is set, no session is created
 
-# 2. CSRF Protection Disabled for Critical Endpoints (SecurityConfig.java:39)
+# 2. 🟢[FIXED] CSRF Protection Disabled for Critical Endpoints (SecurityConfig.java:39)
 
 .csrf(csrf -> csrf
 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -1153,7 +1153,7 @@ Issues:
 - While cookie-based CSRF tokens are exposed (withHttpOnlyFalse()), you're ignoring them for auth endpoints
 - For SPA architecture, you should either use CSRF tokens properly or switch to stateless JWT
 
-# 3. Logout Handler Duplicates Logout Logic (AuthServiceImpl.java:90-123 + CustomLogoutSuccessHandler.java)
+# 3. 🟢[FIXED] Logout Handler Duplicates Logout Logic (AuthServiceImpl.java:90-123 + CustomLogoutSuccessHandler.java)
 
 You have two separate logout implementations doing the same thing:
 - AuthService.logout() - called by controller
@@ -1171,7 +1171,7 @@ Security Concerns:
 - Creates fake OAuth2 attributes from database (not from actual Canvas response)
 - Could allow session hijacking if remember-me tokens leak
 
-# 5. Remember-Me Tokens Stored in Plain Text (RememberMeServiceImpl.java:28-46)
+# 🟢[FIXED] 5. Remember-Me Tokens Stored in Plain Text (RememberMeServiceImpl.java:28-46)
 
 rememberMeTokenRepository.save(RememberMeToken.builder()
 .token(rawToken)  // ❌ Stored as plain text!
