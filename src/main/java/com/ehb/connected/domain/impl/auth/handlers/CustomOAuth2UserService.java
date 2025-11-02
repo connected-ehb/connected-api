@@ -1,5 +1,7 @@
 package com.ehb.connected.domain.impl.auth.handlers;
 
+import com.ehb.connected.domain.impl.auth.entities.AuthenticationType;
+import com.ehb.connected.domain.impl.auth.entities.UserPrincipal;
 import com.ehb.connected.domain.impl.canvas.entities.CanvasAttributes;
 import com.ehb.connected.domain.impl.users.Factories.UserFactory;
 import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
@@ -50,8 +52,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .getUserInfoEndpoint()
                 .getUserNameAttributeName();
 
+        // Create lightweight principal for session storage
+        UserPrincipal userPrincipal = UserPrincipal.fromUser(user, AuthenticationType.OAUTH2);
+
+        log.info("OAuth2 login successful for user: {} (Canvas ID: {})", user.getEmail(), user.getCanvasUserId());
+
         // Spring automatically stores tokens in oauth2_authorized_client table
-        return new CustomOAuth2User(user, attributes, nameAttrKey);
+        return new CustomOAuth2User(userPrincipal, attributes, nameAttrKey);
     }
 
     private void syncCanvasAttributes(User user, CanvasAttributes canvasAttributes) {

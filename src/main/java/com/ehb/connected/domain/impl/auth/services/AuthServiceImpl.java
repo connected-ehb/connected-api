@@ -1,7 +1,9 @@
 package com.ehb.connected.domain.impl.auth.services;
 
+import com.ehb.connected.domain.impl.auth.entities.AuthenticationType;
 import com.ehb.connected.domain.impl.auth.entities.LoginRequestDto;
 import com.ehb.connected.domain.impl.auth.entities.RegistrationRequestDto;
+import com.ehb.connected.domain.impl.auth.entities.UserPrincipal;
 import com.ehb.connected.domain.impl.canvas.CanvasAuthService;
 import com.ehb.connected.domain.impl.invitations.services.InvitationService;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
@@ -45,6 +47,8 @@ public class AuthServiceImpl implements AuthService {
     private final InvitationService invitationService;
     private final PasswordEncoder passwordEncoder;
     private final RememberMeService rememberMeService;
+    private final com.ehb.connected.domain.impl.users.Factories.UserFactory userFactory;
+    private final PrincipalResolver principalResolver;
 
     @Override
     public UserDetailsDto register(RegistrationRequestDto request) {
@@ -56,15 +60,19 @@ public class AuthServiceImpl implements AuthService {
             throw new BaseRuntimeException("A user with this email already exists.", HttpStatus.CONFLICT);
         }
 
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.RESEARCHER);
+        // Create form user with emailVerified=true (researchers don't need verification for now)
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        User user = userFactory.newFormUser(
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName(),
+                encodedPassword
+        );
+
         user = userRepository.save(user);
 
         invitationService.markInvitationAsUsed(request.getInvitationCode());
+        log.info("Registered new researcher user: {}", user.getEmail());
         return userDetailsMapper.toUserDetailsDto(user);
     }
 
@@ -133,62 +141,61 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthUserDetailsDto refreshSessionIfStale(HttpServletRequest request) {
-        Authentication authentication = getCurrentAuthentication();
-        CustomOAuth2User customUser = extractCustomUser(authentication);
-        User dbUser = loadDbUser(customUser);
-
-        if (isStale(customUser.getUser(), dbUser)) {
-            log.info("Refreshing session for user {} (role/emailVerified changed)", dbUser.getId());
-            CustomOAuth2User newPrincipal = rebuildPrincipal(dbUser, customUser);
-            Authentication newAuth = rebuildAuthentication(newPrincipal, (OAuth2AuthenticationToken) authentication);
-            updateSecurityContext(newAuth, request);
-            return userDetailsMapper.toDtoWithPrincipal(dbUser, newPrincipal);
-        }
-
-        return userDetailsMapper.toDtoWithPrincipal(dbUser, customUser);
-    }
-
-    private Authentication getCurrentAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof OAuth2AuthenticationToken)) {
-            throw new BaseRuntimeException("No OAuth2 authentication found", HttpStatus.UNAUTHORIZED);
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BaseRuntimeException("No authenticated user found", HttpStatus.UNAUTHORIZED);
         }
-        return authentication;
-    }
 
-    private CustomOAuth2User extractCustomUser(Authentication authentication) {
-        OAuth2AuthenticationToken oauth2Auth = (OAuth2AuthenticationToken) authentication;
-        if (!(oauth2Auth.getPrincipal() instanceof CustomOAuth2User customUser)) {
-            throw new BaseRuntimeException("Unexpected principal type", HttpStatus.UNAUTHORIZED);
-        }
-        return customUser;
-    }
+        // Extract the UserPrincipal using PrincipalResolver
+        UserPrincipal sessionPrincipal = principalResolver.extractUserPrincipal(authentication);
 
-    private User loadDbUser(CustomOAuth2User customUser) {
-        return userRepository.findByCanvasUserId(customUser.getUser().getCanvasUserId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
-    }
+        // Load fresh user data from database
+        User dbUser = principalResolver.loadUserFromDatabase(sessionPrincipal);
 
-    private boolean isStale(User sessionUser, User dbUser) {
-        boolean roleChanged = !Objects.equals(dbUser.getRole(), sessionUser.getRole());
-        boolean emailVerifiedChanged = dbUser.isEmailVerified() != sessionUser.isEmailVerified();
-        return roleChanged || emailVerifiedChanged;
-    }
+        // Check if session is stale (role or emailVerified changed)
+        if (!sessionPrincipal.matchesUser(dbUser)) {
+            log.info("Refreshing stale session for user {} (role/emailVerified changed)", dbUser.getId());
 
-    private CustomOAuth2User rebuildPrincipal(User dbUser, CustomOAuth2User oldPrincipal) {
-        return new CustomOAuth2User(
+            // Create fresh principal with updated data
+            UserPrincipal freshPrincipal = UserPrincipal.fromUser(
                 dbUser,
-                oldPrincipal.getAttributes(),
-                oldPrincipal.getNameAttributeKey()
-        );
-    }
+                sessionPrincipal.getAuthenticationType()
+            );
 
-    private Authentication rebuildAuthentication(CustomOAuth2User newPrincipal, OAuth2AuthenticationToken oldAuth) {
-        return new OAuth2AuthenticationToken(
-                newPrincipal,
-                newPrincipal.getAuthorities(),
-                oldAuth.getAuthorizedClientRegistrationId()
-        );
+            // Rebuild authentication based on type
+            if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
+                CustomOAuth2User customOAuth2User = (CustomOAuth2User) oauth2Token.getPrincipal();
+
+                // Create new CustomOAuth2User with fresh principal
+                CustomOAuth2User newCustomOAuth2User = new CustomOAuth2User(
+                    freshPrincipal,
+                    customOAuth2User.getAttributes(),
+                    customOAuth2User.getNameAttributeKey()
+                );
+
+                // Create new authentication
+                OAuth2AuthenticationToken newAuth = new OAuth2AuthenticationToken(
+                    newCustomOAuth2User,
+                    newCustomOAuth2User.getAuthorities(),
+                    oauth2Token.getAuthorizedClientRegistrationId()
+                );
+
+                // Update security context
+                updateSecurityContext(newAuth, request);
+                return userDetailsMapper.toDtoWithPrincipal(dbUser, newCustomOAuth2User);
+            }
+        }
+
+        // Session is not stale, return current data
+        // For OAuth2 users, extract the CustomOAuth2User principal
+        if (authentication instanceof OAuth2AuthenticationToken oauth2Token
+            && oauth2Token.getPrincipal() instanceof CustomOAuth2User customOAuth2User) {
+            return userDetailsMapper.toDtoWithPrincipal(dbUser, customOAuth2User);
+        }
+
+        // For form login users, just return user details without OAuth2 principal
+        return userDetailsMapper.toDto(dbUser);
     }
 
     private void updateSecurityContext(Authentication newAuth, HttpServletRequest request) {
@@ -215,7 +222,13 @@ public class AuthServiceImpl implements AuthService {
             throw new BaseRuntimeException("Session expired. Please log in again.", HttpStatus.UNAUTHORIZED);
         }
 
-        // ✅ Reconstruct Canvas-like attributes from database
+        // Create lightweight UserPrincipal for session
+        UserPrincipal userPrincipal = UserPrincipal.fromUser(
+            user,
+            com.ehb.connected.domain.impl.auth.entities.AuthenticationType.OAUTH2
+        );
+
+        // Reconstruct Canvas-like attributes from database
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("id", user.getCanvasUserId());
         attributes.put("name", user.getFirstName() + " " + user.getLastName());
@@ -229,10 +242,11 @@ public class AuthServiceImpl implements AuthService {
         }
         attributes.put("locale", "en");
 
-        CustomOAuth2User principal = new CustomOAuth2User(user, attributes, "id");
+        // Create CustomOAuth2User with lightweight principal
+        CustomOAuth2User customOAuth2User = new CustomOAuth2User(userPrincipal, attributes, "id");
 
         // Verify principal name
-        String principalName = principal.getName();
+        String principalName = customOAuth2User.getName();
         if (!principalName.equals(canvasId)) {
             log.error("Principal name mismatch: {} vs {}", principalName, canvasId);
             throw new BaseRuntimeException("Session restoration failed", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -240,8 +254,8 @@ public class AuthServiceImpl implements AuthService {
 
         // Create authentication
         OAuth2AuthenticationToken auth = new OAuth2AuthenticationToken(
-                principal,
-                principal.getAuthorities(),
+                customOAuth2User,
+                customOAuth2User.getAuthorities(),
                 "canvas"
         );
 
@@ -256,6 +270,6 @@ public class AuthServiceImpl implements AuthService {
         );
 
         log.info("Successfully restored OAuth2 session for user: {}", user.getEmail());
-        return userDetailsMapper.toDtoWithPrincipal(user, principal);
+        return userDetailsMapper.toDtoWithPrincipal(user, customOAuth2User);
     }
 }

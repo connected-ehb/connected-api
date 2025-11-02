@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(comm:*)",
+      "Bash(cd:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(mvn:*)",
+      "Bash(mvn dependency:tree:*)",
+      "Bash(xargs cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
