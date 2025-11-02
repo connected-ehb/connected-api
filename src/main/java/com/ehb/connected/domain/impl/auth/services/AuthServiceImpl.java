@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -47,6 +48,7 @@ public class AuthServiceImpl implements AuthService {
     private final RememberMeService rememberMeService;
     private final UserFactory userFactory;
     private final PrincipalResolver principalResolver;
+    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     @Override
     public UserDetailsDto register(RegistrationRequest request) {
@@ -99,25 +101,37 @@ public class AuthServiceImpl implements AuthService {
             throw new BaseRuntimeException("Account is disabled", HttpStatus.FORBIDDEN);
         }
 
-        // 2. Create Spring Security authentication
+        // 2. Invalidate old session if exists (prevents CSRF token issues)
+        var existingSession = httpRequest.getSession(false);
+        if (existingSession != null) {
+            existingSession.invalidate();
+        }
+
+        // 3. Create new session BEFORE setting security context
+        var newSession = httpRequest.getSession(true);
+
+        // 4. Create lightweight UserPrincipal for session (avoids Redis serialization issues)
+        UserPrincipal userPrincipal = UserPrincipal.fromUser(user, AuthenticationType.FORM);
+
+        // 5. Create Spring Security authentication
         Authentication authentication = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                user,  // principal
-                user.getPassword(),  // credentials
+                userPrincipal,  // principal (lightweight, serializable)
+                null,  // credentials (don't store password in session)
                 user.getAuthorities()  // authorities
         );
 
-        // 3. Set security context
+        // 6. Set security context
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
 
-        // 4. Save to HTTP session
-        httpRequest.getSession(true).setAttribute(
+        // 7. Save security context to the new session
+        newSession.setAttribute(
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 context
         );
 
-        // 5. Create remember-me token if requested (optional - you can add a checkbox in frontend)
+        // 7. Create remember-me token if requested (optional - you can add a checkbox in frontend)
         // rememberMeService.createRememberMeToken(user, httpResponse);
 
         log.info("User {} successfully logged in via form authentication", user.getEmail());

@@ -6,6 +6,7 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import org.springframework.security.core.Authentication;
 
 import java.security.Principal;
 import java.util.List;
@@ -37,5 +38,5 @@ public interface ProjectService {
 
     ProjectDetailsDto createGlobalProject(Principal principal, ProjectCreateDto project);
 
-    List<ProjectDetailsDto> getAllGlobalProjects(Principal principal);
+    List<ProjectDetailsDto> getAllGlobalProjects(Authentication authentication);
 }

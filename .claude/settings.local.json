@@ -13,7 +13,10 @@
       "Bash(mkdir:*)",
       "Bash(tree:*)",
       "Bash(awk:*)",
-      "Bash(./mvnw compile:*)"
+      "Bash(./mvnw compile:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []

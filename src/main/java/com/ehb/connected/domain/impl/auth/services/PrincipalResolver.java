@@ -56,6 +56,11 @@ public class PrincipalResolver {
 
         Object principal = authentication.getPrincipal();
 
+        // Direct UserPrincipal (stored in session for form login)
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return userPrincipal;
+        }
+
         // OAuth2 authentication with CustomOAuth2User
         if (principal instanceof CustomOAuth2User customOAuth2User) {
             return customOAuth2User.getUserPrincipal();

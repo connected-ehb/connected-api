@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -396,8 +397,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectDetailsDto> getAllGlobalProjects(Principal principal) {
-        User user = userService.getUserByPrincipal(principal);
+    public List<ProjectDetailsDto> getAllGlobalProjects(Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
         if (user.hasRole(Role.RESEARCHER)) {
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(user));
         } else {

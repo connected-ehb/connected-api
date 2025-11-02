@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -73,8 +74,8 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyAuthority('project:read')")
     @GetMapping("/global")
-    public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(Principal principal){
-        return ResponseEntity.ok(projectService.getAllGlobalProjects(principal));
+    public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(Authentication authentication){
+        return ResponseEntity.ok(projectService.getAllGlobalProjects(authentication));
     }
 
     @PreAuthorize("hasAnyAuthority('project:update')")
