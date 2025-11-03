@@ -15,9 +15,9 @@ import com.ehb.connected.domain.impl.users.services.UserService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import com.ehb.connected.exceptions.UserUnauthorizedException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.List;
 
 @Service
@@ -31,11 +31,11 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final FeedbackMapper feedbackMapper;
 
     @Override
-    public FeedbackDto giveFeedback(Principal principal, Long projectId, FeedbackCreateDto feedbackDto) {
+    public FeedbackDto giveFeedback(Authentication authentication, Long projectId, FeedbackCreateDto feedbackDto) {
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
-        final User user = userService.getUserByPrincipal(principal);
+        final User user = userService.getUserByAuthentication(authentication);
         if (user.hasRole(Role.STUDENT)) {
             throw new UserUnauthorizedException(user.getId());
         }
@@ -66,10 +66,10 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public FeedbackDto updateFeedback(Principal principal, Long feedbackId, FeedbackCreateDto feedbackDto) {
+    public FeedbackDto updateFeedback(Authentication authentication, Long feedbackId, FeedbackCreateDto feedbackDto) {
         final Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
-        final User user = userService.getUserByPrincipal(principal);
+        final User user = userService.getUserByAuthentication(authentication);
 
         if (!feedback.isOwner(user)) {
             throw new UserUnauthorizedException(user.getId());
@@ -80,11 +80,11 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public void deleteFeedback(Principal principal, Long feedbackId) {
+    public void deleteFeedback(Authentication authentication, Long feedbackId) {
         final Feedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new EntityNotFoundException(Feedback.class, feedbackId));
 
-        final User user = userService.getUserByPrincipal(principal);
+        final User user = userService.getUserByAuthentication(authentication);
         if (!feedback.isOwner(user)) {
             throw new UserUnauthorizedException(user.getId());
         }
@@ -92,7 +92,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
-    public List<FeedbackDto> getAllFeedbackForProject(Principal principal, Long projectId) {
+    public List<FeedbackDto> getAllFeedbackForProject(Authentication authentication, Long projectId) {
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 

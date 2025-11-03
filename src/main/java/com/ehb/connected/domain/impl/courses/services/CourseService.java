@@ -6,15 +6,14 @@ import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import org.springframework.security.core.Authentication;
 
-import java.security.Principal;
 import java.util.List;
 
 public interface CourseService {
     List<CourseDetailsDto> getNewCoursesFromCanvas(Authentication authentication);
-    CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto);
-    List<CourseDetailsDto> getCoursesByOwner(Principal principal);
-    List<CourseDetailsDto> getCoursesByEnrollment(Principal principal);
+    CourseDetailsDto createCourseWithEnrollments(Authentication authentication, CourseCreateDto courseDto);
+    List<CourseDetailsDto> getCoursesByOwner(Authentication authentication);
+    List<CourseDetailsDto> getCoursesByEnrollment(Authentication authentication);
     Course getCourseById(Long courseId);
     void deleteCourseById(Long courseId);
-    CourseDetailsDto refreshEnrollments(Principal principal, Long courseId);
+    CourseDetailsDto refreshEnrollments(Authentication authentication, Long courseId);
 }

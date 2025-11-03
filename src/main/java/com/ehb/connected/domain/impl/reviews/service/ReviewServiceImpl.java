@@ -13,9 +13,9 @@ import com.ehb.connected.exceptions.BaseRuntimeException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.List;
 
 @Service
@@ -28,13 +28,13 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserService userService;
 
     @Override
-    public List<ReviewDetailsDto> getAllReviewsByProjectId(Principal principal, Long projectId) {
+    public List<ReviewDetailsDto> getAllReviewsByProjectId(Authentication authentication, Long projectId) {
         return reviewMapper.toDtoList(reviewRepository.findAllByProjectId(projectId));
     }
 
     @Override
-    public ReviewDetailsDto createOrUpdateReviewForProject(Principal principal, Long projectId, ReviewCreateDto reviewCreateDto) {
-        User reviewer = userService.getUserByPrincipal(principal);
+    public ReviewDetailsDto createOrUpdateReviewForProject(Authentication authentication, Long projectId, ReviewCreateDto reviewCreateDto) {
+        User reviewer = userService.getUserByAuthentication(authentication);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
@@ -49,8 +49,8 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public void deleteReview(Principal principal, Long reviewId) {
-        User user = userService.getUserByPrincipal(principal);
+    public void deleteReview(Authentication authentication, Long reviewId) {
+        User user = userService.getUserByAuthentication(authentication);
         Review review = reviewRepository.findByIdAndReviewer(reviewId, user)
                 .orElseThrow(() -> new EntityNotFoundException(Review.class, reviewId));
         if (!review.isOwner(user)) {

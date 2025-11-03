@@ -4,11 +4,10 @@ import com.ehb.connected.domain.impl.reviews.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -19,8 +18,8 @@ public class ReviewController {
 
     @PreAuthorize("hasAnyAuthority('review:delete')")
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<Void> deleteReview(Principal principal, Long reviewId) {
-        reviewService.deleteReview(principal, reviewId);
+    public ResponseEntity<Void> deleteReview(Authentication authentication, Long reviewId) {
+        reviewService.deleteReview(authentication, reviewId);
         return ResponseEntity.noContent().build();
     }
 }
