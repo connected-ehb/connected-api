@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -17,7 +16,9 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -38,14 +39,29 @@ public class CanvasAuthServiceImpl implements CanvasAuthService {
 
     @Override
     public void deleteAccessToken(String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) {
+            logger.debug("[{}] Skipping Canvas token revocation: no access token provided",
+                    CanvasAuthService.class.getSimpleName());
+            return;
+        }
+
+        WebClient nonOAuthWebClient = webClient.mutate()
+                .filters(List::clear)
+                .build();
+
         try {
-            webClient.delete()
+            nonOAuthWebClient.delete()
                     .uri(tokenUri)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                     .retrieve()
                     .bodyToMono(Void.class)
                     .block();
+            logger.info("[{}] Successfully revoked Canvas access token", CanvasAuthService.class.getSimpleName());
+        } catch (WebClientResponseException e) {
+            logger.error("[{}] Canvas token revocation failed (status: {}, body: {})",
+                    CanvasAuthService.class.getSimpleName(), e.getStatusCode(), e.getResponseBodyAsString(), e);
         } catch (Exception e) {
-            logger.error("[{}] Failed to delete access token from Canvas", CanvasAuthService.class.getSimpleName());
+            logger.error("[{}] Failed to delete access token from Canvas", CanvasAuthService.class.getSimpleName(), e);
         }
     }
 
