@@ -1,4 +1,4 @@
-package com.ehb.connected.domain.impl.auth.entities;
+package com.ehb.connected.domain.impl.auth.security;
 
 /**
  * Enum representing the type of authentication used by a user.

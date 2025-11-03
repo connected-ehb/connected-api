@@ -25,7 +25,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -128,9 +127,9 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public CourseDetailsDto createCourseWithEnrollments(Principal principal, CourseCreateDto courseDto) {
+    public CourseDetailsDto createCourseWithEnrollments(Authentication authentication, CourseCreateDto courseDto) {
 
-        Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, principal);
+        Course courseEntity = courseMapper.CourseCreateToEntity(courseDto, authentication);
         importCourse(courseEntity);
 
         final List<Long> userIds = fetchAllCanvasUserIdsForCourse(courseEntity.getCanvasId());
@@ -164,14 +163,14 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public List<CourseDetailsDto> getCoursesByOwner(Principal principal) {
-        User owner = userService.getUserByPrincipal(principal);
+    public List<CourseDetailsDto> getCoursesByOwner(Authentication authentication) {
+        User owner = userService.getUserByAuthentication(authentication);
         return courseMapper.toCourseDetailsDtoList(courseRepository.findByOwner(owner));
     }
 
     @Override
-    public List<CourseDetailsDto> getCoursesByEnrollment(Principal principal) {
-        User user = userService.getUserByPrincipal(principal);
+    public List<CourseDetailsDto> getCoursesByEnrollment(Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
         return courseMapper.toCourseDetailsDtoList(courseRepository.findByEnrollmentsCanvasUserId(user.getCanvasUserId()));
     }
 
@@ -199,8 +198,8 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public CourseDetailsDto refreshEnrollments(Principal principal, Long courseId) {
-        final User requester = userService.getUserByPrincipal(principal);
+    public CourseDetailsDto refreshEnrollments(Authentication authentication, Long courseId) {
+        final User requester = userService.getUserByAuthentication(authentication);
         final Course course = getCourseById(courseId);
 
         if (course.getCanvasId() == null) {

@@ -90,10 +90,6 @@ jobs:
       - name: Stop and remove old container
         run: docker compose -f compose.dev.yml down || true
 
-      - name: Flush Redis cache
-        run: |
-          docker run --rm --network host redis:7-alpine redis-cli -h ${{ secrets.REDIS_HOST }} -p ${{ secrets.REDIS_PORT }} FLUSHALL || echo "Redis flush failed or Redis not accessible"
-
       - name: Start new containers
         run: docker compose -f compose.dev.yml up -d --build
 

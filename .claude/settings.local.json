@@ -7,7 +7,16 @@
       "Bash(cat:*)",
       "Bash(mvn:*)",
       "Bash(mvn dependency:tree:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(./mvnw clean:*)",
+      "*",
+      "Bash(mkdir:*)",
+      "Bash(tree:*)",
+      "Bash(awk:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []

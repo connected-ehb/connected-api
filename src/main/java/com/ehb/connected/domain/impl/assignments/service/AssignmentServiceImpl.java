@@ -10,10 +10,10 @@ import com.ehb.connected.domain.impl.courses.services.CourseService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +49,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     //TODO: Check .block() usage and refactor to avoid blocking calls.
     @Override
-    public List<AssignmentDetailsDto> getNewAssignmentsFromCanvas(Principal principal, Long courseId) {
+    public List<AssignmentDetailsDto> getNewAssignmentsFromCanvas(Authentication authentication, Long courseId) {
         final Course course = courseService.getCourseById(courseId);
         final Long canvasCourseId = course.getCanvasId();
 
@@ -79,7 +79,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         return assignmentRepository.existsByCanvasId(canvasAssignmentId);
     }
 
-    public void deleteAssignmentById(Principal principal, Long assignmentId) {
+    public void deleteAssignmentById(Authentication authentication, Long assignmentId) {
         Assignment assignment = getAssignmentById(assignmentId);
         assignmentRepository.delete(assignment);
     }

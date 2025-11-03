@@ -1108,3 +1108,281 @@ The ConnectEd API has **significant security vulnerabilities** that must be addr
 **Report Generated:** 2025-11-01
 **Auditor:** Security Analysis Tool
 **Contact:** security@connected.ehb.be
+
+
+---
+
+
+
+
+🔴 CRITICAL SECURITY VULNERABILITIES
+
+# 1. Form Login Authentication is Completely Broken (SecurityConfig.java:65-71)
+
+Your form login configuration is misconfigured and NOT WORKING:
+
+.formLogin(form -> form
+.loginPage(frontendUri + "/login")           // ❌ Wrong - should be API endpoint
+.loginProcessingUrl("/api/auth/login")
+.defaultSuccessUrl(frontendUri, true)        // ❌ Redirects to frontend, not API
+.failureUrl(frontendUri + "/login?error=form") // ❌ Redirects to frontend
+.permitAll()
+)
+
+Problems:
+- Spring Security's form login expects form-encoded credentials (username & password fields)
+- Your AuthController.login() expects JSON (@RequestBody LoginRequestDto)
+- These are two separate, conflicting login mechanisms
+- Form login redirects to frontend URLs - breaks SPA architecture
+- The /api/auth/login endpoint bypasses Spring Security entirely (CSRF disabled for it)
+
+What's Actually Happening:
+- Your custom @PostMapping("/api/auth/login") controller method works, but it only validates credentials - it doesn't create a Spring Security session
+- Users login via your controller but remain unauthenticated in Spring Security's eyes
+- No SecurityContext is set, no session is created
+
+# 2. 🟢[FIXED] CSRF Protection Disabled for Critical Endpoints (SecurityConfig.java:39)
+
+.csrf(csrf -> csrf
+.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+.ignoringRequestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/ws/**")
+)
+
+Issues:
+- Login, register, and logout are vulnerable to CSRF attacks
+- While cookie-based CSRF tokens are exposed (withHttpOnlyFalse()), you're ignoring them for auth endpoints
+- For SPA architecture, you should either use CSRF tokens properly or switch to stateless JWT
+
+# 3. 🟢[FIXED] Logout Handler Duplicates Logout Logic (AuthServiceImpl.java:90-123 + CustomLogoutSuccessHandler.java)
+
+You have two separate logout implementations doing the same thing:
+- AuthService.logout() - called by controller
+- CustomLogoutSuccessHandler.onLogoutSuccess() - called by Spring Security
+
+This creates race conditions and potential bugs. The logout flow is confusing and redundant.
+
+# 🟢[FIXED] 4. Session Restoration Logic is Risky (AuthServiceImpl.java:212-274)
+
+The restoreOAuth2Session() method manually reconstructs OAuth2 authentication:
+
+Security Concerns:
+- Manually building CustomOAuth2User from database data bypasses OAuth2 flow
+- No validation that OAuth2 tokens are still valid with Canvas
+- Creates fake OAuth2 attributes from database (not from actual Canvas response)
+- Could allow session hijacking if remember-me tokens leak
+
+# 🟢[FIXED] 5. Remember-Me Tokens Stored in Plain Text (RememberMeServiceImpl.java:28-46)
+
+rememberMeTokenRepository.save(RememberMeToken.builder()
+.token(rawToken)  // ❌ Stored as plain text!
+
+Critical Flaw:
+- Tokens should be hashed (like passwords) before storage
+- If database is compromised, attackers can steal all remember-me tokens
+- Industry standard: store hash(token), compare hash(cookie_value) on validation
+
+  ---
+🟡 DESIGN ISSUES & REDUNDANCIES
+
+6. Dual Authentication System is Poorly Integrated
+
+You have OAuth2 and form login, but they're not properly unified:
+
+Form Login Problems:
+- AuthController.login() doesn't integrate with Spring Security
+- No session creation, no SecurityContext setup
+- Returns UserDetailsDto but doesn't authenticate user
+- CustomUserDetailsService exists but is never used (no UserDetailsService bean configuration)
+
+Recommendation: Either:
+- Remove Spring Security's form login and use custom session management
+- Or properly integrate form login with Spring Security (create Authentication manually)
+
+7. Redundant User Principal Wrapper (CustomOAuth2User wrapping UserPrincipal)
+
+You have excessive layering:
+- User (JPA entity, implements UserDetails)
+- UserPrincipal (lightweight session principal)
+- CustomOAuth2User (wraps UserPrincipal, implements OAuth2User)
+
+Issues:
+- Three different representations of the same user
+- Complex extraction logic in PrincipalResolver
+- UserPrincipal.getName() returns different values based on auth type (Canvas ID vs email)
+
+Simplification: Consider using User entity directly in session with Hibernate lazy-loading disabled.
+
+8. Session Refresh Logic is Overly Complex (AuthServiceImpl.java:143-199)
+
+The refreshSessionIfStale() method:
+- Checks if role/emailVerified changed
+- Rebuilds entire CustomOAuth2User wrapper
+- Manually updates SecurityContext and HttpSession
+
+Issues:
+- Requires loading full User entity on every /api/auth/user request
+- Expensive database lookup for session staleness check
+- Could use Redis TTL or versioning instead
+
+9. AuthController.login() Returns Wrong Response (AuthController.java:36-40)
+
+@PostMapping("/login")
+public ResponseEntity<UserDetailsDto> loginUser(@RequestBody LoginRequestDto request) {
+UserDetailsDto userDetails = authService.login(request);
+return ResponseEntity.ok(userDetails);  // ❌ User is NOT actually logged in!
+}
+
+This endpoint validates credentials but doesn't create a session. The response suggests successful login, but the user remains unauthenticated.
+
+10. Inconsistent Error Handling
+
+- Some methods throw EntityNotFoundException
+- Some throw BaseRuntimeException
+- No consistent authentication failure response
+- Form login returns 401, OAuth2 redirects to error page
+
+  ---
+🟠 CODE QUALITY & WEIRD PATTERNS
+
+11. Mixed Logout Implementations
+
+Three different logout paths:
+1. POST /api/auth/logout → AuthController.logout() → AuthService.logout()
+2. Spring Security logout → CustomLogoutSuccessHandler
+3. Both do the same Canvas token revocation
+
+Weird: Why have both? Pick one approach.
+
+12. PrincipalResolver is Over-Engineered
+
+- Has 10+ methods doing similar things
+- Multiple overloads for extracting users
+- Always loads from database (no caching)
+- Could be simplified with a single getCurrentUser() method
+
+13. User.isEnabled() Has Hidden Logic (User.java:143-145)
+
+public boolean isEnabled() {
+return enabled && emailVerified;  // ❌ Overrides UserDetails contract
+}
+
+This breaks the UserDetails contract. Spring Security expects isEnabled() to check enabled flag only. Email verification should be a separate check.
+
+14. UserPrincipal.getName() is Ambiguous (UserPrincipal.java:117-122)
+
+Returns different values based on auth type:
+- OAuth2: Canvas user ID (as String)
+- Form: Email address
+
+This breaks the Principal contract where name should be consistent.
+
+15. AuthenticationType Enum is Stored in Session
+
+- Adds ~50 bytes per session
+- Could be inferred from presence of canvasUserId
+- No real benefit to storing it explicitly
+
+  ---
+🔵 MISSING FEATURES / BEST PRACTICES
+
+16. No Password Validation
+
+- Registration accepts any password
+- No minimum length, complexity requirements
+- No common password checking
+
+17. No Rate Limiting
+
+- Login endpoint vulnerable to brute force
+- No account lockout after failed attempts
+- No throttling on registration
+
+18. No Session Fixation Protection
+
+While Spring Security provides this by default, your custom login doesn't regenerate session ID.
+
+19. OAuth2 Token Refresh Not Tested
+
+- You configure refresh tokens in OAuth2ClientConfig
+- But no evidence of refresh logic in service layer
+- Tokens might expire without user knowing
+
+20. No Audit Logging
+
+- No logging of successful/failed login attempts
+- No tracking of IP addresses
+- No suspicious activity detection
+
+21. Email Verification Token Not Secured
+
+- Tokens stored in plain text
+- No expiry cleanup job
+- Could accumulate forever in database
+
+  ---
+📋 RECOMMENDATIONS
+
+Priority 1 (Fix Immediately)
+
+1. Fix Form Login Authentication:
+   // Option A: Remove Spring Security form login, implement custom authentication
+   @PostMapping("/login")
+   public ResponseEntity<UserDetailsDto> login(@RequestBody LoginRequestDto request, HttpServletRequest httpRequest) {
+   User user = validateCredentials(request);
+
+   // Create authentication manually
+   UsernamePasswordAuthenticationToken auth =
+   new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+
+   // Set security context
+   SecurityContext context = SecurityContextHolder.createEmptyContext();
+   context.setAuthentication(auth);
+   SecurityContextHolder.setContext(context);
+
+   // Save to session
+   httpRequest.getSession(true).setAttribute(
+   HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context
+   );
+
+   return ResponseEntity.ok(userDetailsMapper.toUserDetailsDto(user));
+   }
+2. Hash Remember-Me Tokens:
+   // Store: BCrypt.hashpw(rawToken, BCrypt.gensalt())
+   // Validate: BCrypt.checkpw(cookieToken, storedHash)
+3. Enable CSRF for Auth Endpoints:
+   - Remove auth endpoints from CSRF ignore list
+   - Configure frontend to send CSRF tokens in headers
+
+Priority 2 (Security Hardening)
+
+4. Separate isEnabled() and isEmailVerified()
+5. Add rate limiting (Spring Security + Redis)
+6. Add password validation (min 8 chars, complexity rules)
+7. Fix session restoration - validate OAuth2 tokens before restoring session
+
+Priority 3 (Code Quality)
+
+8. Simplify principal hierarchy - consider removing UserPrincipal wrapper
+9. Consolidate logout logic - pick one approach (controller or handler)
+10. Reduce PrincipalResolver complexity
+11. Add audit logging
+
+  ---
+🎯 OVERALL ASSESSMENT
+
+Security Rating: 4/10
+- Critical auth bypass in form login
+- CSRF vulnerabilities
+- Plain text token storage
+
+Code Quality: 5/10
+- Over-engineered in some areas
+- Redundant logic in others
+- Inconsistent patterns
+
+Production Readiness: NOT READY
+- Form login is broken
+- Security vulnerabilities need fixing
+- Needs comprehensive testing
+
+  ---

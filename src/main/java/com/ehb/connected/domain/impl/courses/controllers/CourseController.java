@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -41,21 +40,21 @@ public class CourseController {
 
     @PreAuthorize("hasAnyAuthority('course:create')")
     @PostMapping("/")
-    public ResponseEntity<CourseDetailsDto> createCourse(Principal principal, @RequestBody CourseCreateDto course) {
-        CourseDetailsDto courseDetails = courseService.createCourseWithEnrollments(principal, course);
+    public ResponseEntity<CourseDetailsDto> createCourse(Authentication authentication, @RequestBody CourseCreateDto course) {
+        CourseDetailsDto courseDetails = courseService.createCourseWithEnrollments(authentication, course);
         return ResponseEntity.ok(courseDetails);
     }
 
     @PreAuthorize("hasAnyAuthority('course:read_all')")
     @GetMapping("/")
-    public ResponseEntity<List<CourseDetailsDto>> getCourses(Principal principal) {
-        return ResponseEntity.ok(courseService.getCoursesByOwner(principal));
+    public ResponseEntity<List<CourseDetailsDto>> getCourses(Authentication authentication) {
+        return ResponseEntity.ok(courseService.getCoursesByOwner(authentication));
     }
 
     @PreAuthorize("hasAnyAuthority('course:read_enrolled')")
     @GetMapping("/enrolled")
-    public ResponseEntity<List<CourseDetailsDto>> getEnrolledCourses(Principal principal) {
-        return ResponseEntity.ok(courseService.getCoursesByEnrollment(principal));
+    public ResponseEntity<List<CourseDetailsDto>> getEnrolledCourses(Authentication authentication) {
+        return ResponseEntity.ok(courseService.getCoursesByEnrollment(authentication));
     }
 
     @PreAuthorize("hasAnyAuthority('assignment:read_all')")
@@ -79,7 +78,7 @@ public class CourseController {
 
     @PreAuthorize("hasAnyAuthority('course:refresh')")
     @PostMapping("/{courseId}/enrollments/refresh")
-    public ResponseEntity<CourseDetailsDto> refreshEnrollments(Principal principal, @PathVariable Long courseId) {
-        return ResponseEntity.ok(courseService.refreshEnrollments(principal, courseId));
+    public ResponseEntity<CourseDetailsDto> refreshEnrollments(Authentication authentication, @PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.refreshEnrollments(authentication, courseId));
     }
 }

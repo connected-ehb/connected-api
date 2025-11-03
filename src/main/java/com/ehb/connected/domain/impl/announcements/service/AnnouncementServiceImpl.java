@@ -11,9 +11,9 @@ import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.List;
 
 @Service
@@ -25,8 +25,8 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     private final UserService userService;
     private final AssignmentRepository assignmentRepository;
     @Override
-    public AnnouncementDetailsDto createAnnouncementByAssignment(Principal principal, Long assignmentId, AnnouncementCreateDto announcement) {
-        User user = userService.getUserByPrincipal(principal);
+    public AnnouncementDetailsDto createAnnouncementByAssignment(Authentication authentication, Long assignmentId, AnnouncementCreateDto announcement) {
+        User user = userService.getUserByAuthentication(authentication);
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new EntityNotFoundException(Announcement.class, assignmentId));
         Announcement announcementEntity = new Announcement();
@@ -41,7 +41,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     }
 
     @Override
-    public List<AnnouncementDetailsDto> getAnnouncementsByAssignment(Principal principal, Long assignmentId) {
+    public List<AnnouncementDetailsDto> getAnnouncementsByAssignment(Authentication authentication, Long assignmentId) {
         return announcementMapper.toDtoList(announcementRepository.findAllByAssignmentIdOrderByCreatedAtDesc(assignmentId));
     }
 }

@@ -1,7 +1,8 @@
 package com.ehb.connected.domain.impl.auth.services;
 
-import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
-import com.ehb.connected.domain.impl.auth.entities.UserPrincipal;
+import com.ehb.connected.domain.impl.auth.security.AuthenticationType;
+import com.ehb.connected.domain.impl.auth.security.CustomOAuth2User;
+import com.ehb.connected.domain.impl.auth.security.UserPrincipal;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import com.ehb.connected.exceptions.BaseRuntimeException;
@@ -12,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -57,6 +56,11 @@ public class PrincipalResolver {
 
         Object principal = authentication.getPrincipal();
 
+        // Direct UserPrincipal (stored in session for form login)
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return userPrincipal;
+        }
+
         // OAuth2 authentication with CustomOAuth2User
         if (principal instanceof CustomOAuth2User customOAuth2User) {
             return customOAuth2User.getUserPrincipal();
@@ -66,13 +70,12 @@ public class PrincipalResolver {
         if (principal instanceof UserDetails userDetails) {
             // User entity implements UserDetails
             if (userDetails instanceof User user) {
-                return UserPrincipal.fromUser(user, com.ehb.connected.domain.impl.auth.entities.AuthenticationType.FORM);
+                return UserPrincipal.fromUser(user, AuthenticationType.FORM);
             }
             // Fallback: load by username (email)
             return getUserPrincipalByEmail(userDetails.getUsername());
         }
 
-        // Unexpected principal type
         throw new BaseRuntimeException(
                 "Unexpected principal type: " + principal.getClass().getName(),
                 HttpStatus.UNAUTHORIZED
@@ -177,7 +180,7 @@ public class PrincipalResolver {
     private UserPrincipal getUserPrincipalByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
-        return UserPrincipal.fromUser(user, com.ehb.connected.domain.impl.auth.entities.AuthenticationType.FORM);
+        return UserPrincipal.fromUser(user, AuthenticationType.FORM);
     }
 
     /**
@@ -198,7 +201,7 @@ public class PrincipalResolver {
      * @param authenticationType The authentication type
      * @return A fresh UserPrincipal
      */
-    public UserPrincipal refreshPrincipal(User user, com.ehb.connected.domain.impl.auth.entities.AuthenticationType authenticationType) {
+    public UserPrincipal refreshPrincipal(User user, AuthenticationType authenticationType) {
         return UserPrincipal.fromUser(user, authenticationType);
     }
 }

@@ -8,9 +8,9 @@ import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -23,8 +23,8 @@ public class InvitationServiceImpl implements InvitationService{
     Logger logger = LoggerFactory.getLogger(InvitationServiceImpl.class);
 
     @Override
-    public InvitationDetailsDto generateInvitation(Principal principal) {
-        User user = userService.getUserByPrincipal(principal);
+    public InvitationDetailsDto generateInvitation(Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
         String code = generateSecureCode(26);
         Invitation invitation = Invitation.builder()
                 .code(code)

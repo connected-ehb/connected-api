@@ -1,10 +1,10 @@
 package com.ehb.connected.domain.impl.auth.handlers;
 
-import com.ehb.connected.domain.impl.auth.entities.AuthenticationType;
-import com.ehb.connected.domain.impl.auth.entities.UserPrincipal;
+import com.ehb.connected.domain.impl.auth.security.AuthenticationType;
+import com.ehb.connected.domain.impl.auth.security.CustomOAuth2User;
+import com.ehb.connected.domain.impl.auth.security.UserPrincipal;
 import com.ehb.connected.domain.impl.canvas.entities.CanvasAttributes;
 import com.ehb.connected.domain.impl.users.Factories.UserFactory;
-import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;

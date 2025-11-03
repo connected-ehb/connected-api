@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -33,10 +34,19 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setCookiePath("/");
+
+        CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
+        csrfTokenRequestHandler.setCsrfRequestAttributeName(null);
+
         httpSecurity
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/ws/**")
+                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(csrfTokenRequestHandler)
+                        // Only ignore CSRF for endpoints that truly can't support it
+                        .ignoringRequestMatchers("/api/auth/register", "/ws/**")
+                        // Note: /login and /logout now require CSRF tokens (proper security)
                 )
 
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
@@ -62,13 +72,8 @@ public class SecurityConfig {
                         .successHandler(customAuthenticationSuccessHandler)
                         .failureUrl(frontendUri + "/login?error=oauth2")
                 )
-                .formLogin(form -> form
-                        .loginPage(frontendUri + "/login")
-                        .loginProcessingUrl("/api/auth/login")
-                        .defaultSuccessUrl(frontendUri, true)
-                        .failureUrl(frontendUri + "/login?error=form")
-                        .permitAll()
-                )
+                // Note: Form login removed - using custom JSON-based authentication
+                // See AuthController.login() for implementation
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler(customLogoutSuccessHandler)

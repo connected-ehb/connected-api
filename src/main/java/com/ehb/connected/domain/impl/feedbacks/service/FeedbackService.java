@@ -2,16 +2,16 @@ package com.ehb.connected.domain.impl.feedbacks.service;
 
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackCreateDto;
 import com.ehb.connected.domain.impl.feedbacks.dto.FeedbackDto;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.List;
 
 @Service
 public interface FeedbackService {
 
-    FeedbackDto giveFeedback(Principal principal, Long id, FeedbackCreateDto feedbackDto);
-    FeedbackDto updateFeedback(Principal principal, Long feedbackId, FeedbackCreateDto feedbackDto);
-    void deleteFeedback(Principal principal, Long feedbackId);
-    List<FeedbackDto> getAllFeedbackForProject(Principal principal, Long id);
+    FeedbackDto giveFeedback(Authentication authentication, Long id, FeedbackCreateDto feedbackDto);
+    FeedbackDto updateFeedback(Authentication authentication, Long feedbackId, FeedbackCreateDto feedbackDto);
+    void deleteFeedback(Authentication authentication, Long feedbackId);
+    List<FeedbackDto> getAllFeedbackForProject(Authentication authentication, Long id);
 }

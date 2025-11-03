@@ -1,4 +1,4 @@
-package com.ehb.connected.domain.impl.auth.entities;
+package com.ehb.connected.domain.impl.auth.security;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -7,6 +7,7 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,62 +16,42 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Session principal for OAuth2 logins that wraps a lightweight UserPrincipal.
- * Stores minimal user data in Redis session to avoid serialization issues with JPA entities.
- * The database is the source of truth - this is just a session cache.
+ * OAuth2 session principal that wraps a lightweight UserPrincipal.
+ * Implements Spring Security's OAuth2User interface for OAuth2 authentication.
+ * Stores minimal user data in Redis session to avoid serialization issues.
  */
 @Getter
 public class CustomOAuth2User implements OAuth2User, Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Lightweight user principal (stored in Redis).
-     * Contains only essential user data (~200 bytes).
-     */
     private final UserPrincipal userPrincipal;
-
-    /**
-     * OAuth2 attributes from Canvas (user info endpoint response).
-     * Sanitized to remove null keys/values.
-     */
     private final Map<String, Object> attributes;
-
-    /**
-     * The attribute key used as the user name (typically "id" for Canvas).
-     */
     private final String nameAttributeKey;
 
     /**
      * Creates a new CustomOAuth2User wrapping a lightweight UserPrincipal.
      * Constructor annotated with @JsonCreator for Jackson deserialization from Redis.
-     *
-     * @param userPrincipal The lightweight user principal
-     * @param attributes OAuth2 attributes from provider
-     * @param nameAttributeKey The attribute key to use as name
      */
     @JsonCreator
     public CustomOAuth2User(
             @JsonProperty("userPrincipal") UserPrincipal userPrincipal,
             @JsonProperty("attributes") Map<String, Object> attributes,
             @JsonProperty("nameAttributeKey") String nameAttributeKey) {
+
         this.userPrincipal = Objects.requireNonNull(userPrincipal, "userPrincipal must not be null");
 
-        // Sanitize attributes: remove null values and keys
+        // Sanitize attributes: remove null keys/values
         if (attributes == null) {
             this.attributes = Collections.emptyMap();
         } else {
             this.attributes = attributes.entrySet().stream()
                     .filter(e -> e.getKey() != null && e.getValue() != null)
-                    .collect(Collectors.toUnmodifiableMap(
-                            Map.Entry::getKey,
-                            Map.Entry::getValue
-                    ));
+                    .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
         this.nameAttributeKey = (nameAttributeKey == null || nameAttributeKey.isBlank()) ? "id" : nameAttributeKey;
     }
-
-    // ---------- OAuth2User Implementation ----------
 
     @JsonIgnore
     @Override
@@ -80,14 +61,11 @@ public class CustomOAuth2User implements OAuth2User, Serializable {
 
     /**
      * Returns the Canvas user ID as a String.
-     * This is used as the principal name for OAuth2AuthorizedClient storage.
-     * Must match the value stored in oauth2_authorized_client.principal_name.
+     * Must match the principal name stored in oauth2_authorized_client table.
      */
     @JsonIgnore
     @Override
     public String getName() {
-        // Use the UserPrincipal's getName() method
-        // For OAuth2 users, this returns the Canvas user ID
         return userPrincipal.getName();
     }
 
@@ -98,11 +76,8 @@ public class CustomOAuth2User implements OAuth2User, Serializable {
     }
 
     /**
-     * Checks if this principal represents the same user as a UserPrincipal.
-     * Used for detecting stale session data.
-     *
-     * @param other The other UserPrincipal
-     * @return true if they represent the same user with same state
+     * Checks if this principal matches another UserPrincipal.
+     * Used for detecting stale session data that needs refreshing.
      */
     public boolean matches(UserPrincipal other) {
         if (other == null) {
