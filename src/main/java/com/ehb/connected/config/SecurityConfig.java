@@ -12,9 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
@@ -28,6 +28,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
+    private final CsrfTokenResponseHeaderFilter csrfTokenResponseHeaderFilter;
 
     @Value("${connected.frontend-uri}")
     private String frontendUri;
@@ -48,6 +49,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/auth/register", "/ws/**")
                         // Note: /login and /logout now require CSRF tokens (proper security)
                 )
+                // Add CSRF token to response headers for SPA support
+                .addFilterAfter(csrfTokenResponseHeaderFilter, BasicAuthenticationFilter.class)
 
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
                 .authorizeHttpRequests(auth -> auth
