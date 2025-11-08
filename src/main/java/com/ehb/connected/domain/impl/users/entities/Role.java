@@ -37,6 +37,7 @@ public enum Role implements GrantedAuthority {
                     Permission.READ_ALL_APPLICATIONS,
                     Permission.PROJECT_CLAIM,
                     Permission.PROJECT_IMPORT,
+                    Permission.PROJECT_LEAVE,
                     Permission.READ_ALL_ANNOUNCEMENT,
                     Permission.CREATE_BUG
             )

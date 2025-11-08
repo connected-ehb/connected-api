@@ -38,4 +38,6 @@ public interface ProjectService {
     ProjectDetailsDto createGlobalProject(Authentication authentication, ProjectCreateDto project);
 
     List<ProjectDetailsDto> getAllGlobalProjects(Authentication authentication);
+
+    void leaveProject(Authentication authentication, Long projectId);
 }

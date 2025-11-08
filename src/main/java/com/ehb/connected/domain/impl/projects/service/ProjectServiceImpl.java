@@ -408,6 +408,25 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public void leaveProject(Authentication authentication, Long projectId) {
+        final User user = userService.getUserByAuthentication(authentication);
+        final Project project = getProjectById(projectId);
+
+        // must be member
+        if (!project.getMembers().removeIf(m -> m.getId().equals(user.getId()))) {
+            throw new UserUnauthorizedException(user.getId());
+        }
+
+        // if they were product owner -> reassign or clear
+        if (user.isProductOwner(project)) {
+            project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
+        }
+
+        projectRepository.save(project);
+        logger.info("[ProjectService] User ID {} left project ID {}", user.getId(), projectId);
+    }
+
+    @Override
     public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
         return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);
     }

@@ -19,6 +19,7 @@ public enum Permission {
     PROJECT_APPLY("project:apply"),
     PROJECT_CLAIM("project:claim"),
     PROJECT_IMPORT("project:import"),
+    PROJECT_LEAVE("project:leave"),
 
     CREATE_APPLICATION("application:create"),
     READ_APPLICATION("application:read"),
