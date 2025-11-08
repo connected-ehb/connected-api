@@ -15,6 +15,8 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.events.entities.ProjectEventType;
+import com.ehb.connected.domain.impl.projects.events.service.ProjectEventService;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -49,6 +51,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ApplicationMapper applicationMapper;
     private final UserService userService;
     private final NotificationServiceImpl notificationService;
+    private final ProjectEventService projectEventService;
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
@@ -141,6 +144,8 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setCreatedBy(user);
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
+        projectEventService.logEvent(savedProject.getId(), user.getId(), ProjectEventType.PROJECT_CREATED,
+                user.getFullName() + " created the project");
         logger.info("[{}] Project has been created", ProjectService.class.getName());
 
         return projectMapper.toDetailsDto(savedProject);
@@ -210,6 +215,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setStatus(status);
         projectRepository.save(project);
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.STATUS_CHANGED,
+                "Status changed from " + previousStatus + " to " + status);
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
 
@@ -301,6 +308,8 @@ public class ProjectServiceImpl implements ProjectService {
                 destinationUrl
         );
 
+        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED,
+                actor.getFullName() + " removed " + kicked.getFullName() + " from the project");
         logger.info("[{}] Member ID: {} removed from project ID: {} by User ID: {}",
                 ProjectService.class.getSimpleName(), memberId, projectId, actor.getId());
     }
@@ -326,6 +335,8 @@ public class ProjectServiceImpl implements ProjectService {
         project.getMembers().add(user);
         project.setProductOwner(user);
         projectRepository.save(project);
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.PROJECT_CLAIMED,
+                user.getFullName() + " claimed the project");
         logger.info("[{}] Project ID: {} has been claimed by User ID: {}", ProjectService.class.getSimpleName(), projectId, user.getId());
         return projectMapper.toDetailsDto(project);
     }
@@ -366,6 +377,8 @@ public class ProjectServiceImpl implements ProjectService {
         importedProject.setTags(new ArrayList<>(project.getTags()));
         projectRepository.save(importedProject);
 
+        projectEventService.logEvent(importedProject.getId(), user.getId(), ProjectEventType.PROJECT_IMPORTED,
+                user.getFullName() + " imported this project");
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
 
@@ -423,6 +436,8 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectRepository.save(project);
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.USER_LEFT,
+                user.getFullName() + " left the project");
         logger.info("[ProjectService] User ID {} left project ID {}", user.getId(), projectId);
     }
 

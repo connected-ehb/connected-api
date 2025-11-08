@@ -13,6 +13,8 @@ import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
 import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.events.entities.ProjectEventType;
+import com.ehb.connected.domain.impl.projects.events.service.ProjectEventService;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -46,6 +48,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final NotificationServiceImpl notificationService;
 
     private final ProjectUserService projectUserService;
+    private final ProjectEventService projectEventService;
 
     private final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
 
@@ -105,6 +108,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application newApplication = new Application(null, applicationDto.getMotivationMd(), ApplicationStatusEnum.PENDING, project, user);
         applicationRepository.save(newApplication);
+
+        projectEventService.logEvent(project.getId(), user.getId(),
+                ProjectEventType.USER_APPLIED,
+                user.getFullName() + " applied to the project");
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
 
         // Check if receiver exits and send notification
@@ -155,6 +162,13 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Set status (approved or rejected) and save
         application.setStatus(status);
+        User applicant = application.getApplicant();
+        projectEventService.logEvent(
+                project.getId(),
+                applicant.getId(),
+                status == ApplicationStatusEnum.APPROVED ? ProjectEventType.USER_JOINED : ProjectEventType.MEMBER_REMOVED,
+                "Application for " + applicant.getFullName() + " was " + status.toString().toLowerCase()
+        );
         applicationRepository.save(application);
 
         // Check if receiver exits and send notification
@@ -212,6 +226,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                     // TODO This will need a new status
                     .forEach(app -> app.setStatus(ApplicationStatusEnum.REJECTED));
         }
+
+        projectEventService.logEvent(project.getId(), user.getId(),
+                ProjectEventType.USER_JOINED,
+                user.getFullName() + " joined the project");
 
         projectService.save(project);
 
