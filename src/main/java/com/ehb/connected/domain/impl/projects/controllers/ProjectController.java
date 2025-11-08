@@ -165,4 +165,11 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDetailsDto>> getMyProjects(Authentication authentication, @PathVariable  Long assignmentId) {
         return ResponseEntity.ok(projectService.findAllInAssignmentCreatedBy(assignmentId, authentication));
     }
+
+    @PreAuthorize("hasAnyAuthority('project:leave')")
+    @DeleteMapping("/{projectId}/leave")
+    public ResponseEntity<ProjectDetailsDto> leaveProject(Authentication authentication, @PathVariable Long projectId) {
+        projectService.leaveProject(authentication, projectId);
+        return ResponseEntity.ok().build();
+    }
 }
