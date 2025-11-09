@@ -160,7 +160,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new UserNotOwnerOfProjectException();
         }
 
-        projectEventService.logEvent(projectId, null, ProjectEventType.PROJECT_UPDATED, "Project updated");
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.PROJECT_UPDATED, "Project updated");
 
         // When the project has status needs revision -> revised
         if (existingProject.getStatus().equals(ProjectStatusEnum.NEEDS_REVISION)) {
