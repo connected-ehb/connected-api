@@ -168,4 +168,8 @@ public class User implements UserDetails, Serializable {
     public int hashCode() {
         return Objects.hash(id, canvasUserId);
     }
+
+    public String getFullName() {
+       return firstName + " " + lastName;
+    }
 }

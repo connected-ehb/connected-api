@@ -21,6 +21,8 @@ public enum Permission {
     PROJECT_IMPORT("project:import"),
     PROJECT_LEAVE("project:leave"),
 
+    READ_EVENT("event:read"),
+
     CREATE_APPLICATION("application:create"),
     READ_APPLICATION("application:read"),
     READ_ALL_APPLICATIONS("application:read_all"),
