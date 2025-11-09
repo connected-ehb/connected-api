@@ -163,6 +163,7 @@ public class ProjectServiceImpl implements ProjectService {
         // When the project has status needs revision -> revised
         if (existingProject.getStatus().equals(ProjectStatusEnum.NEEDS_REVISION)) {
             existingProject.setStatus(ProjectStatusEnum.REVISED);
+            projectEventService.logEvent(projectId, null, ProjectEventType.STATUS_CHANGED, "Project status changed to REVISED");
         }
 
         projectMapper.updateEntityFromDto(user, project, existingProject);
@@ -172,6 +173,7 @@ public class ProjectServiceImpl implements ProjectService {
         } catch (Exception e) {
             throw new BaseRuntimeException("Project could not be updated", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        projectEventService.logEvent(projectId, null, ProjectEventType.PROJECT_UPDATED, "Project updated");
         logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
 
         return projectMapper.toDetailsDto(savedProject);
