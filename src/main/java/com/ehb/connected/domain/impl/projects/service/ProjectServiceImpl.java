@@ -282,6 +282,8 @@ public class ProjectServiceImpl implements ProjectService {
             throw new EntityNotFoundException(User.class, memberId);
         }
 
+        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED, "Removed " + kicked.getFullName() + " from the project");
+
         // If the removed member was the Product Owner, reassign (or clear)
         if (kicked.isProductOwner(project)) {
             project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
@@ -308,7 +310,6 @@ public class ProjectServiceImpl implements ProjectService {
                 destinationUrl
         );
 
-        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED, "Removed " + kicked.getFullName() + " from the project");
         logger.info("[{}] Member ID: {} removed from project ID: {} by User ID: {}",
                 ProjectService.class.getSimpleName(), memberId, projectId, actor.getId());
     }
