@@ -29,6 +29,7 @@ public enum Role implements GrantedAuthority {
                     ASSIGNMENT_READ,
                     PROJECT_READ_PUBLISHED_OR_OWNED,
                     PROJECT_APPLY,
+                    PROJECT_LEAVE,
                     APPLICATION_JOIN,
                     APPLICATION_REVIEW,
                     COURSE_READ_ENROLLED,
@@ -103,7 +104,8 @@ public enum Role implements GrantedAuthority {
                     BUG_READ_ALL,
                     USER_READ,
                     USER_ME_UPDATE,
-                    USER_ME_REQUEST_DELETE
+                    USER_ME_REQUEST_DELETE,
+                    EVENT_READ
             )
     ),
     RESEARCHER(
@@ -188,7 +190,8 @@ public enum Role implements GrantedAuthority {
                     USER_CREATE,
                     USER_ME_UPDATE,
                     USER_UPDATE,
-                    USER_ME_REQUEST_DELETE
+                    USER_ME_REQUEST_DELETE,
+                    EVENT_READ
             )
     );
 
