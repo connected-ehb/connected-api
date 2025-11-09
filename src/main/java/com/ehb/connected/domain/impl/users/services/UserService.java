@@ -14,6 +14,7 @@ public interface UserService {
     User getUserById(Long id);
     User createUser(User user);
     UserDetailsDto updateUser(Authentication authentication, UserDetailsDto user);
+    UserDetailsDto updateUserAsAdmin(Long userId, UserDetailsDto userDetailsDto);
     void deleteUser(Long id);
 
     User getUserByAuthentication(Authentication authentication);
