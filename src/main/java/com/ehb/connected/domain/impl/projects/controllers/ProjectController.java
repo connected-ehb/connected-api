@@ -11,6 +11,8 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.events.dto.ProjectEventDetailsDto;
+import com.ehb.connected.domain.impl.projects.events.service.ProjectEventService;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewCreateDto;
 import com.ehb.connected.domain.impl.reviews.dto.ReviewDetailsDto;
@@ -41,6 +43,7 @@ public class ProjectController {
     private final FeedbackService feedbackService;
     private final ApplicationService applicationService;
     private final ReviewService reviewService;
+    private final ProjectEventService projectEventService;
 
     @PreAuthorize("hasAnyAuthority('project:read')")
     @GetMapping("/{projectId}")
@@ -165,4 +168,18 @@ public class ProjectController {
     public ResponseEntity<List<ProjectDetailsDto>> getMyProjects(Authentication authentication, @PathVariable  Long assignmentId) {
         return ResponseEntity.ok(projectService.findAllInAssignmentCreatedBy(assignmentId, authentication));
     }
+
+    @PreAuthorize("hasAnyAuthority('project:leave')")
+    @DeleteMapping("/{projectId}/leave")
+    public ResponseEntity<ProjectDetailsDto> leaveProject(Authentication authentication, @PathVariable Long projectId) {
+        projectService.leaveProject(authentication, projectId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasAuthority('event:read')")
+    @GetMapping("/{projectId}/events")
+    public ResponseEntity<List<ProjectEventDetailsDto>> getEvents(Authentication authentication, @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectEventService.getEventsForProject(authentication, projectId));
+    }
+
 }
