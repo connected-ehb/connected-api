@@ -109,9 +109,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application newApplication = new Application(null, applicationDto.getMotivationMd(), ApplicationStatusEnum.PENDING, project, user);
         applicationRepository.save(newApplication);
 
-        projectEventService.logEvent(project.getId(), user.getId(),
-                ProjectEventType.USER_APPLIED,
-                user.getFullName() + " applied to the project");
+        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_APPLIED, "Application submitted");
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
 
         // Check if receiver exits and send notification
@@ -124,7 +122,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         notificationService.createNotification(
                 project.getProductOwner(),
-                user.getFirstName() + " " + user.getLastName() + " applied for your project.",
+                user.getFullName() + " applied for your project.",
                 destinationUrl
         );
 
@@ -162,13 +160,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Set status (approved or rejected) and save
         application.setStatus(status);
-        User applicant = application.getApplicant();
-        projectEventService.logEvent(
-                project.getId(),
-                applicant.getId(),
-                status == ApplicationStatusEnum.APPROVED ? ProjectEventType.USER_JOINED : ProjectEventType.MEMBER_REMOVED,
-                "Application for " + applicant.getFullName() + " was " + status.toString().toLowerCase()
-        );
+
         applicationRepository.save(application);
 
         // Check if receiver exits and send notification
@@ -227,9 +219,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     .forEach(app -> app.setStatus(ApplicationStatusEnum.REJECTED));
         }
 
-        projectEventService.logEvent(project.getId(), user.getId(),
-                ProjectEventType.USER_JOINED,
-                user.getFullName() + " joined the project");
+        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_JOINED, "Joined the project");
 
         projectService.save(project);
 

@@ -144,8 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setCreatedBy(user);
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
-        projectEventService.logEvent(savedProject.getId(), user.getId(), ProjectEventType.PROJECT_CREATED,
-                user.getFullName() + " created the project");
+        projectEventService.logEvent(savedProject.getId(), user.getId(), ProjectEventType.PROJECT_CREATED, "Project created");
         logger.info("[{}] Project has been created", ProjectService.class.getName());
 
         return projectMapper.toDetailsDto(savedProject);
@@ -286,6 +285,7 @@ public class ProjectServiceImpl implements ProjectService {
         // If the removed member was the Product Owner, reassign (or clear)
         if (kicked.isProductOwner(project)) {
             project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
+            projectEventService.logEvent(projectId, null, ProjectEventType.PRODUCT_OWNER_REASSIGNED, "Product owner reassigned");
         }
 
         // Mark any application of the removed user to this project as REJECTED
@@ -308,8 +308,7 @@ public class ProjectServiceImpl implements ProjectService {
                 destinationUrl
         );
 
-        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED,
-                actor.getFullName() + " removed " + kicked.getFullName() + " from the project");
+        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED, "Removed " + kicked.getFullName() + " from the project");
         logger.info("[{}] Member ID: {} removed from project ID: {} by User ID: {}",
                 ProjectService.class.getSimpleName(), memberId, projectId, actor.getId());
     }
@@ -335,8 +334,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.getMembers().add(user);
         project.setProductOwner(user);
         projectRepository.save(project);
-        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.PROJECT_CLAIMED,
-                user.getFullName() + " claimed the project");
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.PROJECT_CLAIMED, "Claimed the project");
         logger.info("[{}] Project ID: {} has been claimed by User ID: {}", ProjectService.class.getSimpleName(), projectId, user.getId());
         return projectMapper.toDetailsDto(project);
     }
@@ -377,8 +375,7 @@ public class ProjectServiceImpl implements ProjectService {
         importedProject.setTags(new ArrayList<>(project.getTags()));
         projectRepository.save(importedProject);
 
-        projectEventService.logEvent(importedProject.getId(), user.getId(), ProjectEventType.PROJECT_IMPORTED,
-                user.getFullName() + " imported this project");
+        projectEventService.logEvent(importedProject.getId(), user.getId(), ProjectEventType.PROJECT_IMPORTED,"Project imported");
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
 
@@ -436,8 +433,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectRepository.save(project);
-        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.USER_LEFT,
-                user.getFullName() + " left the project");
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.USER_LEFT, "Left the project");
         logger.info("[ProjectService] User ID {} left project ID {}", user.getId(), projectId);
     }
 
