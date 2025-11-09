@@ -12,9 +12,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -26,31 +28,44 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
+    private final CsrfTokenResponseHeaderFilter csrfTokenResponseHeaderFilter;
 
     @Value("${connected.frontend-uri}")
     private String frontendUri;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setCookiePath("/");
+
+        CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
+        csrfTokenRequestHandler.setCsrfRequestAttributeName(null);
+
         httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(csrfTokenRequestHandler)
+                        // Only ignore CSRF for endpoints that truly can't support it
+                        .ignoringRequestMatchers("/api/auth/register", "/ws/**")
+                        // Note: /login and /logout now require CSRF tokens (proper security)
+                )
+                // Add CSRF token to response headers for SPA support
+                .addFilterAfter(csrfTokenResponseHeaderFilter, BasicAuthenticationFilter.class)
+
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfig.corsFilter()))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(
-                                "/api/auth/**",
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/login/**", 
-                                "/login/oauth2/authorization/canvas", 
-                                "/oauth2/authorization/canvas", 
+                                "/api/auth/**",  // Covers /login, /register, /logout, etc.
+                                "/login/**",  // OAuth2 login endpoints
+                                "/oauth2/authorization/**",  // OAuth2 authorization endpoints
                                 "/error",
-                                "/ws/**", 
-                                "/actuator/**",
-                                "/api/users/verify", // Email verification endpoint
-                                "/api/bugs"
+                                "/ws/**",  // WebSocket endpoints
+                                "/actuator/**",  // Actuator endpoints
+                                "/api/users/verify",  // Email verification endpoint
+                                "/api/bugs"  // Public bug reporting
                         ).permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // CORS preflight
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -60,13 +75,8 @@ public class SecurityConfig {
                         .successHandler(customAuthenticationSuccessHandler)
                         .failureUrl(frontendUri + "/login?error=oauth2")
                 )
-                .formLogin(form -> form
-                        .loginPage(frontendUri + "/login")
-                        .loginProcessingUrl("/api/auth/login")
-                        .defaultSuccessUrl(frontendUri, true)
-                        .failureUrl(frontendUri + "/login?error=form")
-                        .permitAll()
-                )
+                // Note: Form login removed - using custom JSON-based authentication
+                // See AuthController.login() for implementation
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler(customLogoutSuccessHandler)

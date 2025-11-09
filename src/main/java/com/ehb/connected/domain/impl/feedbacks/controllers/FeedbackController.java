@@ -6,14 +6,13 @@ import com.ehb.connected.domain.impl.feedbacks.service.FeedbackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/feedback")
@@ -25,14 +24,14 @@ public class FeedbackController {
 
     @PreAuthorize("hasAuthority('feedback:update')")
     @PutMapping("{feedbackId}")
-    public ResponseEntity<FeedbackDto> updateFeedback(Principal principal, @PathVariable Long feedbackId, @RequestBody FeedbackCreateDto feedbackDto) {
-        return ResponseEntity.ok(feedbackService.updateFeedback(principal, feedbackId, feedbackDto));
+    public ResponseEntity<FeedbackDto> updateFeedback(Authentication authentication, @PathVariable Long feedbackId, @RequestBody FeedbackCreateDto feedbackDto) {
+        return ResponseEntity.ok(feedbackService.updateFeedback(authentication, feedbackId, feedbackDto));
     }
 
     @PreAuthorize("hasAuthority('feedback:delete')")
     @DeleteMapping("{feedbackId}")
-    public ResponseEntity<Void> deleteFeedback(Principal principal, @PathVariable Long feedbackId) {
-        feedbackService.deleteFeedback(principal, feedbackId);
+    public ResponseEntity<Void> deleteFeedback(Authentication authentication, @PathVariable Long feedbackId) {
+        feedbackService.deleteFeedback(authentication, feedbackId);
         return ResponseEntity.ok().build();
     }
 

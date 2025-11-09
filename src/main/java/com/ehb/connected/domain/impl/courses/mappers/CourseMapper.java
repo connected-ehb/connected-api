@@ -6,9 +6,9 @@ import com.ehb.connected.domain.impl.courses.dto.CourseDetailsDto;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.users.services.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class CourseMapper {
     private final UserServiceImpl userService;
     private final AssignmentMapper assignmentMapper;
 
-    public Course CourseCreateToEntity(CourseCreateDto courseCreateDto, Principal principal) {
+    public Course CourseCreateToEntity(CourseCreateDto courseCreateDto, Authentication authentication) {
         Course course = new Course();
         course.setName(courseCreateDto.getName());
         course.setUuid(courseCreateDto.getUuid());
@@ -28,7 +28,7 @@ public class CourseMapper {
         course.setStartAt(courseCreateDto.getStartAt());
         course.setEndAt(courseCreateDto.getEndAt());
         course.setAssignments(new ArrayList<>());
-        course.setOwner(userService.getUserByPrincipal(principal));
+        course.setOwner(userService.getUserByAuthentication(authentication));
         course.setCanvasId(courseCreateDto.getCanvasId());
         return course;
     }

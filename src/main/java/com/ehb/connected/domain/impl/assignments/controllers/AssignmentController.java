@@ -13,6 +13,7 @@ import com.ehb.connected.domain.impl.dashboard.service.DashboardServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -35,8 +35,8 @@ public class AssignmentController {
 
     @PreAuthorize("hasAnyAuthority('canvas:sync')")
     @PostMapping("/canvas/{courseId}")
-    public ResponseEntity<List<AssignmentDetailsDto>> getAssignmentsFromCanvas(Principal principal, @PathVariable Long courseId) {
-        List<AssignmentDetailsDto> filteredAssignmentsJson = assignmentService.getNewAssignmentsFromCanvas(principal, courseId);
+    public ResponseEntity<List<AssignmentDetailsDto>> getAssignmentsFromCanvas(Authentication authentication, @PathVariable Long courseId) {
+        List<AssignmentDetailsDto> filteredAssignmentsJson = assignmentService.getNewAssignmentsFromCanvas(authentication, courseId);
         return ResponseEntity.ok(filteredAssignmentsJson);
     }
 
@@ -48,27 +48,27 @@ public class AssignmentController {
 
     @PreAuthorize("hasAnyAuthority('assignment:delete')")
     @DeleteMapping("/{assignmentId}")
-    public ResponseEntity<Void> deleteAssignment(Principal principal, @PathVariable Long assignmentId) {
-        assignmentService.deleteAssignmentById(principal, assignmentId);
+    public ResponseEntity<Void> deleteAssignment(Authentication authentication, @PathVariable Long assignmentId) {
+        assignmentService.deleteAssignmentById(authentication, assignmentId);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyAuthority('application:read_all')")
     @GetMapping("/{assignmentId}/applications")
-    public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Principal principal, @PathVariable Long assignmentId){
-        return ResponseEntity.ok(applicationService.getAllApplications(principal, assignmentId));
+    public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Authentication authentication, @PathVariable Long assignmentId){
+        return ResponseEntity.ok(applicationService.getAllApplications(authentication, assignmentId));
     }
 
     @PreAuthorize("hasAnyAuthority('announcement:create')")
     @PostMapping("/{assignmentId}/announcements")
-    public ResponseEntity<AnnouncementDetailsDto> createAnnouncement(Principal principal, @PathVariable Long assignmentId, @RequestBody AnnouncementCreateDto announcement) {
-        return ResponseEntity.ok(announcementService.createAnnouncementByAssignment(principal, assignmentId, announcement));
+    public ResponseEntity<AnnouncementDetailsDto> createAnnouncement(Authentication authentication, @PathVariable Long assignmentId, @RequestBody AnnouncementCreateDto announcement) {
+        return ResponseEntity.ok(announcementService.createAnnouncementByAssignment(authentication, assignmentId, announcement));
     }
 
     @PreAuthorize("hasAnyAuthority('announcement:read_all')")
     @GetMapping("/{assignmentId}/announcements")
-    public ResponseEntity<List<AnnouncementDetailsDto>> getAnnouncements(Principal principal, @PathVariable Long assignmentId) {
-        return ResponseEntity.ok(announcementService.getAnnouncementsByAssignment(principal, assignmentId));
+    public ResponseEntity<List<AnnouncementDetailsDto>> getAnnouncements(Authentication authentication, @PathVariable Long assignmentId) {
+        return ResponseEntity.ok(announcementService.getAnnouncementsByAssignment(authentication, assignmentId));
     }
 
     @PreAuthorize("hasAnyAuthority('dashboard:read')")

@@ -8,9 +8,9 @@ import com.ehb.connected.domain.impl.bugs.repositories.BugRepository;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.List;
 
 @Service
@@ -22,14 +22,14 @@ public class BugServiceImpl implements BugService {
     private final BugMapper bugMapper;
 
     @Override
-    public void create(Principal principal, BugCreateDto bugCreateDto) {
+    public void create(Authentication authentication, BugCreateDto bugCreateDto) {
 
         Bug bug = new Bug();
         bug.setDescription(bugCreateDto.getDescription());
         bug.setRoute(bugCreateDto.getRoute());
         bug.setAppVersion(bugCreateDto.getAppVersion());
-        if (principal != null) {
-            final User user = userService.getUserByPrincipal(principal);
+        if (authentication != null) {
+            final User user = userService.getUserByAuthentication(authentication);
             bug.setCreatedBy(user);
         }
 

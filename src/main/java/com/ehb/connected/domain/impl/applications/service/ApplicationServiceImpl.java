@@ -13,6 +13,8 @@ import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
 import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.events.entities.ProjectEventType;
+import com.ehb.connected.domain.impl.projects.events.service.ProjectEventService;
 import com.ehb.connected.domain.impl.projects.service.ProjectService;
 import com.ehb.connected.domain.impl.projects.service.ProjectUserService;
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -28,9 +30,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.List;
 
 @Service
@@ -46,15 +48,16 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final NotificationServiceImpl notificationService;
 
     private final ProjectUserService projectUserService;
+    private final ProjectEventService projectEventService;
 
     private final Logger logger = LoggerFactory.getLogger(ApplicationServiceImpl.class);
 
     @Override
-    public ApplicationDetailsDto getById(Principal principal, Long applicationId) {
+    public ApplicationDetailsDto getById(Authentication authentication, Long applicationId) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new EntityNotFoundException(Application.class, applicationId));
 
-        User user = userService.getUserByPrincipal(principal);
+        User user = userService.getUserByAuthentication(authentication);
 
         if (!hasAccessToApplication(user, application)) {
             throw new UserUnauthorizedException(user.getId());
@@ -92,10 +95,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDetailsDto create(Principal principal, Long projectId, ApplicationCreateDto applicationDto) {
+    public ApplicationDetailsDto create(Authentication authentication, Long projectId, ApplicationCreateDto applicationDto) {
 
         final Project project = projectService.getProjectById(projectId);
-        final User user = userService.getUserByPrincipal(principal);
+        final User user = userService.getUserByAuthentication(authentication);
 
         assertCanApply(user, project);
 
@@ -105,6 +108,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application newApplication = new Application(null, applicationDto.getMotivationMd(), ApplicationStatusEnum.PENDING, project, user);
         applicationRepository.save(newApplication);
+
+        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_APPLIED, "Applied");
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
 
         // Check if receiver exits and send notification
@@ -117,7 +122,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         notificationService.createNotification(
                 project.getProductOwner(),
-                user.getFirstName() + " " + user.getLastName() + " applied for your project.",
+                user.getFullName() + " applied for your project.",
                 destinationUrl
         );
 
@@ -125,8 +130,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public List<ApplicationDetailsDto> getAllApplications(Principal principal, Long assignmentId) {
-        User user = userService.getUserByPrincipal(principal);
+    public List<ApplicationDetailsDto> getAllApplications(Authentication authentication, Long assignmentId) {
+        User user = userService.getUserByAuthentication(authentication);
         if (user.hasRole(Role.STUDENT)) {
             return applicationMapper.toDtoList(applicationRepository.findAllApplicationsByUserIdOrProjectProductOwnerAndAssignment(user.getId(), assignmentId));
         } else if (user.hasRole(Role.TEACHER)) {
@@ -137,10 +142,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public ApplicationDetailsDto reviewApplication(Principal principal, Long applicationId, ApplicationStatusEnum status) {
+    public ApplicationDetailsDto reviewApplication(Authentication authentication, Long applicationId, ApplicationStatusEnum status) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new EntityNotFoundException(Application.class, applicationId));
-        User user = userService.getUserByPrincipal(principal);
+        User user = userService.getUserByAuthentication(authentication);
         Project project = application.getProject();
 
         // Ensure user owns the project
@@ -155,6 +160,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Set status (approved or rejected) and save
         application.setStatus(status);
+
         applicationRepository.save(application);
 
         // Check if receiver exits and send notification
@@ -175,10 +181,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Transactional
     @Override
-    public ApplicationDetailsDto joinProject(Principal principal, Long applicationId) {
+    public ApplicationDetailsDto joinProject(Authentication authentication, Long applicationId) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new EntityNotFoundException(Application.class, applicationId));
-        User user = userService.getUserByPrincipal(principal);
+        User user = userService.getUserByAuthentication(authentication);
         Project project = application.getProject();
 
         if (!application.hasStatus(ApplicationStatusEnum.APPROVED)) {
@@ -212,6 +218,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                     // TODO This will need a new status
                     .forEach(app -> app.setStatus(ApplicationStatusEnum.REJECTED));
         }
+
+        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_JOINED, "Joined");
 
         projectService.save(project);
 

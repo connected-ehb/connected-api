@@ -1,11 +1,10 @@
 package com.ehb.connected.domain.impl.invitations.services;
 
 import com.ehb.connected.domain.impl.invitations.entities.InvitationDetailsDto;
-
-import java.security.Principal;
+import org.springframework.security.core.Authentication;
 
 public interface InvitationService {
-    InvitationDetailsDto generateInvitation(Principal principal);
+    InvitationDetailsDto generateInvitation(Authentication authentication);
     boolean validateInvitationCode(String code);
     void markInvitationAsUsed(String code);
 }

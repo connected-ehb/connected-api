@@ -1,12 +1,12 @@
 package com.ehb.connected.domain.impl.users.services;
 
+import com.ehb.connected.domain.impl.auth.services.PrincipalResolver;
 import com.ehb.connected.domain.impl.enrollments.entities.Enrollment;
 import com.ehb.connected.domain.impl.enrollments.repositories.EnrollmentRepository;
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.EmailRequestDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
-import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
@@ -18,11 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +31,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
+    private final PrincipalResolver principalResolver;
     private final UserRepository userRepository;
     private final UserDetailsMapper userDetailsMapper;
     private final TagMapper tagMapper;
@@ -65,8 +65,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDetailsDto updateUser(Principal principal, UserDetailsDto userDto) {
-        User user = getUserByPrincipal(principal);
+    public UserDetailsDto updateUser(Authentication authentication, UserDetailsDto userDto) {
+        User user = getUserByAuthentication(authentication);
+
+        user.setAboutMe(userDto.getAboutMe());
+        user.setFieldOfStudy(userDto.getFieldOfStudy());
+        user.setLinkedinUrl(userDto.getLinkedinUrl());
+        user.setTags(new ArrayList<>(tagMapper.toEntityList(userDto.getTags())));
+        return userDetailsMapper.toUserDetailsDto(userRepository.save(user));
+    }
+
+    @Override
+    public UserDetailsDto updateUserAsAdmin(Long userId, UserDetailsDto userDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(UserService.class, userId));
 
         user.setAboutMe(userDto.getAboutMe());
         user.setFieldOfStudy(userDto.getFieldOfStudy());
@@ -86,58 +98,9 @@ public class UserServiceImpl implements UserService {
             throw new AuthenticationRequiredException();
         }
 
-        Object principal = authentication.getPrincipal();
-
-        // OAuth2 login (Canvas)
-        if (principal instanceof CustomOAuth2User customOAuth2User) {
-            return customOAuth2User.getUser();  // ✅ Direct access to User entity
-        }
-
-        // OAuth2 login (generic)
-        if (principal instanceof OAuth2User oauth2User) {
-            String principalName = oauth2User.getName();
-            try {
-                long canvasUserId = Long.parseLong(principalName);
-                return userRepository.findByCanvasUserId(canvasUserId)
-                        .orElseThrow(() -> new EntityNotFoundException("User not found with Canvas ID: " + canvasUserId));
-            } catch (NumberFormatException e) {
-                throw new AuthenticationRequiredException("Invalid Canvas user ID: " + principalName);
-            }
-        }
-
-        // Form-based login (if you implement UserDetails on User entity)
-        if (principal instanceof User user) {
-            return user;  // ✅ Already a User entity
-        }
-
-        // Fallback for other UserDetails implementations
-        if (principal instanceof UserDetails userDetails) {
-            String email = userDetails.getUsername();
-            return userRepository.findByEmail(email)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
-        }
-
-        throw new AuthenticationRequiredException("Unsupported principal type: " + principal.getClass().getName());
-    }
-
-    @Override
-    public User getUserByPrincipal(Principal principal) {
-        if (principal == null) {
-            throw new AuthenticationRequiredException();
-        }
-
-        String principalName = principal.getName();
-
-        try {
-            // Try to parse as Canvas ID (OAuth2 authentication)
-            long canvasUserId = Long.parseLong(principalName);
-            return userRepository.findByCanvasUserId(canvasUserId)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found for canvas ID: " + canvasUserId));
-        } catch (NumberFormatException e) {
-            // Try as email (form-based authentication)
-            return userRepository.findByEmail(principalName)
-                    .orElseThrow(() -> new EntityNotFoundException("User not found for email: " + principalName));
-        }
+        // Use PrincipalResolver to extract User from any principal type
+        // This handles OAuth2 (CustomOAuth2User), form login (UserDetails), etc.
+        return principalResolver.getUser(authentication);
     }
 
     @Override
@@ -151,8 +114,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void requestDeleteUser(Principal principal) {
-        User user = getUserByPrincipal(principal);
+    public void requestDeleteUser(Authentication authentication) {
+        User user = getUserByAuthentication(authentication);
         user.setDeleteRequestedAt(LocalDateTime.now());
         userRepository.save(user);
     }

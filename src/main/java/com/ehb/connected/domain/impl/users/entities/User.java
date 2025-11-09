@@ -4,7 +4,19 @@ import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -155,5 +167,9 @@ public class User implements UserDetails, Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(id, canvasUserId);
+    }
+
+    public String getFullName() {
+       return firstName + " " + lastName;
     }
 }

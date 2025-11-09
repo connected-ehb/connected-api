@@ -1,7 +1,9 @@
 package com.ehb.connected.domain.impl.auth.handlers;
 
+import com.ehb.connected.domain.impl.auth.security.CustomOAuth2User;
+import com.ehb.connected.domain.impl.auth.security.UserPrincipal;
+import com.ehb.connected.domain.impl.auth.services.PrincipalResolver;
 import com.ehb.connected.domain.impl.auth.services.RememberMeService;
-import com.ehb.connected.domain.impl.auth.entities.CustomOAuth2User;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +27,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
 
     private final ObjectMapper objectMapper;
     private final RememberMeService rememberMeService;
+    private final PrincipalResolver principalResolver;
 
     @Value("${connected.frontend-uri}")
     private String frontendUri;
@@ -41,25 +44,29 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
             // OAuth2 authentication
             if (oauth2Token.getPrincipal() instanceof CustomOAuth2User customUser) {
-                User user = customUser.getUser();
+                UserPrincipal userPrincipal = customUser.getUserPrincipal();
+
+                // Load full user from database to create remember-me token
+                User user = principalResolver.loadUserFromDatabase(userPrincipal);
 
                 // ✅ Create remember-me token and set cookie
                 rememberMeService.createRememberMeToken(user, response);
 
                 responseData.put("message", "OAuth2 login successful");
-                responseData.put("canvasUserId", user.getCanvasUserId());
-                responseData.put("emailVerified", user.isEmailVerified());
-                responseData.put("role", user.getRole());
-                responseData.put("firstName", user.getFirstName());
-                responseData.put("lastName", user.getLastName());
+                responseData.put("canvasUserId", userPrincipal.getCanvasUserId());
+                responseData.put("emailVerified", userPrincipal.isEmailVerified());
+                responseData.put("role", userPrincipal.getRole());
+                responseData.put("firstName", userPrincipal.getFirstName());
+                responseData.put("lastName", userPrincipal.getLastName());
 
-                if (!user.isEmailVerified()) {
+                if (!userPrincipal.isEmailVerified()) {
                     responseData.put("requiresEmailVerification", true);
                 }
 
                 // ✅ After creating the cookie, redirect browser to frontend
                 String redirectUrl = frontendUri + "/login/success";
-                log.info("OAuth2 login successful for user {}. Redirecting to {}", user.getFirstName() + " " + user.getLastName(), redirectUrl);
+                log.info("OAuth2 login successful for user {} {}. Redirecting to {}",
+                    userPrincipal.getFirstName(), userPrincipal.getLastName(), redirectUrl);
                 response.sendRedirect(redirectUrl);
                 return;
 

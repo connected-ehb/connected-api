@@ -15,6 +15,8 @@ import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
+import com.ehb.connected.domain.impl.projects.events.entities.ProjectEventType;
+import com.ehb.connected.domain.impl.projects.events.service.ProjectEventService;
 import com.ehb.connected.domain.impl.projects.mappers.ProjectMapper;
 import com.ehb.connected.domain.impl.projects.repositories.ProjectRepository;
 import com.ehb.connected.domain.impl.users.entities.Role;
@@ -29,9 +31,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -49,12 +51,13 @@ public class ProjectServiceImpl implements ProjectService {
     private final ApplicationMapper applicationMapper;
     private final UserService userService;
     private final NotificationServiceImpl notificationService;
+    private final ProjectEventService projectEventService;
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
 
     @Override
-    public ProjectDetailsDto getProjectById(Principal principal, Long projectId) {
-        User user = userService.getUserByPrincipal(principal);
+    public ProjectDetailsDto getProjectById(Authentication authentication, Long projectId) {
+        User user = userService.getUserByAuthentication(authentication);
         Project project = getProjectById(projectId);
 
         if (user.hasRole(Role.RESEARCHER) && user.isCreator(project)) {
@@ -80,8 +83,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto getProjectByUserAndAssignmentId(Principal principal, Long assignmentId) {
-        User user = userService.getUserByPrincipal(principal);
+    public ProjectDetailsDto getProjectByUserAndAssignmentId(Authentication authentication, Long assignmentId) {
+        User user = userService.getUserByAuthentication(authentication);
         //project can be null if the user is not a member of any project in the assignment
         Project project = projectRepository.findByMembersAndAssignmentIdAndStatus(List.of(user), assignmentId, ProjectStatusEnum.PUBLISHED);
         if (project == null) {
@@ -91,19 +94,19 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Principal principal, Long assignmentId) {
+    public List<ProjectDetailsDto> getAllPublishedOrOwnedProjectsByAssignmentId(Authentication authentication, Long assignmentId) {
         return projectMapper.toDetailsDtoList(
                 projectRepository.findAllByAssignmentIdAndStatusOrOwnedBy(
                         assignmentId,
                         ProjectStatusEnum.PUBLISHED,
-                        userService.getUserByPrincipal(principal)
+                        userService.getUserByAuthentication(authentication)
                 ));
     }
 
     @Override
-    public ProjectDetailsDto createProject(Principal principal, Long assignmentId, ProjectCreateDto projectDto) {
+    public ProjectDetailsDto createProject(Authentication authentication, Long assignmentId, ProjectCreateDto projectDto) {
 
-        final User user = userService.getUserByPrincipal(principal);
+        final User user = userService.getUserByAuthentication(authentication);
         final Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new EntityNotFoundException(Assignment.class, assignmentId));
 
@@ -141,24 +144,28 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setCreatedBy(user);
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
+        projectEventService.logEvent(savedProject.getId(), null, ProjectEventType.PROJECT_CREATED, "Project created");
         logger.info("[{}] Project has been created", ProjectService.class.getName());
 
         return projectMapper.toDetailsDto(savedProject);
     }
 
     @Override
-    public ProjectDetailsDto save(Principal principal, Long projectId, ProjectUpdateDto project) {
+    public ProjectDetailsDto save(Authentication authentication, Long projectId, ProjectUpdateDto project) {
         final Project existingProject = getProjectById(projectId);
-        final User user = userService.getUserByPrincipal(principal);
+        final User user = userService.getUserByAuthentication(authentication);
 
         // Check if user is the owner of the project
         if (!user.hasRole(Role.TEACHER) && !user.isProductOwner(existingProject)) {
             throw new UserNotOwnerOfProjectException();
         }
 
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.PROJECT_UPDATED, "Project updated");
+
         // When the project has status needs revision -> revised
         if (existingProject.getStatus().equals(ProjectStatusEnum.NEEDS_REVISION)) {
             existingProject.setStatus(ProjectStatusEnum.REVISED);
+            projectEventService.logEvent(projectId, null, ProjectEventType.STATUS_CHANGED, "Project status changed to REVISED");
         }
 
         projectMapper.updateEntityFromDto(user, project, existingProject);
@@ -168,14 +175,15 @@ public class ProjectServiceImpl implements ProjectService {
         } catch (Exception e) {
             throw new BaseRuntimeException("Project could not be updated", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
         logger.info("[{}] Project with id: {} has been updated", ProjectService.class.getSimpleName(), projectId);
 
         return projectMapper.toDetailsDto(savedProject);
     }
 
     @Override
-    public List<ProjectDetailsDto> findAllInAssignmentCreatedBy(Long assignmentId, Principal principal) {
-        User user = userService.getUserByPrincipal(principal);
+    public List<ProjectDetailsDto> findAllInAssignmentCreatedBy(Long assignmentId, Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
         List<Project> projects = projectRepository.findAllByAssignmentIdAndCreatedBy(assignmentId, user);
 
         List<Project> filtered = projects.stream()
@@ -191,8 +199,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto changeProjectStatus(Principal principal, Long projectId, ProjectStatusEnum status) {
-        final User user = userService.getUserByPrincipal(principal);
+    public ProjectDetailsDto changeProjectStatus(Authentication authentication, Long projectId, ProjectStatusEnum status) {
+        final User user = userService.getUserByAuthentication(authentication);
 
         final Project project = getProjectById(projectId);
 
@@ -210,6 +218,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setStatus(status);
         projectRepository.save(project);
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.STATUS_CHANGED,
+                "Status changed from " + previousStatus + " to " + status);
         logger.info("[{}] Project ID: {} status changed from {} to {} by User ID: {}",
                 ProjectService.class.getSimpleName(), projectId, previousStatus, status, user.getId());
 
@@ -239,16 +249,16 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectDetailsDto> publishAllProjects(Principal principal, Long assignmentId) {
+    public List<ProjectDetailsDto> publishAllProjects(Authentication authentication, Long assignmentId) {
         final List<Project> projects = getAllProjectsByStatus(assignmentId, ProjectStatusEnum.APPROVED);
-        projects.forEach(project -> changeProjectStatus(principal, project.getId(), ProjectStatusEnum.PUBLISHED));
+        projects.forEach(project -> changeProjectStatus(authentication, project.getId(), ProjectStatusEnum.PUBLISHED));
         logger.info("All approved projects have been published.");
         return projectMapper.toDetailsDtoList(projects);
     }
 
     @Override
-    public List<ApplicationDetailsDto> getAllApplicationsByProjectId(Principal principal, Long projectId) {
-        final User user = userService.getUserByPrincipal(principal);
+    public List<ApplicationDetailsDto> getAllApplicationsByProjectId(Authentication authentication, Long projectId) {
+        final User user = userService.getUserByAuthentication(authentication);
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
 
@@ -259,9 +269,9 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void removeMember(Principal principal, Long projectId, Long memberId) {
+    public void removeMember(Authentication authentication, Long projectId, Long memberId) {
         final Project project = getProjectById(projectId);
-        final User actor = userService.getUserByPrincipal(principal);
+        final User actor = userService.getUserByAuthentication(authentication);
 
         // only teachers may remove members
         if (!actor.hasRole(Role.TEACHER)) {
@@ -276,9 +286,12 @@ public class ProjectServiceImpl implements ProjectService {
             throw new EntityNotFoundException(User.class, memberId);
         }
 
+        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED, "Kicked " + kicked.getFullName());
+
         // If the removed member was the Product Owner, reassign (or clear)
         if (kicked.isProductOwner(project)) {
             project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
+            projectEventService.logEvent(projectId, null, ProjectEventType.PRODUCT_OWNER_REASSIGNED, "Product owner reassigned");
         }
 
         // Mark any application of the removed user to this project as REJECTED
@@ -306,8 +319,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto claimProject(Principal principal, Long projectId) {
-        final User user = userService.getUserByPrincipal(principal);
+    public ProjectDetailsDto claimProject(Authentication authentication, Long projectId) {
+        final User user = userService.getUserByAuthentication(authentication);
         final Project project = getProjectById(projectId);
 
         if (project.getProductOwner() != null) {
@@ -326,13 +339,14 @@ public class ProjectServiceImpl implements ProjectService {
         project.getMembers().add(user);
         project.setProductOwner(user);
         projectRepository.save(project);
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.PROJECT_CLAIMED, "Claimed the project");
         logger.info("[{}] Project ID: {} has been claimed by User ID: {}", ProjectService.class.getSimpleName(), projectId, user.getId());
         return projectMapper.toDetailsDto(project);
     }
 
     @Override
-    public ProjectDetailsDto importProject(Principal principal, Long assignmentId, Long projectId) {
-        final User user = userService.getUserByPrincipal(principal);
+    public ProjectDetailsDto importProject(Authentication authentication, Long assignmentId, Long projectId) {
+        final User user = userService.getUserByAuthentication(authentication);
         final Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new EntityNotFoundException(Project.class, projectId));
         final Assignment assignment = assignmentRepository.findById(assignmentId)
@@ -366,6 +380,7 @@ public class ProjectServiceImpl implements ProjectService {
         importedProject.setTags(new ArrayList<>(project.getTags()));
         projectRepository.save(importedProject);
 
+        projectEventService.logEvent(importedProject.getId(), user.getId(), ProjectEventType.PROJECT_IMPORTED,"Project imported");
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
 
@@ -381,8 +396,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectDetailsDto createGlobalProject(Principal principal, ProjectCreateDto project) {
-        final User user = userService.getUserByPrincipal(principal);
+    public ProjectDetailsDto createGlobalProject(Authentication authentication, ProjectCreateDto project) {
+        final User user = userService.getUserByAuthentication(authentication);
 
         Project newProject = projectMapper.toEntity(project);
         newProject.setStatus(ProjectStatusEnum.APPROVED);
@@ -396,8 +411,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectDetailsDto> getAllGlobalProjects(Principal principal) {
-        User user = userService.getUserByPrincipal(principal);
+    public List<ProjectDetailsDto> getAllGlobalProjects(Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
         if (user.hasRole(Role.RESEARCHER)) {
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(user));
         } else {
@@ -405,6 +420,26 @@ public class ProjectServiceImpl implements ProjectService {
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByRoleAndAssignmentIsNull(Role.RESEARCHER));
         }
 
+    }
+
+    @Override
+    public void leaveProject(Authentication authentication, Long projectId) {
+        final User user = userService.getUserByAuthentication(authentication);
+        final Project project = getProjectById(projectId);
+
+        // must be member
+        if (!project.getMembers().removeIf(m -> m.getId().equals(user.getId()))) {
+            throw new UserUnauthorizedException(user.getId());
+        }
+
+        // if they were product owner -> reassign or clear
+        if (user.isProductOwner(project)) {
+            project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
+        }
+
+        projectRepository.save(project);
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.USER_LEFT, "Left");
+        logger.info("[ProjectService] User ID {} left project ID {}", user.getId(), projectId);
     }
 
     @Override
