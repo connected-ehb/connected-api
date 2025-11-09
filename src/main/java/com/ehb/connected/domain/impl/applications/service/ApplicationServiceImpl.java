@@ -109,7 +109,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application newApplication = new Application(null, applicationDto.getMotivationMd(), ApplicationStatusEnum.PENDING, project, user);
         applicationRepository.save(newApplication);
 
-        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_APPLIED, "Application submitted");
+        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_APPLIED, "Applied");
         logger.info("[{}] Application has been created for project [{}]", ApplicationService.class.getSimpleName(), project.getId());
 
         // Check if receiver exits and send notification
@@ -219,7 +219,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     .forEach(app -> app.setStatus(ApplicationStatusEnum.REJECTED));
         }
 
-        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_JOINED, "Joined the project");
+        projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_JOINED, "Joined");
 
         projectService.save(project);
 

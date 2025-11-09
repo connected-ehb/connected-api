@@ -144,7 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
         newProject.setCreatedBy(user);
         newProject.setAssignment(assignment);
         Project savedProject = projectRepository.save(newProject);
-        projectEventService.logEvent(savedProject.getId(), user.getId(), ProjectEventType.PROJECT_CREATED, "Project created");
+        projectEventService.logEvent(savedProject.getId(), null, ProjectEventType.PROJECT_CREATED, "Project created");
         logger.info("[{}] Project has been created", ProjectService.class.getName());
 
         return projectMapper.toDetailsDto(savedProject);
@@ -282,7 +282,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new EntityNotFoundException(User.class, memberId);
         }
 
-        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED, "Removed " + kicked.getFullName() + " from the project");
+        projectEventService.logEvent(projectId, actor.getId(), ProjectEventType.MEMBER_REMOVED, "Kicked " + kicked.getFullName());
 
         // If the removed member was the Product Owner, reassign (or clear)
         if (kicked.isProductOwner(project)) {
@@ -434,7 +434,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectRepository.save(project);
-        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.USER_LEFT, "Left the project");
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.USER_LEFT, "Left");
         logger.info("[ProjectService] User ID {} left project ID {}", user.getId(), projectId);
     }
 
