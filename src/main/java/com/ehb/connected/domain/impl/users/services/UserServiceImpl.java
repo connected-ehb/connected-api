@@ -76,6 +76,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDetailsDto updateUserAsAdmin(Long userId, UserDetailsDto userDto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(UserService.class, userId));
+
+        user.setAboutMe(userDto.getAboutMe());
+        user.setFieldOfStudy(userDto.getFieldOfStudy());
+        user.setLinkedinUrl(userDto.getLinkedinUrl());
+        user.setTags(new ArrayList<>(tagMapper.toEntityList(userDto.getTags())));
+        return userDetailsMapper.toUserDetailsDto(userRepository.save(user));
+    }
+
+    @Override
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }

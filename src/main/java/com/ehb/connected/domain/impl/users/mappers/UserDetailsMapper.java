@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.users.mappers;
 
 import com.ehb.connected.domain.impl.tags.mappers.TagMapper;
 import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
+import com.ehb.connected.domain.impl.users.dto.MinimalUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.Role;
 import com.ehb.connected.domain.impl.users.entities.User;
@@ -59,6 +60,21 @@ public class UserDetailsMapper {
             dto.setTags(tagMapper.toDtoList(user.getTags()));
         }
         dto.setIsVerified(user.isEmailVerified());
+        return dto;
+    }
+
+    public MinimalUserDetailsDto toMinimalUserDetailsDto(User user) {
+        MinimalUserDetailsDto dto = new MinimalUserDetailsDto();
+        dto.setId(user.getId());
+        dto.setProfileImageUrl(user.getProfileImageUrl());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setLinkedinUrl(user.getLinkedinUrl());
+        dto.setFieldOfStudy(user.getFieldOfStudy());
+        dto.setAboutMe(user.getAboutMe());
+        if (user.getTags() != null) {
+            dto.setTags(tagMapper.toDtoList(user.getTags()));
+        }
         return dto;
     }
 

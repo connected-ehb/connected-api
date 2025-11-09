@@ -1,12 +1,14 @@
 package com.ehb.connected.domain.impl.users.controllers;
 
 import com.ehb.connected.domain.impl.users.dto.EmailRequestDto;
+import com.ehb.connected.domain.impl.users.dto.MinimalUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import com.ehb.connected.domain.impl.users.entities.User;
 import com.ehb.connected.domain.impl.users.mappers.UserDetailsMapper;
 import com.ehb.connected.domain.impl.users.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -26,25 +28,36 @@ public class UserController {
     private final UserService userService;
     private final UserDetailsMapper userDetailsMapper;
 
+    @PreAuthorize("hasAuthority('user:read')")
     @GetMapping("/{id}")
-    public ResponseEntity<UserDetailsDto> getUserById(@PathVariable Long id){
+    public ResponseEntity<MinimalUserDetailsDto> getUserById(@PathVariable Long id){
         User user = userService.getUserById(id);
-        return ResponseEntity.ok(userDetailsMapper.toUserDetailsDto(user));
+        return ResponseEntity.ok(userDetailsMapper.toMinimalUserDetailsDto(user));
     }
 
+    @PreAuthorize("hasAuthority('user:create')")
     @PostMapping()
     public ResponseEntity<User> createUser(@RequestBody User user){
         User createdUser = userService.createUser(user);
         return ResponseEntity.ok(createdUser);
     }
 
-    @PatchMapping("/update")
-    public ResponseEntity<UserDetailsDto> updateUser(Authentication authentication, @RequestBody UserDetailsDto userDetailsDto){
+    @PreAuthorize("hasAuthority('user:me:update')")
+    @PatchMapping("/me")
+    public ResponseEntity<UserDetailsDto> updateCurrentUser(Authentication authentication, @RequestBody UserDetailsDto userDetailsDto){
         UserDetailsDto updatedUser = userService.updateUser(authentication, userDetailsDto);
         return ResponseEntity.ok(updatedUser);
     }
 
-    @PostMapping("/request-delete")
+    @PreAuthorize("hasAuthority('user:update')")
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserDetailsDto> updateUserAsAdmin(@PathVariable Long userId, @RequestBody UserDetailsDto userDetailsDto) {
+        UserDetailsDto updatedUser = userService.updateUserAsAdmin(userId, userDetailsDto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @PreAuthorize("hasAuthority('user:me:request_delete')")
+    @PostMapping("/me/request-delete")
     public ResponseEntity<Void> requestDeleteUser(Authentication authentication){
         userService.requestDeleteUser(authentication);
         return ResponseEntity.ok().build();
