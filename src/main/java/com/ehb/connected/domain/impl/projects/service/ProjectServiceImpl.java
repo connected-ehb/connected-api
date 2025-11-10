@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -267,6 +268,14 @@ public class ProjectServiceImpl implements ProjectService {
             throw new UserNotOwnerOfProjectException();
         }
         return applicationMapper.toDtoList(project.getApplications());
+    }
+
+    @Override
+    public List<ProjectDetailsDto> getAllProjectsForUser(Authentication authentication, Long userId) {
+        List<Project> projects = projectRepository.findDistinctByCreatedBy_IdOrMembers_Id(userId, userId);
+        return projects.stream()
+                .map(projectMapper::toDetailsDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional

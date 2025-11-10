@@ -182,4 +182,10 @@ public class ProjectController {
         return ResponseEntity.ok(projectEventService.getEventsForProject(authentication, projectId));
     }
 
+
+    @PreAuthorize("hasAnyAuthority('project:read')")
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ProjectDetailsDto>> getProjectsForUser(Authentication authentication, @PathVariable Long userId) {
+        return ResponseEntity.ok(projectService.getAllProjectsForUser(authentication, userId));
+    }
 }
