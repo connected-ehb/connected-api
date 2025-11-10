@@ -27,6 +27,10 @@ public class ProjectMapper {
         return projects.stream().map(this::toDetailsDto).toList();
     }
 
+    public List<ResearcherProjectDetailsDto> toResearcherDetailsDtoList(List<Project> projects) {
+        return projects.stream().map(this::toResearcherDetailsDto).toList();
+    }
+
     public ProjectDetailsDto toDetailsDto(Project project) {
         return new ProjectDetailsDto(
                 project.getId(),
@@ -79,8 +83,23 @@ public class ProjectMapper {
     }
 
     public ResearcherProjectDetailsDto toResearcherDetailsDto(Project project) {
-        ProjectDetailsDto detailsDto = toDetailsDto(project);
-        ResearcherProjectDetailsDto dto = new ResearcherProjectDetailsDto(detailsDto);
+        ResearcherProjectDetailsDto dto = new ResearcherProjectDetailsDto();
+
+        dto.setId(project.getId());
+        dto.setGid(project.getGid());
+        dto.setTitle(project.getTitle());
+        dto.setDescription(project.getDescription());
+        dto.setShortDescription(project.getShortDescription());
+        dto.setStatus(project.getStatus());
+        dto.setRepositoryUrl(project.getRepositoryUrl());
+        dto.setBoardUrl(project.getBoardUrl());
+        dto.setBackgroundImage(project.getBackgroundImage());
+        dto.setTeamSize(project.getTeamSize());
+        dto.setAssignmentId(project.getAssignment() != null ? project.getAssignment().getId() : null);
+        dto.setTags(project.getTags() != null ? project.getTags().stream().map(tagMapper::toDto).toList() : Collections.emptyList());
+        dto.setCreatedBy(project.getCreatedBy() != null ? userMapper.toUserDetailsDto(project.getCreatedBy()) : null);
+        dto.setProductOwner(project.getProductOwner() != null ? userMapper.toUserDetailsDto(project.getProductOwner()) : null);
+        dto.setMembers(project.getMembers() != null ? project.getMembers().stream().map(userMapper::toUserDetailsDto).toList() : Collections.emptyList());
 
         if (project.getAssignment() != null) {
             dto.setCourseName(project.getAssignment().getCourse().getName());

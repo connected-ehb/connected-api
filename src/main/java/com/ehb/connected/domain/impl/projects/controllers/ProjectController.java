@@ -10,6 +10,7 @@ import com.ehb.connected.domain.impl.feedbacks.service.FeedbackService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.events.dto.ProjectEventDetailsDto;
 import com.ehb.connected.domain.impl.projects.events.service.ProjectEventService;
@@ -86,6 +87,12 @@ public class ProjectController {
     @GetMapping("/global")
     public ResponseEntity<List<ProjectDetailsDto>> getAllGlobalProjects(Authentication authentication){
         return ResponseEntity.ok(projectService.getAllGlobalProjects(authentication));
+    }
+
+    @PreAuthorize("hasAnyAuthority('project:read_imported')")
+    @GetMapping("/global/imported")
+    public ResponseEntity<List<ResearcherProjectDetailsDto>> getAllImportedProjects(Authentication authentication) {
+        return ResponseEntity.ok(projectService.getAllImportedProjects(authentication));
     }
 
     @PreAuthorize("hasAnyAuthority('project:update')")

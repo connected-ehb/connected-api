@@ -87,7 +87,7 @@ public enum Permission {
 
     BUG_CREATE("bug:create"),
     BUG_READ_ALL("bug:read_all"),
-    ;
+    PROJECT_READ_IMPORTED("project:read_imported");
 
     private final String permission;
 }
