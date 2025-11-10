@@ -102,8 +102,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         assertCanApply(user, project);
 
-        if (project.hasUserApplied(user)) {
-            throw new BaseRuntimeException("User has already applied to this project", HttpStatus.CONFLICT);
+        if (project.hasActiveApplication(user)) {
+            throw new BaseRuntimeException("User already has an active application for this project", HttpStatus.CONFLICT);
         }
 
         Application newApplication = new Application(null, applicationDto.getMotivationMd(), ApplicationStatusEnum.PENDING, project, user);
