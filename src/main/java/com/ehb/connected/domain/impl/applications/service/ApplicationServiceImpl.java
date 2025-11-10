@@ -10,7 +10,7 @@ import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
-import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
+import com.ehb.connected.domain.impl.notifications.service.NotificationService;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.events.entities.ProjectEventType;
@@ -45,7 +45,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ProjectService projectService;
     private final DeadlineService deadlineService;
     private final ApplicationMapper applicationMapper;
-    private final NotificationServiceImpl notificationService;
+    private final NotificationService notificationService;
 
     private final ProjectUserService projectUserService;
     private final ProjectEventService projectEventService;
@@ -240,13 +240,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private void rejectAllOtherApplications(Application application) {
-        List<Application> otherApplications = applicationRepository.findByApplicantInAssignment(application.getProject().getAssignment().getId(), application.getApplicant());
-        otherApplications.stream()
+        applicationRepository.findByApplicantInAssignment(
+                        application.getProject().getAssignment().getId(),
+                        application.getApplicant()
+                ).stream()
                 .filter(otherApplication -> !otherApplication.equals(application))
-                .forEach(otherApplication -> {
-                    otherApplication.setStatus(ApplicationStatusEnum.REJECTED);
-                    applicationRepository.save(otherApplication);
-                });
+                .forEach(otherApplication -> otherApplication.setStatus(ApplicationStatusEnum.REJECTED));
     }
-
 }
