@@ -31,6 +31,8 @@ public interface ProjectService {
 
     List<ApplicationDetailsDto> getAllApplicationsByProjectId(Authentication authentication, Long projectId);
 
+    List<ProjectDetailsDto> getAllProjectsForUser(Authentication authentication, Long userId);
+
     void removeMember(Authentication authentication, Long id, Long memberId);
 
     ProjectDetailsDto claimProject(Authentication authentication, Long projectId);

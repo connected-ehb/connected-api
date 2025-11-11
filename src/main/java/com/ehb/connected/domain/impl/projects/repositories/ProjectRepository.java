@@ -63,6 +63,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     int countByAssignmentIdAndStatusIn(Long assignmentId, Collection<ProjectStatusEnum> statuses);
 
     int countByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
+           
+    List<Project> findDistinctByCreatedBy_IdOrMembers_Id(Long createdById, Long memberId);
 
     List<Project> findAllByCreatedByAndAssignmentIsNull(User user);
 
