@@ -13,6 +13,7 @@ import com.ehb.connected.domain.impl.notifications.service.NotificationService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.events.entities.ProjectEventType;
@@ -67,10 +68,9 @@ public class ProjectServiceImpl implements ProjectService {
         }
         if (user.canViewProject(project)) {
             return projectMapper.toDetailsDto(project);
-
-        } else {
-            throw new UserUnauthorizedException(user.getId());
         }
+
+        throw new UserUnauthorizedException(user.getId());
     }
 
     @Override
@@ -426,12 +426,24 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectDetailsDto> getAllGlobalProjects(Authentication authentication) {
         User user = userService.getUserByAuthentication(authentication);
         if (user.hasRole(Role.RESEARCHER)) {
-            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(user));
+            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByAndAssignmentIsNull(user));
         } else {
             // Return all projects where createdBy user has role RESEARCHER and has no assignment
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByRoleAndAssignmentIsNull(Role.RESEARCHER));
         }
+    }
 
+    @Override
+    public List<ResearcherProjectDetailsDto> getAllImportedProjects(Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
+
+        if (!user.hasRole(Role.RESEARCHER)) {
+            throw new UserUnauthorizedException(user.getId());
+        }
+
+        return projectMapper.toResearcherDetailsDtoList(
+                projectRepository.findAllByCreatedByAndAssignmentIsNotNull(user)
+        );
     }
 
     @Override
