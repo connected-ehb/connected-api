@@ -274,6 +274,7 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectDetailsDto> getAllProjectsForUser(Authentication authentication, Long userId) {
         List<Project> projects = projectRepository.findDistinctByCreatedBy_IdOrMembers_Id(userId, userId);
         return projects.stream()
+                .filter(p -> p.getStatus() == ProjectStatusEnum.PUBLISHED)
                 .map(projectMapper::toDetailsDto)
                 .collect(Collectors.toList());
     }
