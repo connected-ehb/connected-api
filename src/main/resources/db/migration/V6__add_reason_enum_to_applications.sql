@@ -1,0 +1,8 @@
+ALTER TABLE applications
+    ADD COLUMN reason ENUM(
+    'PROJECT_FULL',
+    'JOINED_ANOTHER_PROJECT',
+    'PO_DECISION',
+    'REMOVED_FROM_PROJECT',
+    'LEFT_PROJECT'
+) NULL AFTER status;

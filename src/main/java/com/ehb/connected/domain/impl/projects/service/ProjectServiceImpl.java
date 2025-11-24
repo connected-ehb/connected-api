@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.entities.ReasonEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
@@ -300,7 +301,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.getApplications().stream()
                 .filter(a -> a.getApplicant().getId().equals(memberId))
                 .findFirst()
-                .ifPresent(a -> a.setStatus(ApplicationStatusEnum.REJECTED));
+                .ifPresent(a -> a.reject(ReasonEnum.REMOVED_FROM_PROJECT));
 
         projectRepository.save(project);
 
@@ -336,7 +337,7 @@ public class ProjectServiceImpl implements ProjectService {
         // reject all other applications of the user
         user.getApplications().stream()
                 .filter(application -> application.hasSameAssignment(project))
-                .forEach(application -> application.setStatus(ApplicationStatusEnum.REJECTED));
+                .forEach(application -> application.reject(ReasonEnum.JOINED_ANOTHER_PROJECT));
 
         project.getMembers().add(user);
         project.setProductOwner(user);
@@ -455,7 +456,7 @@ public class ProjectServiceImpl implements ProjectService {
                     .filter(app -> app.getApplicant().getId().equals(user.getId()) &&
                             app.getStatus() != ApplicationStatusEnum.REJECTED)
                     .findFirst()
-                    .ifPresent(app -> app.setStatus(ApplicationStatusEnum.REJECTED));
+                    .ifPresent(app -> app.reject(ReasonEnum.LEFT_PROJECT));
         }
 
         projectRepository.save(project);
