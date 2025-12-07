@@ -4,6 +4,7 @@ import com.ehb.connected.domain.impl.applications.dto.ApplicationCreateDto;
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.entities.Application;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.entities.ReasonEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.applications.repositories.ApplicationRepository;
 import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
@@ -106,7 +107,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BaseRuntimeException("User already has an active application for this project", HttpStatus.CONFLICT);
         }
 
-        Application newApplication = new Application(null, applicationDto.getMotivationMd(), ApplicationStatusEnum.PENDING, project, user);
+        Application newApplication = new Application(null, applicationDto.getMotivationMd(), ApplicationStatusEnum.PENDING, null, project, user);
         applicationRepository.save(newApplication);
 
         projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_APPLIED, "Applied");
@@ -159,7 +160,11 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         // Set status (approved or rejected) and save
-        application.setStatus(status);
+        if (status.equals(ApplicationStatusEnum.REJECTED)) {
+            application.reject(ReasonEnum.PO_DECISION);
+        } else {
+            application.setStatus(status);
+        }
 
         applicationRepository.save(application);
 
@@ -207,7 +212,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         //reject all other applications for the same applicant
-        rejectAllOtherApplications(application);
+        rejectOtherApplicationsOfApplicant(application);
         members.add(user);
         project.setMembers(members);
 
@@ -215,8 +220,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (project.hasReachedMaxMembers()) {
             project.getApplications().stream()
                     .filter(app -> app.hasStatus(ApplicationStatusEnum.PENDING))
-                    // TODO This will need a new status
-                    .forEach(app -> app.setStatus(ApplicationStatusEnum.REJECTED));
+                    .forEach(app -> app.reject(ReasonEnum.PROJECT_FULL));
         }
 
         projectEventService.logEvent(project.getId(), user.getId(), ProjectEventType.USER_JOINED, "Joined");
@@ -239,12 +243,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         return applicationMapper.toDto(application);
     }
 
-    private void rejectAllOtherApplications(Application application) {
+    private void rejectOtherApplicationsOfApplicant(Application application) {
         applicationRepository.findByApplicantInAssignment(
                         application.getProject().getAssignment().getId(),
                         application.getApplicant()
                 ).stream()
                 .filter(otherApplication -> !otherApplication.equals(application))
-                .forEach(otherApplication -> otherApplication.setStatus(ApplicationStatusEnum.REJECTED));
+                .forEach(otherApplication -> otherApplication.reject(ReasonEnum.JOINED_ANOTHER_PROJECT));
     }
 }
