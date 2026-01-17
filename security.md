@@ -45,7 +45,7 @@ A comprehensive security audit has identified **35+ security vulnerabilities** a
 
 ## Critical Issues
 
-### 1. CSRF Protection Completely Disabled
+### 1. 🟢[FIXED] CSRF Protection Completely Disabled
 
 **📍 Location:** `SecurityConfig.java:36`
 
@@ -66,8 +66,8 @@ httpSecurity.csrf(csrf -> csrf
 ```
 
 ---
-
-### 2. IDOR Vulnerabilities - Users Can Access Others' Data
+### SHould not be that impactfull, curerntly returns a MinimalUserDetailsDto which reveals less info about the user while still allowing users to visit other user profiles
+### 2. 🟢[FIXED] IDOR Vulnerabilities - Users Can Access Others' Data
 
 #### A. User Controller
 
@@ -154,30 +154,7 @@ public ResponseEntity<Void> deleteDeadline(@PathVariable Long deadlineId) {
 }
 ```
 
----
-
-### 3. Hardcoded Secrets in Repository
-
-**📍 Location:** `.env`, `.env.prod`
-
-**Exposed Credentials:**
-- Database passwords (plaintext)
-- Canvas API client secret
-- Mail service password
-- Session secrets
-
-**Impact:**
-All credentials are compromised and visible in git history.
-
-**Required Actions:**
-1. ❌ Remove `.env` and `.env.prod` from git history
-2. ❌ Rotate ALL credentials immediately
-3. ❌ Add `.env*` to `.gitignore`
-4. ❌ Use environment variables or secrets management (e.g., AWS Secrets Manager, HashiCorp Vault)
-
----
-
-### 4. Unprotected Canvas Sync Endpoint
+### 4. 🟢[FIXED]  Unprotected Canvas Sync Endpoint
 
 **📍 Location:** `CourseController.java:35-40`
 
@@ -232,7 +209,7 @@ public ResponseEntity<TagDto> createTag(@RequestBody TagDto tagDto) {
 
 **📍 Location:** `LoginRequestDto.java`, `RegistrationRequestDto.java`
 
-**LoginRequestDto:**
+**LoginRequestDto:**'
 ```java
 @Getter
 public class LoginRequestDto {

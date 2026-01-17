@@ -31,7 +31,7 @@ public class CourseController {
     private final AssignmentService assignmentService;
     private final UserService userService;
 
-    //@PreAuthorize("hasAnyAuthority('canvas:sync')")
+    @PreAuthorize("hasAnyAuthority('canvas:sync')")
     @PostMapping("/canvas")
     public ResponseEntity<List<CourseDetailsDto>> getNewCoursesFromCanvas(Authentication authentication) {
         List<CourseDetailsDto> newCourses = courseService.getNewCoursesFromCanvas(authentication);
