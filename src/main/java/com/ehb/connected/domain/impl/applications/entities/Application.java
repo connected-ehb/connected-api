@@ -35,7 +35,12 @@ public class Application {
     private String motivationMd;
 
     @Enumerated(EnumType.STRING)
-    private ApplicationStatusEnum status;
+    @Column(nullable = false)
+    private ApplicationStatusEnum status = ApplicationStatusEnum.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reason")
+    private ReasonEnum reason;
 
     @ManyToOne
     @JoinColumn(name = "project_id")
@@ -49,8 +54,17 @@ public class Application {
         return this.status.equals(status);
     }
 
-    public boolean hasSameAssignment(Project project) {
-        return this.project.getAssignment().equals(project.getAssignment());
+    public boolean hasSameAssignment(Project other) {
+        if (this.project == null || other == null) return false;
+        return Objects.equals(
+                this.project.getAssignment(),
+                other.getAssignment()
+        );
+    }
+
+    public void reject(ReasonEnum reason) {
+        this.status = ApplicationStatusEnum.REJECTED;
+        this.reason = reason;
     }
 
     @Override

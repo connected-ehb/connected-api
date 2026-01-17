@@ -2,6 +2,7 @@ package com.ehb.connected.domain.impl.projects.service;
 
 import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
+import com.ehb.connected.domain.impl.applications.entities.ReasonEnum;
 import com.ehb.connected.domain.impl.applications.mappers.ApplicationMapper;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
@@ -9,10 +10,11 @@ import com.ehb.connected.domain.impl.deadlines.entities.Deadline;
 import com.ehb.connected.domain.impl.deadlines.enums.DeadlineRestriction;
 import com.ehb.connected.domain.impl.deadlines.service.DeadlineService;
 import com.ehb.connected.domain.impl.notifications.helpers.UrlHelper;
-import com.ehb.connected.domain.impl.notifications.service.NotificationServiceImpl;
+import com.ehb.connected.domain.impl.notifications.service.NotificationService;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.projects.events.entities.ProjectEventType;
@@ -27,6 +29,7 @@ import com.ehb.connected.exceptions.DeadlineExpiredException;
 import com.ehb.connected.exceptions.EntityNotFoundException;
 import com.ehb.connected.exceptions.UserNotOwnerOfProjectException;
 import com.ehb.connected.exceptions.UserUnauthorizedException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +53,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final AssignmentRepository assignmentRepository;
     private final ApplicationMapper applicationMapper;
     private final UserService userService;
-    private final NotificationServiceImpl notificationService;
+    private final NotificationService notificationService;
     private final ProjectEventService projectEventService;
 
     private final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
@@ -65,10 +68,9 @@ public class ProjectServiceImpl implements ProjectService {
         }
         if (user.canViewProject(project)) {
             return projectMapper.toDetailsDto(project);
-
-        } else {
-            throw new UserUnauthorizedException(user.getId());
         }
+
+        throw new UserUnauthorizedException(user.getId());
     }
 
     @Override
@@ -160,7 +162,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new UserNotOwnerOfProjectException();
         }
 
-        projectEventService.logEvent(projectId, null, ProjectEventType.PROJECT_UPDATED, "Project updated");
+        projectEventService.logEvent(projectId, user.getId(), ProjectEventType.PROJECT_UPDATED, "Project updated");
 
         // When the project has status needs revision -> revised
         if (existingProject.getStatus().equals(ProjectStatusEnum.NEEDS_REVISION)) {
@@ -268,6 +270,7 @@ public class ProjectServiceImpl implements ProjectService {
         return applicationMapper.toDtoList(project.getApplications());
     }
 
+    @Transactional
     @Override
     public void removeMember(Authentication authentication, Long projectId, Long memberId) {
         final Project project = getProjectById(projectId);
@@ -290,7 +293,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         // If the removed member was the Product Owner, reassign (or clear)
         if (kicked.isProductOwner(project)) {
-            project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
+            reassignProductOwner(project);
             projectEventService.logEvent(projectId, null, ProjectEventType.PRODUCT_OWNER_REASSIGNED, "Product owner reassigned");
         }
 
@@ -298,7 +301,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.getApplications().stream()
                 .filter(a -> a.getApplicant().getId().equals(memberId))
                 .findFirst()
-                .ifPresent(a -> a.setStatus(ApplicationStatusEnum.REJECTED));
+                .ifPresent(a -> a.reject(ReasonEnum.REMOVED_FROM_PROJECT));
 
         projectRepository.save(project);
 
@@ -334,7 +337,7 @@ public class ProjectServiceImpl implements ProjectService {
         // reject all other applications of the user
         user.getApplications().stream()
                 .filter(application -> application.hasSameAssignment(project))
-                .forEach(application -> application.setStatus(ApplicationStatusEnum.REJECTED));
+                .forEach(application -> application.reject(ReasonEnum.JOINED_ANOTHER_PROJECT));
 
         project.getMembers().add(user);
         project.setProductOwner(user);
@@ -380,7 +383,7 @@ public class ProjectServiceImpl implements ProjectService {
         importedProject.setTags(new ArrayList<>(project.getTags()));
         projectRepository.save(importedProject);
 
-        projectEventService.logEvent(importedProject.getId(), user.getId(), ProjectEventType.PROJECT_IMPORTED,"Project imported");
+        projectEventService.logEvent(importedProject.getId(), user.getId(), ProjectEventType.PROJECT_IMPORTED, "Project imported");
         logger.info("[{}] Project with GID: {} has been imported to assignment ID: {} by {} {}",
                 ProjectService.class.getSimpleName(), gid, assignmentId, user.getFirstName(), user.getLastName());
 
@@ -414,12 +417,24 @@ public class ProjectServiceImpl implements ProjectService {
     public List<ProjectDetailsDto> getAllGlobalProjects(Authentication authentication) {
         User user = userService.getUserByAuthentication(authentication);
         if (user.hasRole(Role.RESEARCHER)) {
-            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedBy(user));
+            return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByAndAssignmentIsNull(user));
         } else {
             // Return all projects where createdBy user has role RESEARCHER and has no assignment
             return projectMapper.toDetailsDtoList(projectRepository.findAllByCreatedByRoleAndAssignmentIsNull(Role.RESEARCHER));
         }
+    }
 
+    @Override
+    public List<ResearcherProjectDetailsDto> getAllImportedProjects(Authentication authentication) {
+        User user = userService.getUserByAuthentication(authentication);
+
+        if (!user.hasRole(Role.RESEARCHER)) {
+            throw new UserUnauthorizedException(user.getId());
+        }
+
+        return projectMapper.toResearcherDetailsDtoList(
+                projectRepository.findAllByCreatedByAndAssignmentIsNotNull(user)
+        );
     }
 
     @Override
@@ -434,7 +449,14 @@ public class ProjectServiceImpl implements ProjectService {
 
         // if they were product owner -> reassign or clear
         if (user.isProductOwner(project)) {
-            project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().get(0));
+            reassignProductOwner(project);
+        } else {
+            // get the application of the user that wants to leave and set the status to rejected so he can apply to other projects.
+            project.getApplications().stream()
+                    .filter(app -> app.getApplicant().getId().equals(user.getId()) &&
+                            app.getStatus() != ApplicationStatusEnum.REJECTED)
+                    .findFirst()
+                    .ifPresent(app -> app.reject(ReasonEnum.LEFT_PROJECT));
         }
 
         projectRepository.save(project);
@@ -445,6 +467,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<Project> getAllProjectsByStatus(Long assignmentId, ProjectStatusEnum status) {
         return projectRepository.findAllByAssignmentIdAndStatus(assignmentId, status);
+    }
+
+    private void reassignProductOwner(Project project) {
+        project.setProductOwner(project.hasNoMembers() ? null : project.getMembers().getFirst());
     }
 
 }

@@ -112,6 +112,7 @@ public enum Role implements GrantedAuthority {
             Set.of(
                     PROJECT_CREATE,
                     PROJECT_READ,
+                    PROJECT_READ_IMPORTED,
                     PROJECT_UPDATE,
                     PROJECT_DELETE,
                     APPLICATION_CREATE,
@@ -140,6 +141,7 @@ public enum Role implements GrantedAuthority {
             Set.of(
                     PROJECT_CREATE,
                     PROJECT_READ,
+                    PROJECT_READ_IMPORTED,
                     PROJECT_UPDATE,
                     PROJECT_DELETE,
                     APPLICATION_CREATE,

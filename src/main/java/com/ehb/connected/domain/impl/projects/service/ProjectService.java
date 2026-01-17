@@ -4,6 +4,7 @@ import com.ehb.connected.domain.impl.applications.dto.ApplicationDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectCreateDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.dto.ProjectUpdateDto;
+import com.ehb.connected.domain.impl.projects.dto.ResearcherProjectDetailsDto;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import org.springframework.security.core.Authentication;
@@ -21,6 +22,7 @@ public interface ProjectService {
     ProjectDetailsDto save(Authentication authentication, Long id, ProjectUpdateDto project);
 
     List<ProjectDetailsDto> findAllInAssignmentCreatedBy(Long assignmentId, Authentication authentication);
+    List<ResearcherProjectDetailsDto> getAllImportedProjects(Authentication authentication);
 
     void save(Project project);
 

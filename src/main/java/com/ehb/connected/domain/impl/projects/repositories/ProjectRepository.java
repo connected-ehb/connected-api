@@ -32,19 +32,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     boolean existsByAssignmentIdAndGid(Long assignmentId, UUID gid);
 
-    List<Project> findAllByCreatedBy(User principal);
-
     List<Project> findAllByAssignmentIdAndCreatedBy(Long assignmentId, User createdBy);
 
     List<Project> findAllByCreatedByRoleAndAssignmentIsNull(Role role);
-
-    @Query("""
-              select count(distinct p.createdBy.id)
-              from Project p
-              where p.assignment.id = :assignmentId
-                and p.status in ('APPROVED','PUBLISHED')
-            """)
-    int countDistinctApprovedOwners(@Param("assignmentId") Long assignmentId);
 
     @Query("""
               select distinct p.createdBy.id
@@ -73,4 +63,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     int countByAssignmentIdAndStatusIn(Long assignmentId, Collection<ProjectStatusEnum> statuses);
 
     int countByAssignmentIdAndStatus(Long assignmentId, ProjectStatusEnum status);
+
+    List<Project> findAllByCreatedByAndAssignmentIsNull(User user);
+
+    List<Project> findAllByCreatedByAndAssignmentIsNotNull(User user);
 }

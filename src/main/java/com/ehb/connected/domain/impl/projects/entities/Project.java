@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.projects.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.applications.entities.ApplicationStatusEnum;
 import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.feedbacks.entities.Feedback;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
@@ -106,8 +107,10 @@ public class Project {
         return this.members.isEmpty();
     }
 
-    public boolean hasUserApplied(User user) {
-        return this.getApplications().stream().anyMatch(user::isApplicant);
+    public boolean hasActiveApplication(User user) {
+        return this.getApplications().stream()
+                .anyMatch(app -> app.getApplicant().getId().equals(user.getId())
+                        && !app.hasStatus(ApplicationStatusEnum.REJECTED));
     }
 
     public boolean hasReachedMaxMembers() {
