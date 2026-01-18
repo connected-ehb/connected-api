@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +19,7 @@ public class ReviewController {
 
     @PreAuthorize("hasAnyAuthority('review:delete')")
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<Void> deleteReview(Authentication authentication, Long reviewId) {
+    public ResponseEntity<Void> deleteReview(Authentication authentication, @PathVariable Long reviewId) {
         reviewService.deleteReview(authentication, reviewId);
         return ResponseEntity.noContent().build();
     }

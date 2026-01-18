@@ -292,7 +292,7 @@ ADMIN(
 
 ---
 
-### 8. Bug Endpoint Public Access
+### 8. 🟢[FIXED] Bug Endpoint Public Access
 
 **📍 Location:** `SecurityConfig.java:51`
 
@@ -315,7 +315,7 @@ Remove `/api/bugs` from permitAll() list.
 
 ---
 
-### 9. Missing @PathVariable Annotation
+### 9. 🟢[FIXED] Missing @PathVariable Annotation
 
 **📍 Location:** `ReviewController.java:22`
 
