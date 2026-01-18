@@ -62,8 +62,7 @@ public class SecurityConfig {
                                 "/error",
                                 "/ws/**",  // WebSocket endpoints
                                 "/actuator/**",  // Actuator endpoints
-                                "/api/users/verify",  // Email verification endpoint
-                                "/api/bugs"  // Public bug reporting
+                                "/api/users/verify"  // Email verification endpoint
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // CORS preflight
                         .anyRequest().authenticated()

@@ -138,7 +138,7 @@ public enum Role implements GrantedAuthority {
                     BUG_CREATE,
                     USER_READ,
                     USER_ME_UPDATE,
-                    USER_ME_REQUEST_DELETE.
+                    USER_ME_REQUEST_DELETE,
                     TAG_CREATE,
                     TAG_READ
             )
