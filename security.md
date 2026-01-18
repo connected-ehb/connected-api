@@ -261,7 +261,7 @@ public class RegistrationRequestDto {
 
 ---
 
-### 7. Admin Role Missing Critical Permissions
+### 7. 🟢[FIXED]  Admin Role Missing Critical Permissions
 
 **📍 Location:** `Role.java:126-177`
 
