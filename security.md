@@ -344,7 +344,7 @@ public ResponseEntity<Void> deleteReview(
 
 ---
 
-### 10. Email Verification Role Assignment Bypass
+### 10. 🟢[No problem I guess, ehb.be email can't be obtained] Email Verification Role Assignment Bypass
 
 **📍 Location:** `UserServiceImpl.java:160-192`
 
@@ -377,7 +377,7 @@ Implement proper email domain verification with EHB SMTP server or OAuth.
 
 ## High Severity Issues
 
-### 11. Insecure CORS Configuration
+### 11. 🟢[FIXED] Insecure CORS Configuration
 
 **📍 Location:** `CorsConfig.java`
 
@@ -403,7 +403,7 @@ configuration.setAllowedHeaders(List.of(
 
 ---
 
-### 12. Missing Security Headers
+### 12. 🟢[FIXED] Missing Security Headers
 
 **Issue:**
 No HTTP security headers configured for protection against common attacks.
@@ -438,7 +438,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 ---
 
-### 13. Actuator Endpoints Exposed
+### 13. 🟢[FIXED] Actuator Endpoints Exposed
 
 **📍 Location:** `SecurityConfig.java:46`
 

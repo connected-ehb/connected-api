@@ -61,9 +61,10 @@ public class SecurityConfig {
                                 "/oauth2/authorization/**",  // OAuth2 authorization endpoints
                                 "/error",
                                 "/ws/**",  // WebSocket endpoints
-                                "/actuator/**",  // Actuator endpoints
+                                "/actuator/health",  // Actuator endpoints
                                 "/api/users/verify"  // Email verification endpoint
                         ).permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // CORS preflight
                         .anyRequest().authenticated()
                 )
