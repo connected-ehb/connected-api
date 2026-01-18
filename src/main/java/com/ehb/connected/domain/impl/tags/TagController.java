@@ -4,6 +4,7 @@ import com.ehb.connected.domain.impl.tags.dto.TagDto;
 import com.ehb.connected.domain.impl.tags.services.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,11 +20,13 @@ import java.util.List;
 public class TagController {
     private final TagService tagService;
 
+    @PreAuthorize("hasAnyAuthority('tag:read')")
     @GetMapping("/search")
     public ResponseEntity<List<TagDto>> searchTagsByQuery(@RequestParam String query) {
         return ResponseEntity.ok(tagService.searchTagsByQuery(query));
     }
 
+    @PreAuthorize("hasAnyAuthority('tag:create')")
     @PostMapping
     public ResponseEntity<TagDto> createTag(@RequestBody TagDto tagDto) {
         return ResponseEntity.ok(tagService.createTag(tagDto));

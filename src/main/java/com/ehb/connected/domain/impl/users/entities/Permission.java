@@ -87,7 +87,10 @@ public enum Permission {
 
     BUG_CREATE("bug:create"),
     BUG_READ_ALL("bug:read_all"),
-    PROJECT_READ_IMPORTED("project:read_imported");
+    PROJECT_READ_IMPORTED("project:read_imported"),
+
+    TAG_READ("tag:read"),
+    TAG_CREATE("tag:create");
 
     private final String permission;
 }
