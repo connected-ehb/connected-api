@@ -205,9 +205,9 @@ public ResponseEntity<TagDto> createTag(@RequestBody TagDto tagDto) {
 
 ---
 
-### 6. Missing Input Validation on Authentication
+### 6. 🟢[FIXED] Missing Input Validation on Authentication
 
-**📍 Location:** `LoginRequestDto.java`, `RegistrationRequestDto.java`
+**📍 Location:** `LoginRequest.java`, `RegistrationRequest.java`, `AuthController.java`
 
 **LoginRequestDto:**'
 ```java

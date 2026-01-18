@@ -7,6 +7,7 @@ import com.ehb.connected.domain.impl.users.dto.AuthUserDetailsDto;
 import com.ehb.connected.domain.impl.users.dto.UserDetailsDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,7 +53,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<UserDetailsDto> loginUser(
-            @RequestBody LoginRequest loginRequest,
+            @RequestBody @Valid LoginRequest loginRequest,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
 
@@ -65,7 +66,7 @@ public class AuthController {
      * Requires a valid invitation code.
      */
     @PostMapping("/register")
-    public ResponseEntity<UserDetailsDto> registerUser(@RequestBody RegistrationRequest request) {
+    public ResponseEntity<UserDetailsDto> registerUser(@RequestBody @Valid RegistrationRequest request) {
         UserDetailsDto registeredUser = authService.register(request);
         return ResponseEntity.ok(registeredUser);
     }
