@@ -29,6 +29,7 @@ public class SecurityConfig {
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
     private final CsrfTokenResponseHeaderFilter csrfTokenResponseHeaderFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     @Value("${connected.frontend-uri}")
     private String frontendUri;
@@ -49,6 +50,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/auth/register", "/ws/**")
                         // Note: /login and /logout now require CSRF tokens (proper security)
                 )
+                // Add rate limiting before authentication
+                .addFilterBefore(rateLimitFilter, BasicAuthenticationFilter.class)
                 // Add CSRF token to response headers for SPA support
                 .addFilterAfter(csrfTokenResponseHeaderFilter, BasicAuthenticationFilter.class)
 
