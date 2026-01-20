@@ -63,7 +63,7 @@ public class ProjectServiceImpl implements ProjectService {
         User user = userService.getUserByAuthentication(authentication);
         Project project = getProjectById(projectId);
 
-        if (user.hasRole(Role.RESEARCHER) && user.isCreator(project)) {
+        if (user.hasRole(Role.RESEARCHER) && user.isProjectCreator(project)) {
             return projectMapper.toResearcherDetailsDto(project);
         }
         if (user.canViewProject(project)) {

@@ -7,7 +7,10 @@ import com.ehb.connected.domain.impl.assignments.mappers.AssignmentMapper;
 import com.ehb.connected.domain.impl.assignments.repositories.AssignmentRepository;
 import com.ehb.connected.domain.impl.courses.entities.Course;
 import com.ehb.connected.domain.impl.courses.services.CourseService;
+import com.ehb.connected.domain.impl.users.entities.User;
+import com.ehb.connected.domain.impl.users.services.UserService;
 import com.ehb.connected.exceptions.EntityNotFoundException;
+import com.ehb.connected.exceptions.UserUnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.core.Authentication;
@@ -24,6 +27,7 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
     private final CourseService courseService;
+    private final UserService userService;
     private final AssignmentMapper assignmentMapper;
 
     private final WebClient webClient;
@@ -81,6 +85,11 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     public void deleteAssignmentById(Authentication authentication, Long assignmentId) {
         Assignment assignment = getAssignmentById(assignmentId);
-        assignmentRepository.delete(assignment);
+        User user = userService.getUserByAuthentication(authentication);
+        if (user.canDeleteAssignment(assignment)) {
+            assignmentRepository.deleteById(assignmentId);
+        } else {
+            throw new UserUnauthorizedException("User does not have permission to delete this assignment.");
+        }
     }
 }

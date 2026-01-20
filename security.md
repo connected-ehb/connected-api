@@ -461,7 +461,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 ---
 
-### 14. No Rate Limiting
+### 14. 🟢[FIXED] No Rate Limiting
 
 **Issue:**
 No rate limiting implemented on any endpoint.
@@ -489,7 +489,7 @@ public RateLimiter rateLimiter() {
 
 ---
 
-### 15. Assignment Dashboard IDOR
+### 15. 🟢[FIXED] Assignment Dashboard IDOR
 
 **📍 Location:** `AssignmentController.java:74-81`
 
@@ -547,7 +547,7 @@ public ProjectDetailsDto changeProjectStatus(
 
 ---
 
-### 18. Assignment Deletion - No Ownership Check
+### 18.🟡 [Temporary fix, should be expanded] Assignment Deletion - No Ownership Check
 
 **📍 Location:** `AssignmentServiceImpl.java:82-85`
 
@@ -562,7 +562,7 @@ public void deleteAssignmentById(Principal principal, Long assignmentId) {
 
 ---
 
-### 19. Teachers Can View ALL Applications
+### 19. 🟡 [Fine for now] Teachers Can View ALL Applications
 
 **📍 Location:** `ApplicationServiceImpl.java:128-137`
 
@@ -581,7 +581,7 @@ Teachers can view applications for assignments they don't teach.
 
 ---
 
-### 20. Feedback Can Be Given by Any Teacher
+### 20. 🟡 [Fine for now] Feedback Can Be Given by Any Teacher
 
 **📍 Location:** `FeedbackServiceImpl.java:34-66`
 
@@ -605,7 +605,7 @@ public FeedbackDto giveFeedback(Principal principal, Long projectId, FeedbackCre
 
 ---
 
-### 21. Session Restoration Without Token Validation
+### 21. 🟡 [Fine for now] Session Restoration Without Token Validation
 
 **📍 Location:** `AuthServiceImpl.java:205-260`
 

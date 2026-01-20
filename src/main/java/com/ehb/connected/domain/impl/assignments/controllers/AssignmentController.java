@@ -55,7 +55,7 @@ public class AssignmentController {
 
     @PreAuthorize("hasAnyAuthority('application:read_all')")
     @GetMapping("/{assignmentId}/applications")
-    public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Authentication authentication, @PathVariable Long assignmentId){
+    public ResponseEntity<List<ApplicationDetailsDto>> getAllApplications(Authentication authentication, @PathVariable Long assignmentId) {
         return ResponseEntity.ok(applicationService.getAllApplications(authentication, assignmentId));
     }
 
@@ -73,9 +73,7 @@ public class AssignmentController {
 
     @PreAuthorize("hasAnyAuthority('dashboard:read')")
     @GetMapping("/{assignmentId}/dashboard")
-    public ResponseEntity<DashboardDetailsDto> getDashboard(
-            @PathVariable Long assignmentId
-    ) {
+    public ResponseEntity<DashboardDetailsDto> getDashboard(Authentication authentication, @PathVariable Long assignmentId) {
         DashboardDetailsDto dashboard = dashboardServiceImpl.getDashboardDetails(assignmentId);
         return ResponseEntity.ok(dashboard);
     }

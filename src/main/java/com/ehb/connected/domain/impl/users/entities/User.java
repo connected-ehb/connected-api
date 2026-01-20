@@ -1,6 +1,7 @@
 package com.ehb.connected.domain.impl.users.entities;
 
 import com.ehb.connected.domain.impl.applications.entities.Application;
+import com.ehb.connected.domain.impl.assignments.entities.Assignment;
 import com.ehb.connected.domain.impl.projects.entities.Project;
 import com.ehb.connected.domain.impl.projects.entities.ProjectStatusEnum;
 import com.ehb.connected.domain.impl.tags.entities.Tag;
@@ -110,7 +111,7 @@ public class User implements UserDetails, Serializable {
         return this.equals(application.getApplicant());
     }
 
-    public boolean isCreator(Project project) {
+    public boolean isProjectCreator(Project project) {
         return project.getCreatedBy().equals(this);
     }
 
@@ -120,6 +121,11 @@ public class User implements UserDetails, Serializable {
                 project.getCreatedBy().hasRole(Role.RESEARCHER) ||
                 this.hasRole(Role.TEACHER) ||
                 this.isProductOwner(project);
+    }
+
+    //TODO: This method should be expanded with ownership logic. Currently Assignments have no owner.
+    public Boolean canDeleteAssignment(Assignment assignment) {
+        return this.hasRole(Role.TEACHER);
     }
 
     // ---------- UserDetails Implementation ----------
