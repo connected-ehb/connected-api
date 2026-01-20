@@ -13,6 +13,10 @@ server:
   servlet:
     session:
       timeout: 8h
+      cookie:
+        http-only: true
+        secure: false  # Set to false for dev environment (HTTP)
+        same-site: lax
 
 spring:
   application:

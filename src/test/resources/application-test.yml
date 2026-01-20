@@ -76,3 +76,7 @@ server:
   servlet:
     session:
       timeout: 1h
+      cookie:
+        http-only: true
+        secure: false  # Set to false for test environment
+        same-site: lax

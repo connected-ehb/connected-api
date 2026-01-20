@@ -13,6 +13,10 @@ server:
   servlet:
     session:
       timeout: 4h
+      cookie:
+        http-only: true
+        secure: true  # HTTPS required in production
+        same-site: lax
 
 spring:
   application:

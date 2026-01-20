@@ -626,7 +626,7 @@ If OAuth2 token is revoked externally (on Canvas), the application won't detect 
 
 ---
 
-### 22. No Cookie Security Attributes
+### 22. 🟢[FIXED] No Cookie Security Attributes
 
 **Issue:**
 Session cookies lack security attributes.
